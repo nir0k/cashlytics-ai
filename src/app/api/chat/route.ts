@@ -4,6 +4,26 @@ import { tools } from '@/lib/ai/tools';
 import { getAccounts } from '@/actions/account-actions';
 import { getCategories } from '@/actions/category-actions';
 import { getExpenses } from '@/actions/expense-actions';
+import { rateLimit } from '@/lib/rate-limiter';
+
+const MAX_MESSAGES = 100;
+
+/**
+ * Strips characters that could break LLM prompt structure or enable injection attacks.
+ */
+function sanitizeForPrompt(str: string): string {
+  return str
+    .replace(/`{1,3}/g, '')
+    .replace(/"{3}/g, '')
+    .replace(/'{3}/g, '')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\[INST\]/gi, '')
+    .replace(/<<SYS>>/gi, '')
+    .replace(/<\/s>/gi, '')
+    .replace(/\[\/INST\]/gi, '')
+    .trim();
+}
 
 const BASE_SYSTEM_PROMPT = `Du bist der Finanz-Assistent von Cashlytics - einer persönlichen Budget-App.
 
@@ -102,14 +122,14 @@ async function buildSystemPrompt(): Promise<string> {
   const accountsContext =
     accountsResult.success && accountsResult.data.length > 0
       ? accountsResult.data
-          .map((a) => `  - "${a.name}" | Typ: ${a.type} | Stand: ${a.balance} ${a.currency} | ID: ${a.id}`)
+          .map((a) => `  - "${sanitizeForPrompt(a.name)}" | Typ: ${sanitizeForPrompt(a.type)} | Stand: ${a.balance} ${sanitizeForPrompt(a.currency)} | ID: ${a.id}`)
           .join('\n')
       : '  (Keine Konten vorhanden – zuerst createAccount aufrufen)';
 
   const categoriesContext =
     categoriesResult.success && categoriesResult.data.length > 0
       ? categoriesResult.data
-          .map((c) => `  - "${c.name}" ${c.icon ?? ''} | ID: ${c.id}`)
+          .map((c) => `  - "${sanitizeForPrompt(c.name)}" ${c.icon ?? ''} | ID: ${c.id}`)
           .join('\n')
       : '  (Keine Kategorien vorhanden)';
 
@@ -117,10 +137,10 @@ async function buildSystemPrompt(): Promise<string> {
     expensesResult.success && expensesResult.data.length > 0
       ? expensesResult.data
           .map((e) => {
-            const cat = e.category?.name ? ` [${e.category.name}]` : '';
+            const cat = e.category?.name ? ` [${sanitizeForPrompt(e.category.name)}]` : '';
             const start = new Date(e.startDate).toLocaleDateString('de-DE');
             const end = e.endDate ? ` bis ${new Date(e.endDate).toLocaleDateString('de-DE')}` : '';
-            return `  - "${e.name}"${cat} | ${e.amount}€ | ${e.recurrenceType} | ab ${start}${end} | ID: ${e.id}`;
+            return `  - "${sanitizeForPrompt(e.name)}"${cat} | ${e.amount}€ | ${e.recurrenceType} | ab ${start}${end} | ID: ${e.id}`;
           })
           .join('\n')
       : '  (Keine periodischen Ausgaben vorhanden)';
@@ -143,15 +163,71 @@ ${expensesContext}`;
 }
 
 export async function POST(req: Request) {
-  try {
-    const { messages } = (await req.json()) as { messages: UIMessage[] };
+  // Rate limiting: 20 requests per minute per IP
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'local';
+  const rl = rateLimit(`chat:${ip}`, 20, 60_000);
+  if (!rl.allowed) {
+    const retryAfterSecs = Math.ceil((rl.resetAt - Date.now()) / 1000);
+    return new Response(
+      JSON.stringify({ error: 'Zu viele Anfragen. Bitte warte einen Moment.' }),
+      {
+        status: 429,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': String(retryAfterSecs) },
+      }
+    );
+  }
 
+  try {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Ungültiger JSON-Body.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!body || typeof body !== 'object' || !('messages' in body)) {
+      return new Response(
+        JSON.stringify({ error: 'Fehlende "messages"-Eigenschaft im Request-Body.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { messages } = body as { messages: unknown };
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: '"messages" muss ein nicht-leeres Array sein.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (messages.length > MAX_MESSAGES) {
+      return new Response(
+        JSON.stringify({ error: `Zu viele Nachrichten. Maximum: ${MAX_MESSAGES}.` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+      if (!msg || typeof msg !== 'object' || !('role' in msg) || !('content' in msg)) {
+        return new Response(
+          JSON.stringify({ error: `Nachricht ${i} fehlt "role" oder "content".` }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    const validatedMessages = messages as UIMessage[];
     const systemPrompt = await buildSystemPrompt();
 
     const result = streamText({
       model: openai('gpt-4o'),
       system: systemPrompt,
-      messages: await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true }),
+      messages: await convertToModelMessages(validatedMessages, { ignoreIncompleteToolCalls: true }),
       tools,
       stopWhen: stepCountIs(10),
       toolChoice: 'auto',

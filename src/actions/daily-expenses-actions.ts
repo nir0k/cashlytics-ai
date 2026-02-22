@@ -5,6 +5,7 @@ import { dailyExpenses, categories, accounts } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, DailyExpense, DailyExpenseWithDetails, NewDailyExpense } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getDailyExpenses(filters?: {
   accountId?: string;
@@ -48,7 +49,7 @@ export async function getDailyExpenses(filters?: {
 
     return { success: true, data: dailyExpensesWithDetails };
   } catch (error) {
-    console.error('Failed to fetch daily expenses:', error);
+    logger.error('Failed to fetch daily expenses', 'getDailyExpenses', error);
     return { success: false, error: 'Tägliche Ausgaben konnten nicht geladen werden.' };
   }
 }
@@ -80,7 +81,7 @@ export async function getDailyExpenseById(id: string): Promise<ApiResponse<Daily
       },
     };
   } catch (error) {
-    console.error('Failed to fetch daily expense:', error);
+    logger.error('Failed to fetch daily expense', 'getDailyExpenseById', error);
     return { success: false, error: 'Tägliche Ausgabe konnte nicht geladen werden.' };
   }
 }
@@ -108,7 +109,7 @@ export async function createDailyExpense(data: {
     revalidatePath('/dashboard');
     return { success: true, data: newDailyExpense };
   } catch (error) {
-    console.error('Failed to create daily expense:', error);
+    logger.error('Failed to create daily expense', 'createDailyExpense', error);
     return { success: false, error: 'Tägliche Ausgabe konnte nicht erstellt werden.' };
   }
 }
@@ -137,7 +138,7 @@ export async function updateDailyExpense(
     revalidatePath('/dashboard');
     return { success: true, data: updatedDailyExpense };
   } catch (error) {
-    console.error('Failed to update daily expense:', error);
+    logger.error('Failed to update daily expense', 'updateDailyExpense', error);
     return { success: false, error: 'Tägliche Ausgabe konnte nicht aktualisiert werden.' };
   }
 }
@@ -157,7 +158,7 @@ export async function deleteDailyExpense(id: string): Promise<ApiResponse<void>>
     revalidatePath('/dashboard');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete daily expense:', error);
+    logger.error('Failed to delete daily expense', 'deleteDailyExpense', error);
     return { success: false, error: 'Tägliche Ausgabe konnte nicht gelöscht werden.' };
   }
 }

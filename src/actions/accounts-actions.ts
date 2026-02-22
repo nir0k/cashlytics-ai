@@ -5,6 +5,7 @@ import { accounts } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Account, NewAccount } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getAccounts(): Promise<ApiResponse<Account[]>> {
   try {
@@ -15,7 +16,7 @@ export async function getAccounts(): Promise<ApiResponse<Account[]>> {
 
     return { success: true, data: allAccounts };
   } catch (error) {
-    console.error('Failed to fetch accounts:', error);
+    logger.error('Failed to fetch accounts', 'getAccounts', error);
     return { success: false, error: 'Konten konnten nicht geladen werden.' };
   }
 }
@@ -34,7 +35,7 @@ export async function getAccountById(id: string): Promise<ApiResponse<Account>> 
 
     return { success: true, data: account };
   } catch (error) {
-    console.error('Failed to fetch account:', error);
+    logger.error('Failed to fetch account', 'getAccountById', error);
     return { success: false, error: 'Konto konnte nicht geladen werden.' };
   }
 }
@@ -59,7 +60,7 @@ export async function createAccount(data: {
     revalidatePath('/dashboard');
     return { success: true, data: newAccount };
   } catch (error) {
-    console.error('Failed to create account:', error);
+    logger.error('Failed to create account', 'createAccount', error);
     return { success: false, error: 'Konto konnte nicht erstellt werden.' };
   }
 }
@@ -83,7 +84,7 @@ export async function updateAccount(
     revalidatePath('/dashboard');
     return { success: true, data: updatedAccount };
   } catch (error) {
-    console.error('Failed to update account:', error);
+    logger.error('Failed to update account', 'updateAccount', error);
     return { success: false, error: 'Konto konnte nicht aktualisiert werden.' };
   }
 }
@@ -103,7 +104,7 @@ export async function deleteAccount(id: string): Promise<ApiResponse<void>> {
     revalidatePath('/dashboard');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete account:', error);
+    logger.error('Failed to delete account', 'deleteAccount', error);
     return { success: false, error: 'Konto konnte nicht gelöscht werden.' };
   }
 }

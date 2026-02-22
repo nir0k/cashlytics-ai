@@ -5,6 +5,7 @@ import { accounts, incomes, expenses, transfers } from '@/lib/db/schema';
 import { eq, or } from 'drizzle-orm';
 import type { ApiResponse, Account, Expense, Income, Transfer } from '@/types/database';
 import { safeParseFloat } from '@/lib/safe-parse';
+import { logger } from '@/lib/logger';
 
 export type AccountForecast = {
   account: Account;
@@ -255,7 +256,7 @@ export async function getAccountForecast(
       },
     };
   } catch (error) {
-    console.error('Failed to generate forecast:', error);
+    logger.error('Failed to generate forecast', 'getAccountForecast', error);
     return { success: false, error: 'Prognose konnte nicht erstellt werden.' };
   }
 }

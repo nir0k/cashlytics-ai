@@ -5,13 +5,14 @@ import { categories } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Category, NewCategory } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getCategories(): Promise<ApiResponse<Category[]>> {
   try {
     const allCategories = await db.select().from(categories).orderBy(categories.name);
     return { success: true, data: allCategories };
   } catch (error) {
-    console.error('Failed to fetch categories:', error);
+    logger.error('Failed to fetch categories', 'getCategories', error);
     return { success: false, error: 'Failed to fetch categories' };
   }
 }
@@ -25,7 +26,7 @@ export async function createCategory(data: NewCategory): Promise<ApiResponse<Cat
     revalidatePath('/expenses');
     return { success: true, data: category };
   } catch (error) {
-    console.error('Failed to create category:', error);
+    logger.error('Failed to create category', 'createCategory', error);
     return { success: false, error: 'Failed to create category' };
   }
 }
@@ -45,7 +46,7 @@ export async function updateCategory(
     revalidatePath('/expenses');
     return { success: true, data: category };
   } catch (error) {
-    console.error('Failed to update category:', error);
+    logger.error('Failed to update category', 'updateCategory', error);
     return { success: false, error: 'Failed to update category' };
   }
 }
@@ -59,7 +60,7 @@ export async function deleteCategory(id: string): Promise<ApiResponse<void>> {
     revalidatePath('/expenses');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete category:', error);
+    logger.error('Failed to delete category', 'deleteCategory', error);
     return { success: false, error: 'Failed to delete category' };
   }
 }

@@ -2,6 +2,7 @@
 
 import { db } from '@/lib/db';
 import { expenses, incomes, dailyExpenses, categories, accounts } from '@/lib/db/schema';
+import { logger } from '@/lib/logger';
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import type { ApiResponse, MonthlyOverview, Forecast, CategoryBreakdown, ExpenseWithDetails, IncomeWithAccount } from '@/types/database';
 import { safeParseFloat, toUTCDate } from '@/lib/safe-parse';
@@ -129,7 +130,7 @@ export async function getMonthlyOverview(
       },
     };
   } catch (error) {
-    console.error('Failed to get monthly overview:', error);
+    logger.error('Failed to get monthly overview', 'getMonthlyOverview', error);
     return { success: false, error: 'Monatsübersicht konnte nicht geladen werden.' };
   }
 }
@@ -178,7 +179,7 @@ export async function getForecast(months: number): Promise<ApiResponse<Forecast>
       },
     };
   } catch (error) {
-    console.error('Failed to get forecast:', error);
+    logger.error('Failed to get forecast', 'getForecast', error);
     return { success: false, error: 'Prognose konnte nicht erstellt werden.' };
   }
 }
@@ -266,7 +267,7 @@ export async function getCategoryBreakdown(
 
     return { success: true, data: breakdown };
   } catch (error) {
-    console.error('Failed to get category breakdown:', error);
+    logger.error('Failed to get category breakdown', 'getCategoryBreakdown', error);
     return { success: false, error: 'Kategorie-Übersicht konnte nicht geladen werden.' };
   }
 }
@@ -306,7 +307,7 @@ export async function getNormalizedMonthlyExpenses(): Promise<
 
     return { success: true, data: normalizedExpenses };
   } catch (error) {
-    console.error('Failed to get normalized monthly expenses:', error);
+    logger.error('Failed to get normalized monthly expenses', 'getNormalizedMonthlyExpenses', error);
     return { success: false, error: 'Normalisierte Ausgaben konnten nicht geladen werden.' };
   }
 }
@@ -404,7 +405,7 @@ export async function getMonthlyTrend(months: number = 6): Promise<ApiResponse<M
 
     return { success: true, data };
   } catch (error) {
-    console.error('Failed to fetch monthly trend:', error);
+    logger.error('Failed to fetch monthly trend', 'getMonthlyTrend', error);
     return { success: false, error: 'Monatstrend konnte nicht geladen werden.' };
   }
 }
@@ -443,7 +444,7 @@ export async function getExpensesByCategory(year?: number, month?: number): Prom
 
     return { success: true, data };
   } catch (error) {
-    console.error('Failed to fetch expenses by category:', error);
+    logger.error('Failed to fetch expenses by category', 'getExpensesByCategory', error);
     return { success: false, error: 'Kategorie-Auswertung konnte nicht geladen werden.' };
   }
 }
@@ -494,7 +495,7 @@ export async function getIncomeVsExpensesByMonth(year?: number): Promise<ApiResp
 
     return { success: true, data };
   } catch (error) {
-    console.error('Failed to fetch income vs expenses by month:', error);
+    logger.error('Failed to fetch income vs expenses by month', 'getIncomeVsExpensesByMonth', error);
     return { success: false, error: 'Jahresübersicht konnte nicht geladen werden.' };
   }
 }
@@ -540,7 +541,7 @@ export async function getSavingsProgress(): Promise<ApiResponse<SavingsProgress>
 
     return { success: true, data: { totalIncome: roundedIncome, totalExpenses, savingsAmount, savingsRate } };
   } catch (error) {
-    console.error('Failed to fetch savings progress:', error);
+    logger.error('Failed to fetch savings progress', 'getSavingsProgress', error);
     return { success: false, error: 'Sparfortschritt konnte nicht geladen werden.' };
   }
 }
@@ -581,7 +582,7 @@ export async function getSubscriptions(): Promise<
 
     return { success: true, data: subscriptions };
   } catch (error) {
-    console.error('Failed to fetch subscriptions:', error);
+    logger.error('Failed to fetch subscriptions', 'getSubscriptions', error);
     return { success: false, error: 'Abonnements konnten nicht geladen werden.' };
   }
 }
@@ -850,7 +851,7 @@ export async function getMonthlyPaymentsCalendar(
 
     return { success: true, data: calendarDays };
   } catch (error) {
-    console.error('Failed to fetch monthly payments calendar:', error);
+    logger.error('Failed to fetch monthly payments calendar', 'getMonthlyPaymentsCalendar', error);
     return { success: false, error: 'Monatskalender konnte nicht geladen werden.' };
   }
 }

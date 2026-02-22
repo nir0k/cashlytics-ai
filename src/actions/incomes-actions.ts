@@ -5,6 +5,7 @@ import { incomes, accounts } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Income, IncomeWithAccount, NewIncome } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getIncomes(filters?: {
   accountId?: string;
@@ -41,7 +42,7 @@ export async function getIncomes(filters?: {
 
     return { success: true, data: incomesWithAccount };
   } catch (error) {
-    console.error('Failed to fetch incomes:', error);
+    logger.error('Failed to fetch incomes', 'getIncomes', error);
     return { success: false, error: 'Einnahmen konnten nicht geladen werden.' };
   }
 }
@@ -70,7 +71,7 @@ export async function getIncomeById(id: string): Promise<ApiResponse<IncomeWithA
       },
     };
   } catch (error) {
-    console.error('Failed to fetch income:', error);
+    logger.error('Failed to fetch income', 'getIncomeById', error);
     return { success: false, error: 'Einnahme konnte nicht geladen werden.' };
   }
 }
@@ -98,7 +99,7 @@ export async function createIncome(data: {
     revalidatePath('/dashboard');
     return { success: true, data: newIncome };
   } catch (error) {
-    console.error('Failed to create income:', error);
+    logger.error('Failed to create income', 'createIncome', error);
     return { success: false, error: 'Einnahme konnte nicht erstellt werden.' };
   }
 }
@@ -127,7 +128,7 @@ export async function updateIncome(
     revalidatePath('/dashboard');
     return { success: true, data: updatedIncome };
   } catch (error) {
-    console.error('Failed to update income:', error);
+    logger.error('Failed to update income', 'updateIncome', error);
     return { success: false, error: 'Einnahme konnte nicht aktualisiert werden.' };
   }
 }
@@ -147,7 +148,7 @@ export async function deleteIncome(id: string): Promise<ApiResponse<void>> {
     revalidatePath('/dashboard');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete income:', error);
+    logger.error('Failed to delete income', 'deleteIncome', error);
     return { success: false, error: 'Einnahme konnte nicht gelöscht werden.' };
   }
 }

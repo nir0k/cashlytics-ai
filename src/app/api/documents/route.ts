@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { documents } from '@/lib/db/schema';
 import { rateLimit } from '@/lib/rate-limiter';
+import { logger } from '@/lib/logger';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ id: document.id, fileName: document.fileName }, { status: 201 });
   } catch (error) {
-    console.error('Document upload error:', error);
+    logger.error('Document upload error', 'POST /api/documents', error);
     return NextResponse.json({ error: 'Upload fehlgeschlagen' }, { status: 500 });
   }
 }
@@ -103,7 +104,7 @@ export async function GET() {
       allDocuments.map((d) => ({ id: d.id, fileName: d.fileName, mimeType: d.mimeType, size: d.size }))
     );
   } catch (error) {
-    console.error('Document fetch error:', error);
+    logger.error('Document fetch error', 'GET /api/documents', error);
     return NextResponse.json({ error: 'Fehler beim Laden' }, { status: 500 });
   }
 }

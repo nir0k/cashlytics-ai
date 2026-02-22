@@ -5,6 +5,7 @@ import { getAccounts } from '@/actions/account-actions';
 import { getCategories } from '@/actions/category-actions';
 import { getExpenses } from '@/actions/expense-actions';
 import { rateLimit } from '@/lib/rate-limiter';
+import { logger } from '@/lib/logger';
 
 const MAX_MESSAGES = 100;
 
@@ -251,7 +252,7 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse();
   } catch (error) {
-    console.error('Chat API error:', error);
+    logger.error('Chat API error', 'POST /api/chat', error);
     return new Response(
       JSON.stringify({ error: 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

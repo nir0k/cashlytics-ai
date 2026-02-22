@@ -5,6 +5,7 @@ import { expenses, dailyExpenses, accounts } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc, sql, ilike } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Expense, NewExpense, DailyExpense, NewDailyExpense, ExpenseWithDetails, DailyExpenseWithDetails } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getExpenses(filters?: {
   accountId?: string;
@@ -42,7 +43,7 @@ export async function getExpenses(filters?: {
 
     return { success: true, data: result as ExpenseWithDetails[] };
   } catch (error) {
-    console.error('Failed to fetch expenses:', error);
+    logger.error('Failed to fetch expenses', 'getExpenses', error);
     return { success: false, error: 'Periodische Ausgaben konnten nicht geladen werden.' };
   }
 }
@@ -50,7 +51,7 @@ export async function getExpenses(filters?: {
 export async function createExpense(data: NewExpense): Promise<ApiResponse<Expense>> {
   try {
     const [expense] = await db.insert(expenses).values(data).returning();
-    
+
     // Kontostand aktualisieren (abziehen) mit SQL
     if (data.accountId) {
       await db
@@ -60,13 +61,13 @@ export async function createExpense(data: NewExpense): Promise<ApiResponse<Expen
         })
         .where(eq(accounts.id, data.accountId));
     }
-    
+
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
     return { success: true, data: expense };
   } catch (error) {
-    console.error('Failed to create expense:', error);
+    logger.error('Failed to create expense', 'createExpense', error);
     return { success: false, error: 'Failed to create expense' };
   }
 }
@@ -84,7 +85,7 @@ export async function updateExpense(
     revalidatePath('/dashboard');
     return { success: true, data: expense };
   } catch (error) {
-    console.error('Failed to update expense:', error);
+    logger.error('Failed to update expense', 'updateExpense', error);
     return { success: false, error: 'Failed to update expense' };
   }
 }
@@ -102,14 +103,14 @@ export async function deleteExpense(id: string): Promise<ApiResponse<void>> {
         })
         .where(eq(accounts.id, expense.accountId));
     }
-    
+
     await db.delete(expenses).where(eq(expenses.id, id));
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete expense:', error);
+    logger.error('Failed to delete expense', 'deleteExpense', error);
     return { success: false, error: 'Failed to delete expense' };
   }
 }
@@ -150,7 +151,7 @@ export async function getDailyExpenses(filters?: {
 
     return { success: true, data: result as DailyExpenseWithDetails[] };
   } catch (error) {
-    console.error('Failed to fetch daily expenses:', error);
+    logger.error('Failed to fetch daily expenses', 'getDailyExpenses', error);
     return { success: false, error: 'Tagesausgaben konnten nicht geladen werden.' };
   }
 }
@@ -158,7 +159,7 @@ export async function getDailyExpenses(filters?: {
 export async function createDailyExpense(data: NewDailyExpense): Promise<ApiResponse<DailyExpense>> {
   try {
     const [expense] = await db.insert(dailyExpenses).values(data).returning();
-    
+
     // Kontostand aktualisieren (abziehen)
     if (data.accountId) {
       await db
@@ -168,13 +169,13 @@ export async function createDailyExpense(data: NewDailyExpense): Promise<ApiResp
         })
         .where(eq(accounts.id, data.accountId));
     }
-    
+
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
     return { success: true, data: expense };
   } catch (error) {
-    console.error('Failed to create daily expense:', error);
+    logger.error('Failed to create daily expense', 'createDailyExpense', error);
     return { success: false, error: 'Failed to create daily expense' };
   }
 }
@@ -192,7 +193,7 @@ export async function updateDailyExpense(
     revalidatePath('/dashboard');
     return { success: true, data: expense };
   } catch (error) {
-    console.error('Failed to update daily expense:', error);
+    logger.error('Failed to update daily expense', 'updateDailyExpense', error);
     return { success: false, error: 'Failed to update daily expense' };
   }
 }
@@ -208,14 +209,14 @@ export async function deleteDailyExpense(id: string): Promise<ApiResponse<void>>
         })
         .where(eq(accounts.id, expense.accountId));
     }
-    
+
     await db.delete(dailyExpenses).where(eq(dailyExpenses.id, id));
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete daily expense:', error);
+    logger.error('Failed to delete daily expense', 'deleteDailyExpense', error);
     return { success: false, error: 'Failed to delete daily expense' };
   }
 }

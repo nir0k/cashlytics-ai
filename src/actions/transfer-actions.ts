@@ -5,6 +5,7 @@ import { transfers, accounts } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Transfer, NewTransfer, TransferWithDetails } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getTransfers(filters?: {
   sourceAccountId?: string;
@@ -38,7 +39,7 @@ export async function getTransfers(filters?: {
 
     return { success: true, data: result as TransferWithDetails[] };
   } catch (error) {
-    console.error('Failed to fetch transfers:', error);
+    logger.error('Failed to fetch transfers', 'getTransfers', error);
     return { success: false, error: 'Transfers konnten nicht geladen werden' };
   }
 }
@@ -70,7 +71,7 @@ export async function createTransfer(data: NewTransfer): Promise<ApiResponse<Tra
     revalidatePath('/accounts');
     return { success: true, data: transfer };
   } catch (error) {
-    console.error('Failed to create transfer:', error);
+    logger.error('Failed to create transfer', 'createTransfer', error);
     return { success: false, error: 'Transfer konnte nicht erstellt werden' };
   }
 }
@@ -130,7 +131,7 @@ export async function updateTransfer(
     revalidatePath('/accounts');
     return { success: true, data: transfer };
   } catch (error) {
-    console.error('Failed to update transfer:', error);
+    logger.error('Failed to update transfer', 'updateTransfer', error);
     return { success: false, error: 'Transfer konnte nicht aktualisiert werden' };
   }
 }
@@ -160,7 +161,7 @@ export async function deleteTransfer(id: string): Promise<ApiResponse<void>> {
     revalidatePath('/accounts');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete transfer:', error);
+    logger.error('Failed to delete transfer', 'deleteTransfer', error);
     return { success: false, error: 'Transfer konnte nicht gelöscht werden' };
   }
 }

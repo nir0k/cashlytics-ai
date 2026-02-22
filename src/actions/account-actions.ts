@@ -5,13 +5,14 @@ import { accounts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Account, NewAccount } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getAccounts(): Promise<ApiResponse<Account[]>> {
   try {
     const allAccounts = await db.select().from(accounts).orderBy(accounts.name);
     return { success: true, data: allAccounts };
   } catch (error) {
-    console.error('Failed to fetch accounts:', error);
+    logger.error('Failed to fetch accounts', 'getAccounts', error);
     return { success: false, error: 'Failed to fetch accounts' };
   }
 }
@@ -23,7 +24,7 @@ export async function createAccount(data: NewAccount): Promise<ApiResponse<Accou
     revalidatePath('/dashboard');
     return { success: true, data: account };
   } catch (error) {
-    console.error('Failed to create account:', error);
+    logger.error('Failed to create account', 'createAccount', error);
     return { success: false, error: 'Failed to create account' };
   }
 }
@@ -41,7 +42,7 @@ export async function updateAccount(
     revalidatePath('/dashboard');
     return { success: true, data: account };
   } catch (error) {
-    console.error('Failed to update account:', error);
+    logger.error('Failed to update account', 'updateAccount', error);
     return { success: false, error: 'Failed to update account' };
   }
 }
@@ -53,7 +54,7 @@ export async function deleteAccount(id: string): Promise<ApiResponse<void>> {
     revalidatePath('/dashboard');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete account:', error);
+    logger.error('Failed to delete account', 'deleteAccount', error);
     return { success: false, error: 'Failed to delete account' };
   }
 }

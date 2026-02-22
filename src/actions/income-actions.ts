@@ -5,6 +5,7 @@ import { incomes, accounts } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Income, NewIncome, IncomeWithAccount } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getIncomes(filters?: {
   accountId?: string;
@@ -40,7 +41,7 @@ export async function getIncomes(filters?: {
 
     return { success: true, data: incomesWithAccount };
   } catch (error) {
-    console.error('Failed to fetch incomes:', error);
+    logger.error('Failed to fetch incomes', 'getIncomes', error);
     return { success: false, error: 'Failed to fetch incomes' };
   }
 }
@@ -48,7 +49,7 @@ export async function getIncomes(filters?: {
 export async function createIncome(data: NewIncome): Promise<ApiResponse<Income>> {
   try {
     const [income] = await db.insert(incomes).values(data).returning();
-    
+
     // Kontostand aktualisieren (hinzufügen)
     if (data.accountId) {
       await db
@@ -58,13 +59,13 @@ export async function createIncome(data: NewIncome): Promise<ApiResponse<Income>
         })
         .where(eq(accounts.id, data.accountId));
     }
-    
+
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
     return { success: true, data: income };
   } catch (error) {
-    console.error('Failed to create income:', error);
+    logger.error('Failed to create income', 'createIncome', error);
     return { success: false, error: 'Failed to create income' };
   }
 }
@@ -82,7 +83,7 @@ export async function updateIncome(
     revalidatePath('/dashboard');
     return { success: true, data: income };
   } catch (error) {
-    console.error('Failed to update income:', error);
+    logger.error('Failed to update income', 'updateIncome', error);
     return { success: false, error: 'Failed to update income' };
   }
 }
@@ -100,14 +101,14 @@ export async function deleteIncome(id: string): Promise<ApiResponse<void>> {
         })
         .where(eq(accounts.id, income.accountId));
     }
-    
+
     await db.delete(incomes).where(eq(incomes.id, id));
     revalidatePath('/income');
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete income:', error);
+    logger.error('Failed to delete income', 'deleteIncome', error);
     return { success: false, error: 'Failed to delete income' };
   }
 }

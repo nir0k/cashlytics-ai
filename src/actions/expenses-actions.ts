@@ -5,6 +5,7 @@ import { expenses, categories, accounts } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Expense, ExpenseWithDetails, NewExpense } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getExpenses(filters?: {
   accountId?: string;
@@ -48,7 +49,7 @@ export async function getExpenses(filters?: {
 
     return { success: true, data: expensesWithDetails };
   } catch (error) {
-    console.error('Failed to fetch expenses:', error);
+    logger.error('Failed to fetch expenses', 'getExpenses', error);
     return { success: false, error: 'Ausgaben konnten nicht geladen werden.' };
   }
 }
@@ -80,7 +81,7 @@ export async function getExpenseById(id: string): Promise<ApiResponse<ExpenseWit
       },
     };
   } catch (error) {
-    console.error('Failed to fetch expense:', error);
+    logger.error('Failed to fetch expense', 'getExpenseById', error);
     return { success: false, error: 'Ausgabe konnte nicht geladen werden.' };
   }
 }
@@ -114,7 +115,7 @@ export async function createExpense(data: {
     revalidatePath('/dashboard');
     return { success: true, data: newExpense };
   } catch (error) {
-    console.error('Failed to create expense:', error);
+    logger.error('Failed to create expense', 'createExpense', error);
     return { success: false, error: 'Ausgabe konnte nicht erstellt werden.' };
   }
 }
@@ -146,7 +147,7 @@ export async function updateExpense(
     revalidatePath('/dashboard');
     return { success: true, data: updatedExpense };
   } catch (error) {
-    console.error('Failed to update expense:', error);
+    logger.error('Failed to update expense', 'updateExpense', error);
     return { success: false, error: 'Ausgabe konnte nicht aktualisiert werden.' };
   }
 }
@@ -166,7 +167,7 @@ export async function deleteExpense(id: string): Promise<ApiResponse<void>> {
     revalidatePath('/dashboard');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete expense:', error);
+    logger.error('Failed to delete expense', 'deleteExpense', error);
     return { success: false, error: 'Ausgabe konnte nicht gelöscht werden.' };
   }
 }

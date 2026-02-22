@@ -5,6 +5,7 @@ import { accounts, incomes, expenses, dailyExpenses, categories } from '@/lib/db
 import { eq, and, gte, lte } from 'drizzle-orm';
 import type { ApiResponse, AccountDetail, IncomeWithAccount, ExpenseWithDetails, DailyExpenseWithDetails } from '@/types/database';
 import { safeParseFloat } from '@/lib/safe-parse';
+import { logger } from '@/lib/logger';
 
 function getMonthDateRange(month: number, year: number): { startDate: Date; endDate: Date } {
   const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
@@ -126,7 +127,7 @@ export async function getAccountTransactions(
       },
     };
   } catch (error) {
-    console.error('Failed to fetch account transactions:', error);
+    logger.error('Failed to fetch account transactions', 'getAccountTransactions', error);
     return { success: false, error: 'Transaktionen konnten nicht geladen werden.' };
   }
 }

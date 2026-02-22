@@ -5,6 +5,7 @@ import { conversations, messages } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { ApiResponse, Conversation, Message, ConversationWithMessages } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export async function getConversations(): Promise<ApiResponse<Conversation[]>> {
   try {
@@ -14,7 +15,7 @@ export async function getConversations(): Promise<ApiResponse<Conversation[]>> {
       .orderBy(desc(conversations.updatedAt));
     return { success: true, data: allConversations };
   } catch (error) {
-    console.error('Failed to fetch conversations:', error);
+    logger.error('Failed to fetch conversations', 'getConversations', error);
     return { success: false, error: 'Failed to fetch conversations' };
   }
 }
@@ -41,7 +42,7 @@ export async function getConversationById(id: string): Promise<ApiResponse<Conve
       data: { ...conversation, messages: conversationMessages },
     };
   } catch (error) {
-    console.error('Failed to fetch conversation:', error);
+    logger.error('Failed to fetch conversation', 'getConversationById', error);
     return { success: false, error: 'Failed to fetch conversation' };
   }
 }
@@ -60,7 +61,7 @@ export async function createConversation(title?: string): Promise<ApiResponse<Co
     revalidatePath('/assistant');
     return { success: true, data: conversation };
   } catch (error) {
-    console.error('Failed to create conversation:', error);
+    logger.error('Failed to create conversation', 'createConversation', error);
     return { success: false, error: 'Failed to create conversation' };
   }
 }
@@ -82,7 +83,7 @@ export async function updateConversationTitle(
     revalidatePath('/assistant');
     return { success: true, data: conversation };
   } catch (error) {
-    console.error('Failed to update conversation:', error);
+    logger.error('Failed to update conversation', 'updateConversationTitle', error);
     return { success: false, error: 'Failed to update conversation' };
   }
 }
@@ -93,7 +94,7 @@ export async function deleteConversation(id: string): Promise<ApiResponse<void>>
     revalidatePath('/assistant');
     return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to delete conversation:', error);
+    logger.error('Failed to delete conversation', 'deleteConversation', error);
     return { success: false, error: 'Failed to delete conversation' };
   }
 }
@@ -117,7 +118,7 @@ export async function saveMessage(
     revalidatePath('/assistant');
     return { success: true, data: message };
   } catch (error) {
-    console.error('Failed to save message:', error);
+    logger.error('Failed to save message', 'saveMessage', error);
     return { success: false, error: 'Failed to save message' };
   }
 }
@@ -131,7 +132,7 @@ export async function getMessages(conversationId: string): Promise<ApiResponse<M
       .orderBy(messages.createdAt);
     return { success: true, data: conversationMessages };
   } catch (error) {
-    console.error('Failed to fetch messages:', error);
+    logger.error('Failed to fetch messages', 'getMessages', error);
     return { success: false, error: 'Failed to fetch messages' };
   }
 }

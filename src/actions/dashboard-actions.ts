@@ -5,6 +5,7 @@ import { accounts, incomes, expenses, dailyExpenses, categories } from '@/lib/db
 import { and, gte, lte, sql, desc, eq } from 'drizzle-orm';
 import type { ApiResponse, Account, DailyExpenseWithDetails } from '@/types/database';
 import { safeParseFloat } from '@/lib/safe-parse';
+import { logger } from '@/lib/logger';
 
 function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceInterval: number | null): number {
   switch (recurrenceType) {
@@ -139,7 +140,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       },
     };
   } catch (error) {
-    console.error('Failed to fetch dashboard stats:', error);
+    logger.error('Failed to fetch dashboard stats', 'getDashboardStats', error);
     return { success: false, error: `Failed to fetch dashboard stats: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
@@ -229,7 +230,7 @@ export async function getCategoryBreakdown(
 
     return { success: true, data: breakdown };
   } catch (error) {
-    console.error('Failed to fetch category breakdown:', error);
+    logger.error('Failed to fetch category breakdown', 'getCategoryBreakdown', error);
     return { success: false, error: 'Failed to fetch category breakdown' };
   }
 }
@@ -247,7 +248,7 @@ export async function getRecentTransactions(limit: number = 5): Promise<ApiRespo
 
     return { success: true, data: transactions as DailyExpenseWithDetails[] };
   } catch (error) {
-    console.error('Failed to fetch recent transactions:', error);
+    logger.error('Failed to fetch recent transactions', 'getRecentTransactions', error);
     return { success: false, error: 'Failed to fetch recent transactions' };
   }
 }
@@ -257,7 +258,7 @@ export async function getAccounts(): Promise<ApiResponse<Account[]>> {
     const allAccounts = await db.select().from(accounts).orderBy(accounts.name);
     return { success: true, data: allAccounts };
   } catch (error) {
-    console.error('Failed to fetch accounts:', error);
+    logger.error('Failed to fetch accounts', 'getAccounts', error);
     return { success: false, error: 'Failed to fetch accounts' };
   }
 }
@@ -404,7 +405,7 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
 
     return { success: true, data: payments };
   } catch (error) {
-    console.error('Failed to fetch upcoming payments:', error);
+    logger.error('Failed to fetch upcoming payments', 'getUpcomingPayments', error);
     return { success: false, error: 'Failed to fetch upcoming payments' };
   }
 }

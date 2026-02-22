@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { accounts, incomes, expenses, dailyExpenses, categories } from '@/lib/db/schema';
 import { and, gte, lte, sql, desc, eq } from 'drizzle-orm';
 import type { ApiResponse, Account, DailyExpenseWithDetails } from '@/types/database';
+import { safeParseFloat } from '@/lib/safe-parse';
 
 function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceInterval: number | null): number {
   switch (recurrenceType) {
@@ -41,7 +42,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
     const accountsResult = await db.select({
       total: sql<string>`COALESCE(SUM(balance), 0)`,
     }).from(accounts);
-    const totalAssets = parseFloat(accountsResult[0]?.total || '0');
+    const totalAssets = safeParseFloat(accountsResult[0]?.total || '0');
 
     // Aktueller Monat
     const now = new Date();
@@ -57,7 +58,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       .where(lte(incomes.startDate, now));
 
     const monthlyIncome = activeIncomes.reduce((sum, inc) => {
-      const amount = parseFloat(inc.amount);
+      const amount = safeParseFloat(inc.amount);
       if (inc.recurrenceType === 'monthly') return sum + amount;
       if (inc.recurrenceType === 'yearly') return sum + amount / 12;
       if (inc.recurrenceType === 'once') {
@@ -76,14 +77,14 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
         gte(incomes.startDate, currentMonthStart),
         sql`${incomes.recurrenceType} = 'once'`
       ));
-    const totalMonthlyIncome = monthlyIncome + parseFloat(oneTimeIncomes[0]?.total || '0');
+    const totalMonthlyIncome = monthlyIncome + safeParseFloat(oneTimeIncomes[0]?.total || '0');
 
     // Ausgaben diesen Monat: tägliche Ausgaben
     const currentMonthDailyExpenses = await db.select({
       total: sql<string>`COALESCE(SUM(amount), 0)`,
     }).from(dailyExpenses)
       .where(gte(dailyExpenses.date, currentMonthStart));
-    const dailyExpensesTotal = parseFloat(currentMonthDailyExpenses[0]?.total || '0');
+    const dailyExpensesTotal = safeParseFloat(currentMonthDailyExpenses[0]?.total || '0');
 
     // Ausgaben: periodische Ausgaben (normalisiert auf monatlich)
     const activeExpenses = await db.select({
@@ -99,7 +100,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
 
     const periodicExpensesTotal = activeExpenses.reduce((sum, exp) => {
       return sum + normalizeToMonthly(
-        parseFloat(exp.amount),
+        safeParseFloat(exp.amount),
         exp.recurrenceType,
         exp.recurrenceInterval
       );
@@ -116,14 +117,14 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
         lte(dailyExpenses.date, lastMonthEnd)
       ));
     // Periodische Ausgaben waren letzten Monat gleich (selbe Fixkosten)
-    const lastMonthExpensesTotal = parseFloat(lastMonthDailyExp[0]?.total || '0') + periodicExpensesTotal;
+    const lastMonthExpensesTotal = safeParseFloat(lastMonthDailyExp[0]?.total || '0') + periodicExpensesTotal;
 
     // Sparquote
     const savingsRate = totalMonthlyIncome - monthlyExpenses;
 
     // Trends berechnen
-    const expenseTrend = lastMonthExpensesTotal > 0 
-      ? ((monthlyExpenses - lastMonthExpensesTotal) / lastMonthExpensesTotal) * 100 
+    const expenseTrend = lastMonthExpensesTotal > 0
+      ? ((monthlyExpenses - lastMonthExpensesTotal) / lastMonthExpensesTotal) * 100
       : 0;
 
     return {
@@ -163,7 +164,7 @@ export async function getCategoryBreakdown(
 
     for (const row of dailyExpensesResult) {
       const categoryId = row.categoryId || 'uncategorized';
-      const amount = parseFloat(row.amount);
+      const amount = safeParseFloat(row.amount);
       if (categoryMap.has(categoryId)) {
         categoryMap.get(categoryId)!.total += amount;
       } else {
@@ -193,14 +194,14 @@ export async function getCategoryBreakdown(
 
     for (const row of periodicExpensesResult) {
       if (row.recurrenceType === 'once') continue;
-      
+
       const categoryId = row.categoryId || 'uncategorized-periodic';
       const monthlyAmount = normalizeToMonthly(
-        parseFloat(row.amount),
+        safeParseFloat(row.amount),
         row.recurrenceType,
         row.recurrenceInterval
       );
-      
+
       if (categoryMap.has(categoryId)) {
         categoryMap.get(categoryId)!.total += monthlyAmount;
       } else {
@@ -278,7 +279,7 @@ interface UpcomingPayment {
 function getNextPaymentDate(startDate: Date, recurrenceType: string, recurrenceInterval: number | null): Date {
   const now = new Date();
   const start = new Date(startDate);
-  
+
   switch (recurrenceType) {
     case 'daily': {
       const next = new Date(now);
@@ -333,9 +334,9 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
   try {
     const now = new Date();
     const endDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-    
+
     const payments: UpcomingPayment[] = [];
-    
+
     const activeExpenses = await db
       .select({
         expense: expenses,
@@ -347,18 +348,18 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
 
     for (const item of activeExpenses) {
       if (item.expense.recurrenceType === 'once') continue;
-      
+
       const nextDate = getNextPaymentDate(
         item.expense.startDate,
         item.expense.recurrenceType,
         item.expense.recurrenceInterval
       );
-      
+
       if (nextDate >= now && nextDate <= endDate) {
         payments.push({
           id: item.expense.id,
           name: item.expense.name,
-          amount: parseFloat(item.expense.amount),
+          amount: safeParseFloat(item.expense.amount),
           date: nextDate,
           type: 'expense',
           category: item.category ? {
@@ -370,7 +371,7 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
         });
       }
     }
-    
+
     const upcomingDailyExpenses = await db
       .select({
         dailyExpense: dailyExpenses,
@@ -387,7 +388,7 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
       payments.push({
         id: item.dailyExpense.id,
         name: item.dailyExpense.description,
-        amount: parseFloat(item.dailyExpense.amount),
+        amount: safeParseFloat(item.dailyExpense.amount),
         date: new Date(item.dailyExpense.date),
         type: 'daily_expense',
         category: item.category ? {
@@ -398,9 +399,9 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
         isSubscription: false,
       });
     }
-    
+
     payments.sort((a, b) => a.date.getTime() - b.date.getTime());
-    
+
     return { success: true, data: payments };
   } catch (error) {
     console.error('Failed to fetch upcoming payments:', error);

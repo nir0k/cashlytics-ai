@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { accounts, incomes, expenses, dailyExpenses, categories } from '@/lib/db/schema';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import type { ApiResponse, AccountDetail, IncomeWithAccount, ExpenseWithDetails, DailyExpenseWithDetails } from '@/types/database';
+import { safeParseFloat } from '@/lib/safe-parse';
 
 function getMonthDateRange(month: number, year: number): { startDate: Date; endDate: Date } {
   const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
@@ -96,15 +97,15 @@ export async function getAccountTransactions(
     }));
 
     const totalIncome = incomesWithAccount.reduce(
-      (sum, income) => sum + parseFloat(income.amount),
+      (sum, income) => sum + safeParseFloat(income.amount),
       0
     );
     const totalExpenses = expensesWithDetails.reduce(
-      (sum, expense) => sum + parseFloat(expense.amount),
+      (sum, expense) => sum + safeParseFloat(expense.amount),
       0
     );
     const totalDailyExpenses = dailyExpensesWithDetails.reduce(
-      (sum, expense) => sum + parseFloat(expense.amount),
+      (sum, expense) => sum + safeParseFloat(expense.amount),
       0
     );
     const balance = totalIncome - totalExpenses - totalDailyExpenses;

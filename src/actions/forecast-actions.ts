@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { accounts, incomes, expenses, transfers } from '@/lib/db/schema';
 import { eq, or } from 'drizzle-orm';
 import type { ApiResponse, Account, Expense, Income, Transfer } from '@/types/database';
+import { safeParseFloat } from '@/lib/safe-parse';
 
 export type AccountForecast = {
   account: Account;
@@ -38,30 +39,30 @@ function isSameMonthAndYear(date1: Date, date2: Date): boolean {
 function calculateIncomeForMonth(income: Income, targetMonth: number, targetYear: number): number {
   const startDate = new Date(income.startDate);
   const targetDate = new Date(targetYear, targetMonth - 1, 15);
-  
+
   if (startDate > targetDate) return 0;
-  
+
   if (income.endDate) {
     const endDate = new Date(income.endDate);
     if (endDate < new Date(targetYear, targetMonth - 1, 1)) return 0;
   }
-  
-  const amount = parseFloat(income.amount);
-  
+
+  const amount = safeParseFloat(income.amount);
+
   switch (income.recurrenceType) {
     case 'once':
       return isSameMonthAndYear(startDate, targetDate) ? amount : 0;
-    
+
     case 'monthly':
       return amount;
-    
+
     case 'yearly':
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();
         if (yearsDiff >= 0) return amount;
       }
       return 0;
-    
+
     default:
       return 0;
   }
@@ -70,40 +71,40 @@ function calculateIncomeForMonth(income: Income, targetMonth: number, targetYear
 function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetYear: number): number {
   const startDate = new Date(expense.startDate);
   const targetDate = new Date(targetYear, targetMonth - 1, 15);
-  
+
   if (startDate > targetDate) return 0;
-  
+
   if (expense.endDate) {
     const endDate = new Date(expense.endDate);
     if (endDate < new Date(targetYear, targetMonth - 1, 1)) return 0;
   }
-  
-  const amount = parseFloat(expense.amount);
-  
+
+  const amount = safeParseFloat(expense.amount);
+
   switch (expense.recurrenceType) {
     case 'once':
       return isSameMonthAndYear(startDate, targetDate) ? amount : 0;
-    
+
     case 'daily': {
       const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
       return amount * daysInMonth;
     }
-    
+
     case 'weekly': {
       const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
       const weeksInMonth = daysInMonth / 7;
       return amount * weeksInMonth;
     }
-    
+
     case 'monthly':
       return amount;
-    
+
     case 'quarterly': {
       const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
       if (monthsSinceStart >= 0 && monthsSinceStart % 3 === 0) return amount;
       return 0;
     }
-    
+
     case 'yearly': {
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();
@@ -111,7 +112,7 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
       }
       return 0;
     }
-    
+
     case 'custom': {
       const interval = expense.recurrenceInterval ?? 1;
       if (interval <= 0) return 0;
@@ -119,7 +120,7 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
       if (monthsSinceStart >= 0 && monthsSinceStart % interval === 0) return amount;
       return 0;
     }
-    
+
     default:
       return 0;
   }
@@ -128,29 +129,29 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
 function calculateTransferForMonth(transfer: Transfer, targetMonth: number, targetYear: number): number {
   const startDate = new Date(transfer.startDate);
   const targetDate = new Date(targetYear, targetMonth - 1, 15);
-  
+
   if (startDate > targetDate) return 0;
-  
+
   if (transfer.endDate) {
     const endDate = new Date(transfer.endDate);
     if (endDate < new Date(targetYear, targetMonth - 1, 1)) return 0;
   }
-  
-  const amount = parseFloat(transfer.amount);
-  
+
+  const amount = safeParseFloat(transfer.amount);
+
   switch (transfer.recurrenceType) {
     case 'once':
       return isSameMonthAndYear(startDate, targetDate) ? amount : 0;
-    
+
     case 'monthly':
       return amount;
-    
+
     case 'quarterly': {
       const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
       if (monthsSinceStart >= 0 && monthsSinceStart % 3 === 0) return amount;
       return 0;
     }
-    
+
     case 'yearly': {
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();
@@ -158,7 +159,7 @@ function calculateTransferForMonth(transfer: Transfer, targetMonth: number, targ
       }
       return 0;
     }
-    
+
     default:
       return 0;
   }
@@ -188,10 +189,10 @@ export async function getAccountForecast(
       )),
     ]);
 
-    const currentBalance = parseFloat(account.balance);
+    const currentBalance = safeParseFloat(account.balance);
     const today = new Date();
     const projectedMonths: AccountForecast['projectedMonths'] = [];
-    
+
     const isCumulativeAccount = account.type === 'savings' || account.type === 'etf';
     let cumulativeBalance = isCumulativeAccount ? currentBalance : 0;
 
@@ -224,7 +225,7 @@ export async function getAccountForecast(
       }
 
       const monthBalance = monthIncome - monthExpenses + transfersIn - transfersOut;
-      
+
       if (isCumulativeAccount) {
         cumulativeBalance += monthBalance;
       } else {

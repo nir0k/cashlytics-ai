@@ -7,6 +7,7 @@ import { globalSearch, type SearchResult } from '@/actions/search-actions';
 import { useSettings } from '@/lib/settings-context';
 import { Search, Loader2, Building2, ArrowRightLeft, ArrowUpRight, ArrowDownRight, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { safeParseFloat } from '@/lib/safe-parse';
 
 interface SearchDialogProps {
   open: boolean;
@@ -31,7 +32,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
   const formatCurrency = (amount: string | undefined) => {
     if (!amount) return '';
-    return fmt(parseFloat(amount));
+    return fmt(safeParseFloat(amount));
   };
 
   const performSearch = useCallback(async (searchQuery: string) => {
@@ -123,8 +124,8 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                 key={`${result.type}-${result.id}`}
                 className={cn(
                   'flex items-center gap-3 px-4 h-10 cursor-pointer transition-colors',
-                  isSelected 
-                    ? 'bg-accent/50 dark:bg-white/[0.05]' 
+                  isSelected
+                    ? 'bg-accent/50 dark:bg-white/[0.05]'
                     : 'hover:bg-accent/30 dark:hover:bg-white/[0.03]'
                 )}
                 onClick={() => handleSelect(result)}

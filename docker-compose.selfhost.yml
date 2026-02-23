@@ -7,6 +7,17 @@
 # 4. Open http://localhost:3000
 
 services:
+  migrate:
+    image: ghcr.io/aaronjoeldev/cashlytics-ai:latest
+    container_name: cashlytics-migrate
+    command: npm run db:migrate
+    environment:
+      - DATABASE_URL=postgresql://cashlytics:${POSTGRES_PASSWORD}@postgres:5432/cashlytics
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   cashlytics:
     image: ghcr.io/aaronjoeldev/cashlytics-ai:latest
     container_name: cashlytics-app
@@ -24,6 +35,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]

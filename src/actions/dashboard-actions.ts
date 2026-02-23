@@ -13,6 +13,7 @@ function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceIn
     case 'weekly': return amount * 4.33;
     case 'monthly': return amount;
     case 'quarterly': return amount / 3;
+    case 'semiannual': return amount / 6;
     case 'yearly': return amount / 12;
     case 'custom': return recurrenceInterval ? amount / recurrenceInterval : amount;
     default: return 0;

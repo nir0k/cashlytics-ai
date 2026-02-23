@@ -408,6 +408,7 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "quarterly": "Quarterly",
+    "semiannual": "Semiannual",
     "yearly": "Yearly",
     "custom": "Custom",
     "everyMonths": "Every {count} months"

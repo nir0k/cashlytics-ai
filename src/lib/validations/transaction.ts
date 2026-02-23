@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const recurrenceTypes = ['once', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'custom'] as const;
+export const recurrenceTypes = ['once', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'custom'] as const;
 export const incomeRecurrenceTypes = ['once', 'monthly', 'yearly'] as const;
 export const transferRecurrenceTypes = ['once', 'monthly', 'quarterly', 'yearly'] as const;
 export const accountTypes = ['checking', 'savings', 'etf'] as const;

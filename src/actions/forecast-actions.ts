@@ -106,6 +106,12 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
       return 0;
     }
 
+    case 'semiannual': {
+      const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
+      if (monthsSinceStart >= 0 && monthsSinceStart % 6 === 0) return amount;
+      return 0;
+    }
+
     case 'yearly': {
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();

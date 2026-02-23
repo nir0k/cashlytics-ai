@@ -3,7 +3,7 @@ import { relations } from 'drizzle-orm';
 
 export const accountTypeEnum = pgEnum('account_type', ['checking', 'savings', 'etf']);
 export const recurrenceTypeEnum = pgEnum('recurrence_type', [
-  'once', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'custom'
+  'once', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'custom'
 ]);
 export const incomeRecurrenceTypeEnum = pgEnum('income_recurrence_type', ['once', 'monthly', 'yearly']);
 export const transferRecurrenceTypeEnum = pgEnum('transfer_recurrence_type', ['once', 'monthly', 'quarterly', 'yearly']);

@@ -60,6 +60,14 @@ function getNextPaymentDate(expense: { recurrenceType: string; startDate: Date |
       }
       return next;
     }
+    case 'semiannual': {
+      const monthsToAdd = 6 - ((now.getMonth() - start.getMonth() + 6) % 6);
+      const next = new Date(now.getFullYear(), now.getMonth() + monthsToAdd, start.getDate());
+      if (next <= now) {
+        next.setMonth(next.getMonth() + 6);
+      }
+      return next;
+    }
     case 'yearly': {
       const next = new Date(now.getFullYear(), start.getMonth(), start.getDate());
       if (next <= now) {
@@ -104,6 +112,7 @@ function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceIn
     case 'weekly': return amount * 4.33;
     case 'monthly': return amount;
     case 'quarterly': return amount / 3;
+    case 'semiannual': return amount / 6;
     case 'yearly': return amount / 12;
     case 'custom': return recurrenceInterval ? amount / recurrenceInterval : amount;
     default: return 0;
@@ -147,6 +156,8 @@ export function ExpensesClient({
         return tRecurrence('monthly');
       case 'quarterly':
         return `${day}. ${month} (${tRecurrence('quarterly')})`;
+      case 'semiannual':
+        return `${day}. ${month} (${tRecurrence('semiannual')})`;
       case 'yearly':
         return `${day}. ${month} (${tRecurrence('yearly')})`;
       case 'weekly': {

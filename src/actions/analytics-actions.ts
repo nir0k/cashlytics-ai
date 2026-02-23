@@ -17,6 +17,8 @@ function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceIn
       return amount;
     case 'quarterly':
       return amount / 3;
+    case 'semiannual':
+      return amount / 6;
     case 'yearly':
       return amount / 12;
     case 'custom':
@@ -647,6 +649,17 @@ function getPaymentDatesInMonth(
     case 'quarterly': {
       const monthDiff = (monthStart.getMonth() - start.getMonth() + 12) % 3;
       if (monthDiff === 0) {
+        const paymentDay = Math.min(start.getDate(), 28);
+        const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
+        if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {
+          dates.push(paymentDate);
+        }
+      }
+      break;
+    }
+    case 'semiannual': {
+      const monthsDiff = (monthStart.getFullYear() - start.getFullYear()) * 12 + (monthStart.getMonth() - start.getMonth());
+      if (monthsDiff >= 0 && monthsDiff % 6 === 0) {
         const paymentDay = Math.min(start.getDate(), 28);
         const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
         if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {

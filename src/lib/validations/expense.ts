@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const recurrenceTypes = ['once', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'custom'] as const;
+export const recurrenceTypes = ['once', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'custom'] as const;
 
 export const expenseSchema = z.object({
   accountId: z.string().uuid('Konto auswählen'),

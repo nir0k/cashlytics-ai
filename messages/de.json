@@ -408,6 +408,7 @@
     "weekly": "Wöchentlich",
     "monthly": "Monatlich",
     "quarterly": "Vierteljährlich",
+    "semiannual": "Halbjährlich",
     "yearly": "Jährlich",
     "custom": "Benutzerdefiniert",
     "everyMonths": "Alle {count} Monate"

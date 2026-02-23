@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.1...v0.4.2) (2026-02-23)
+
+### 🐛 Bug Fixes
+
+* API input validation, prompt injection protection, rate limiting ([0c80d91](https://github.com/aaronjoeldev/cashlytics-ai/commit/0c80d912bfdd039a11faba120b7795380679e332))
+* remove content check from chat validation — UIMessage uses parts not content ([e2d11f2](https://github.com/aaronjoeldev/cashlytics-ai/commit/e2d11f2cfdc45d002080e35e4bb6c8e8d8f17306))
+* replace console.error with structured logger across all actions and API routes ([2463e5f](https://github.com/aaronjoeldev/cashlytics-ai/commit/2463e5f55b6518721f4446c08aaee0a31afe2254))
+* safeParseFloat utility, parallelize getForecast, UTC date normalization ([d2abfb3](https://github.com/aaronjoeldev/cashlytics-ai/commit/d2abfb35127fdc8617f8cd11cacbeb09c57685f1))
+
 ## [0.4.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.0...v0.4.1) (2026-02-21)
 
 ### 🐛 Bug Fixes

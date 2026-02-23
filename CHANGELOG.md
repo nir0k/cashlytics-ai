@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.2...v0.5.0) (2026-02-23)
+
+### ✨ Features
+
+* add minAmount/maxAmount filter to getDailyExpenses action ([ff552f7](https://github.com/aaronjoeldev/cashlytics-ai/commit/ff552f741ddc5e270e1b0a6f77f1e58cedf8e9d8))
+* add semiannual (halbjährlich) recurrence type for expenses ([a67bf02](https://github.com/aaronjoeldev/cashlytics-ai/commit/a67bf025bb9414d5a43f6a6dfb286242fd258f0b))
+* add updateDailyExpense, getTransfers, createTransfer tools and amount filter to getDailyExpenses ([c9b474e](https://github.com/aaronjoeldev/cashlytics-ai/commit/c9b474e0c4389d6ac107aa3a4e856a559675b0f7))
+
+### 🐛 Bug Fixes
+
+* pass amount filter to action instead of client-side filtering in getDailyExpenses tool ([cdaa89c](https://github.com/aaronjoeldev/cashlytics-ai/commit/cdaa89c69a0b63008d1331794abe8d8f0b3bf127))
+
 ## [0.4.2](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.1...v0.4.2) (2026-02-23)
 
 ### 🐛 Bug Fixes

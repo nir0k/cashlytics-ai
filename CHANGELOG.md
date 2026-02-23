@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.6.0...v0.7.0) (2026-02-23)
+
+### ✨ Features
+
+* filter expenses by account ([255ad70](https://github.com/aaronjoeldev/cashlytics-ai/commit/255ad7037e8fc000768dc273ad414a1e2b494139))
+
 ## [0.6.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.5.0...v0.6.0) (2026-02-23)
 
 ### ✨ Features

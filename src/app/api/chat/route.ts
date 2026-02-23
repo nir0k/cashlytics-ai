@@ -214,9 +214,9 @@ export async function POST(req: Request) {
 
     for (let i = 0; i < messages.length; i++) {
       const msg = messages[i];
-      if (!msg || typeof msg !== 'object' || !('role' in msg) || !('content' in msg)) {
+      if (!msg || typeof msg !== 'object' || !('role' in msg)) {
         return new Response(
-          JSON.stringify({ error: `Nachricht ${i} fehlt "role" oder "content".` }),
+          JSON.stringify({ error: `Nachricht ${i} fehlt "role".` }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }

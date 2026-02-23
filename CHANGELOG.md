@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.5.0...v0.6.0) (2026-02-23)
+
+### ✨ Features
+
+* add automatic migration service to self-host docker compose ([199e692](https://github.com/aaronjoeldev/cashlytics-ai/commit/199e692eefdb7cc5c7ff1b1ab64e018e9dce0f1a))
+
 ## [0.5.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.2...v0.5.0) (2026-02-23)
 
 ### ✨ Features

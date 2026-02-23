@@ -5,6 +5,8 @@ import { getExpenses, createExpense, updateExpense, deleteExpense, getDailyExpen
 import { getIncomes, createIncome, updateIncome, deleteIncome } from '@/actions/income-actions';
 import { getCategories, createCategory } from '@/actions/category-actions';
 import { getMonthlyOverview, getForecast, getCategoryBreakdown, getNormalizedMonthlyExpenses } from '@/actions/analytics-actions';
+import { updateDailyExpense } from '@/actions/daily-expenses-actions';
+import { getTransfers, createTransfer } from '@/actions/transfer-actions';
 
 export const tools = {
   createAccount: tool({
@@ -185,8 +187,10 @@ export const tools = {
       description: z.string().optional().describe('Suche nach Beschreibung (Teilstring, case-insensitiv), z.B. "REWE" oder "Tanken"'),
       startDate: z.string().optional().describe('Filter ab Datum (ISO-Format)'),
       endDate: z.string().optional().describe('Filter bis Datum (ISO-Format)'),
+      minAmount: z.number().positive().optional().describe('Mindestbetrag als Zahl, z.B. 50 für "Ausgaben über 50€"'),
+      maxAmount: z.number().positive().optional().describe('Höchstbetrag als Zahl, z.B. 100 für "Ausgaben unter 100€"'),
     }),
-    execute: async ({ accountId, categoryId, description, startDate, endDate }) => {
+    execute: async ({ accountId, categoryId, description, startDate, endDate, minAmount, maxAmount }) => {
       const filters: { accountId?: string; categoryId?: string; description?: string; startDate?: Date; endDate?: Date } = {};
       if (accountId) filters.accountId = accountId;
       if (categoryId) filters.categoryId = categoryId;
@@ -198,18 +202,18 @@ export const tools = {
       // Explicit allowlist: only return fields the AI needs.
       // Documents are intentionally excluded — uploaded files (invoices, bank statements)
       // may contain sensitive personal data and must never reach the AI context.
-      return {
-        success: true,
-        data: result.data.map((e) => ({
-          id: e.id,
-          description: e.description,
-          amount: e.amount,
-          date: e.date,
-          info: e.info,
-          category: e.category ? { id: e.category.id, name: e.category.name, icon: e.category.icon } : null,
-          account: e.account ? { id: e.account.id, name: e.account.name, type: e.account.type } : null,
-        })),
-      };
+      let data = result.data.map((e) => ({
+        id: e.id,
+        description: e.description,
+        amount: e.amount,
+        date: e.date,
+        info: e.info,
+        category: e.category ? { id: e.category.id, name: e.category.name, icon: e.category.icon } : null,
+        account: e.account ? { id: e.account.id, name: e.account.name, type: e.account.type } : null,
+      }));
+      if (minAmount) data = data.filter((e) => parseFloat(String(e.amount)) >= minAmount);
+      if (maxAmount) data = data.filter((e) => parseFloat(String(e.amount)) <= maxAmount);
+      return { success: true, data };
     },
   }),
 
@@ -221,6 +225,26 @@ export const tools = {
     needsApproval: true,
     execute: async ({ id }) => {
       return deleteDailyExpense(id);
+    },
+  }),
+
+  updateDailyExpense: tool({
+    description: 'Aktualisiert eine bestehende einmalige Ausgabe. Nutze dies um Beschreibung, Betrag, Datum oder Kategorie einer täglichen Ausgabe zu korrigieren. Die ID der Ausgabe ist aus getDailyExpenses bekannt.',
+    inputSchema: z.object({
+      id: z.uuid().describe('ID der zu aktualisierenden Ausgabe'),
+      description: z.string().optional().describe('Neue Beschreibung'),
+      amount: z.number().positive().optional().describe('Neuer Betrag'),
+      categoryId: z.uuid().optional().nullable().describe('Neue Kategorie-ID aus dem Kontext'),
+      date: z.string().optional().describe('Neues Datum im ISO-Format'),
+    }),
+    needsApproval: true,
+    execute: async ({ id, description, amount, categoryId, date }) => {
+      const data: Record<string, unknown> = {};
+      if (description !== undefined) data.description = description;
+      if (amount !== undefined) data.amount = amount.toString();
+      if (categoryId !== undefined) data.categoryId = categoryId;
+      if (date !== undefined) data.date = new Date(date);
+      return updateDailyExpense(id, data);
     },
   }),
 
@@ -373,6 +397,63 @@ export const tools = {
     inputSchema: z.object({}),
     execute: async () => {
       return getNormalizedMonthlyExpenses();
+    },
+  }),
+
+  getTransfers: tool({
+    description: 'Gibt Überweisungen zwischen Konten zurück. Kann nach Quell- oder Zielkonto und Zeitraum gefiltert werden.',
+    inputSchema: z.object({
+      sourceAccountId: z.uuid().optional().describe('Filter nach Quellkonto-ID'),
+      targetAccountId: z.uuid().optional().describe('Filter nach Zielkonto-ID'),
+      startDate: z.string().optional().describe('Filter ab Datum (ISO-Format)'),
+      endDate: z.string().optional().describe('Filter bis Datum (ISO-Format)'),
+    }),
+    execute: async ({ sourceAccountId, targetAccountId, startDate, endDate }) => {
+      const filters: { sourceAccountId?: string; targetAccountId?: string; startDate?: Date; endDate?: Date } = {};
+      if (sourceAccountId) filters.sourceAccountId = sourceAccountId;
+      if (targetAccountId) filters.targetAccountId = targetAccountId;
+      if (startDate) filters.startDate = new Date(startDate);
+      if (endDate) filters.endDate = new Date(endDate);
+      const result = await getTransfers(filters);
+      if (!result.success) return result;
+      return {
+        success: true,
+        data: result.data.map((t) => ({
+          id: t.id,
+          amount: t.amount,
+          description: t.description,
+          recurrenceType: t.recurrenceType,
+          startDate: t.startDate,
+          endDate: t.endDate ?? null,
+          sourceAccount: t.sourceAccount ? { id: t.sourceAccount.id, name: t.sourceAccount.name } : null,
+          targetAccount: t.targetAccount ? { id: t.targetAccount.id, name: t.targetAccount.name } : null,
+        })),
+      };
+    },
+  }),
+
+  createTransfer: tool({
+    description: 'Erstellt eine Überweisung zwischen zwei Konten. sourceAccountId und targetAccountId müssen unterschiedlich sein. Die Konto-IDs sind im Kontext bekannt.',
+    inputSchema: z.object({
+      sourceAccountId: z.uuid().describe('ID des Quellkontos (von dem Geld abgeht)'),
+      targetAccountId: z.uuid().describe('ID des Zielkontos (auf das Geld kommt)'),
+      amount: z.number().positive().describe('Betrag als Zahl'),
+      description: z.string().optional().describe('Optionale Beschreibung der Überweisung'),
+      recurrenceType: z.enum(['once', 'monthly', 'quarterly', 'yearly']).describe('Wiederholungstyp: once=einmalig, monthly=monatlich, quarterly=quartalsweise, yearly=jährlich'),
+      startDate: z.string().describe('Startdatum im ISO-Format'),
+      endDate: z.string().optional().nullable().describe('Enddatum im ISO-Format, optional'),
+    }),
+    needsApproval: true,
+    execute: async ({ sourceAccountId, targetAccountId, amount, description, recurrenceType, startDate, endDate }) => {
+      return createTransfer({
+        sourceAccountId,
+        targetAccountId,
+        amount: amount.toString(),
+        description: description ?? null,
+        recurrenceType,
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : null,
+      });
     },
   }),
 };

@@ -1,4 +1,5 @@
 import { getMonthlyOverview, getCategoryBreakdown } from '@/actions/analytics-actions';
+import { getAccounts } from '@/actions/account-actions';
 import { AnalyticsClient } from './client';
 import type { MonthlyTrendItem, CategoryItem } from './client';
 
@@ -17,9 +18,14 @@ export default async function AnalyticsPage() {
     });
   }
 
-  const overviewResults = await Promise.all(
-    trendMonths.map(({ month, year }) => getMonthlyOverview(month, year))
-  );
+  const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+  const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+
+  const [overviewResults, breakdownResult, accountsResult] = await Promise.all([
+    Promise.all(trendMonths.map(({ month, year }) => getMonthlyOverview(month, year))),
+    getCategoryBreakdown(startOfMonth, endOfMonth),
+    getAccounts(),
+  ]);
 
   const monthlyTrend: MonthlyTrendItem[] = trendMonths.map(({ label }, i) => {
     const result = overviewResults[i];
@@ -38,10 +44,6 @@ export default async function AnalyticsPage() {
   const currentMonthIncome = currentOverview.success && currentOverview.data ? currentOverview.data.totalIncome : 0;
   const currentMonthExpenses = currentOverview.success && currentOverview.data ? currentOverview.data.totalExpenses : 0;
 
-  const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
-  const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
-  const breakdownResult = await getCategoryBreakdown(startOfMonth, endOfMonth);
-
   const categoryBreakdown: CategoryItem[] = breakdownResult.success && breakdownResult.data
     ? breakdownResult.data.map((item) => ({
         name: item.category.name,
@@ -52,12 +54,17 @@ export default async function AnalyticsPage() {
       }))
     : [];
 
+  const accounts = accountsResult.success ? accountsResult.data : [];
+
   return (
     <AnalyticsClient
       monthlyTrend={monthlyTrend}
       categoryBreakdown={categoryBreakdown}
       currentMonthIncome={currentMonthIncome}
       currentMonthExpenses={currentMonthExpenses}
+      accounts={accounts}
+      currentMonth={currentMonth}
+      currentYear={currentYear}
     />
   );
 }

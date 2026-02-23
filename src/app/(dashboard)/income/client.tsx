@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, CalendarDays, Pencil } from 'lucide-react';
 import { IncomeForm } from '@/components/organisms/income-form';
 import { deleteIncome } from '@/actions/income-actions';
@@ -33,6 +34,9 @@ export function IncomeClient({
   const [incomes, setIncomes] = useState(initialIncomes);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
+
+  const filteredIncomes = selectedAccountId === 'all' ? incomes : incomes.filter(i => i.accountId === selectedAccountId);
 
   const getDebitLabel = (recurrenceType: string, startDate: Date | string): string => {
     const date = new Date(startDate);
@@ -88,7 +92,22 @@ export function IncomeClient({
           <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">{t('title')}</h2>
           <p className="text-sm text-muted-foreground/60 mt-1.5">{t('description')}</p>
         </div>
-        <IncomeForm accounts={accounts} onSuccess={handleSuccess} />
+        <div className="flex items-center gap-2">
+          {accounts.length > 1 && (
+            <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tCommon('allAccounts')}</SelectItem>
+                {accounts.map(account => (
+                  <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <IncomeForm accounts={accounts} onSuccess={handleSuccess} />
+        </div>
       </div>
 
       <IncomeForm
@@ -104,16 +123,16 @@ export function IncomeClient({
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('allIncome', { count: incomes.length })}</CardTitle>
+          <CardTitle>{t('allIncome', { count: filteredIncomes.length })}</CardTitle>
         </CardHeader>
         <CardContent>
-          {incomes.length === 0 ? (
+          {filteredIncomes.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
               {t('noIncome')}
             </p>
           ) : (
             <div className="space-y-2">
-              {incomes.map(income => (
+              {filteredIncomes.map(income => (
                 <div
                   key={income.id}
                   className="flex items-center justify-between p-4 rounded-xl hover:bg-accent/30 dark:hover:bg-white/5 transition-colors duration-200"

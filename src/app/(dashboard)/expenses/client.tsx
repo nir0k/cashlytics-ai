@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Wallet, PiggyBank, Repeat, CalendarDays, Pencil } from 'lucide-react';
 import { ExpenseForm } from '@/components/organisms/expense-form';
 import { deleteExpense, deleteDailyExpense } from '@/actions/expense-actions';
@@ -137,10 +138,14 @@ export function ExpensesClient({
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [editingDailyExpense, setEditingDailyExpense] = useState<DailyExpense | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
 
-  const monthlyFixed = expenses.filter(e => e.recurrenceType === 'monthly');
-  const periodicReserves = expenses.filter(e => e.recurrenceType !== 'monthly' && e.recurrenceType !== 'once');
-  const oneTimeExpenses = expenses.filter(e => e.recurrenceType === 'once');
+  const filteredExpenses = selectedAccountId === 'all' ? expenses : expenses.filter(e => e.accountId === selectedAccountId);
+  const filteredDailyExpenses = selectedAccountId === 'all' ? dailyExpenses : dailyExpenses.filter(e => e.accountId === selectedAccountId);
+
+  const monthlyFixed = filteredExpenses.filter(e => e.recurrenceType === 'monthly');
+  const periodicReserves = filteredExpenses.filter(e => e.recurrenceType !== 'monthly' && e.recurrenceType !== 'once');
+  const oneTimeExpenses = filteredExpenses.filter(e => e.recurrenceType === 'once');
 
   const totalMonthlyFixed = monthlyFixed.reduce((sum, e) => sum + parseFloat(e.amount), 0);
   const totalReserves = periodicReserves.reduce((sum, e) => sum + normalizeToMonthly(parseFloat(e.amount), e.recurrenceType, e.recurrenceInterval), 0);
@@ -340,7 +345,22 @@ export function ExpensesClient({
           <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">{t('title')}</h2>
           <p className="text-sm text-muted-foreground/60 mt-1.5">{t('description')}</p>
         </div>
-        <ExpenseForm accounts={accounts} categories={categories} onSuccess={handleSuccess} onCategoryCreated={handleCategoryCreated} />
+        <div className="flex items-center gap-2">
+          {accounts.length > 1 && (
+            <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tCommon('allAccounts')}</SelectItem>
+                {accounts.map(account => (
+                  <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <ExpenseForm accounts={accounts} categories={categories} onSuccess={handleSuccess} onCategoryCreated={handleCategoryCreated} />
+        </div>
       </div>
 
       <ExpenseForm
@@ -360,7 +380,7 @@ export function ExpensesClient({
         onCategoryCreated={handleCategoryCreated}
       />
 
-      {expenses.length > 0 && (
+      {filteredExpenses.length > 0 && (
         <div className="grid gap-4 md:grid-cols-3 stagger-children">
           <Card className="hover:bg-card/80 dark:hover:bg-white/[0.08] hover:-translate-y-0.5 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -420,7 +440,7 @@ export function ExpensesClient({
           )}
           <TabsTrigger value="daily">
             <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
-            {t('daily')} ({dailyExpenses.length})
+            {t('daily')} ({filteredDailyExpenses.length})
           </TabsTrigger>
         </TabsList>
 
@@ -544,13 +564,13 @@ export function ExpensesClient({
               </div>
             </CardHeader>
             <CardContent>
-              {dailyExpenses.length === 0 ? (
+              {filteredDailyExpenses.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
                   {t('noDailyExpenses')}
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {dailyExpenses.map(expense => (
+                  {filteredDailyExpenses.map(expense => (
                     <div
                       key={expense.id}
                       className="flex items-center justify-between p-4 rounded-xl hover:bg-accent/30 dark:hover:bg-white/5 transition-colors duration-200"

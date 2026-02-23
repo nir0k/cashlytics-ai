@@ -30,7 +30,8 @@ function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceIn
 
 export async function getMonthlyOverview(
   month: number,
-  year: number
+  year: number,
+  accountId?: string
 ): Promise<ApiResponse<MonthlyOverview>> {
   try {
     const startDate = new Date(Date.UTC(year, month - 1, 1));
@@ -48,7 +49,8 @@ export async function getMonthlyOverview(
       .where(
         and(
           lte(expenses.startDate, endDate),
-          sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()})`
+          sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()})`,
+          accountId ? eq(expenses.accountId, accountId) : undefined
         )
       );
 
@@ -66,7 +68,10 @@ export async function getMonthlyOverview(
       .from(incomes)
       .leftJoin(accounts, eq(incomes.accountId, accounts.id))
       .where(
-        lte(incomes.startDate, endDate)
+        and(
+          lte(incomes.startDate, endDate),
+          accountId ? eq(incomes.accountId, accountId) : undefined
+        )
       );
 
     const incomesWithAccount: IncomeWithAccount[] = incomesResult.map((r) => ({
@@ -82,7 +87,8 @@ export async function getMonthlyOverview(
       .where(
         and(
           gte(dailyExpenses.date, startDate),
-          lte(dailyExpenses.date, endDate)
+          lte(dailyExpenses.date, endDate),
+          accountId ? eq(dailyExpenses.accountId, accountId) : undefined
         )
       );
 
@@ -188,7 +194,8 @@ export async function getForecast(months: number): Promise<ApiResponse<Forecast>
 
 export async function getCategoryBreakdown(
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  accountId?: string
 ): Promise<ApiResponse<CategoryBreakdown[]>> {
   try {
     const categoryMap = new Map<string, { category: typeof categories.$inferSelect | null; amount: number }>();
@@ -203,7 +210,8 @@ export async function getCategoryBreakdown(
       .where(
         and(
           gte(dailyExpenses.date, startDate),
-          lte(dailyExpenses.date, endDate)
+          lte(dailyExpenses.date, endDate),
+          accountId ? eq(dailyExpenses.accountId, accountId) : undefined
         )
       );
 
@@ -229,7 +237,8 @@ export async function getCategoryBreakdown(
       .where(
         and(
           lte(expenses.startDate, endDate),
-          sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()})`
+          sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()})`,
+          accountId ? eq(expenses.accountId, accountId) : undefined
         )
       );
 

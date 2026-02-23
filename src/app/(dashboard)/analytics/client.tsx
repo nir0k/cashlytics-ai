@@ -1,23 +1,30 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslations } from 'next-intl';
 import { useSettings } from '@/lib/settings-context';
-import { ArrowUpRight, ArrowDownRight, PiggyBank, TrendingUp, BarChart3, PieChart, LineChart } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, PiggyBank, TrendingUp, BarChart3, PieChart, LineChart, Loader2 } from 'lucide-react';
+import { getMonthlyOverview, getCategoryBreakdown } from '@/actions/analytics-actions';
+import type { Account } from '@/types/database';
 import dynamic from 'next/dynamic';
+import {
+  Bar,
+  Line,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 
+// Chart containers need ssr:false (use browser layout APIs)
 const BarChartComp = dynamic(() => import('recharts').then((m) => m.BarChart), { ssr: false });
-const Bar = dynamic(() => import('recharts').then((m) => m.Bar), { ssr: false });
 const LineChartComp = dynamic(() => import('recharts').then((m) => m.LineChart), { ssr: false });
-const Line = dynamic(() => import('recharts').then((m) => m.Line), { ssr: false });
 const PieChartComp = dynamic(() => import('recharts').then((m) => m.PieChart), { ssr: false });
-const Pie = dynamic(() => import('recharts').then((m) => m.Pie), { ssr: false });
-const Cell = dynamic(() => import('recharts').then((m) => m.Cell), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then((m) => m.XAxis), { ssr: false });
-const YAxis = dynamic(() => import('recharts').then((m) => m.YAxis), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then((m) => m.CartesianGrid), { ssr: false });
-const Tooltip = dynamic(() => import('recharts').then((m) => m.Tooltip), { ssr: false });
-const Legend = dynamic(() => import('recharts').then((m) => m.Legend), { ssr: false });
 const ResponsiveContainer = dynamic(() => import('recharts').then((m) => m.ResponsiveContainer), { ssr: false });
 
 export interface MonthlyTrendItem {
@@ -40,6 +47,9 @@ export interface AnalyticsClientProps {
   categoryBreakdown: CategoryItem[];
   currentMonthIncome: number;
   currentMonthExpenses: number;
+  accounts: Account[];
+  currentMonth: number;
+  currentYear: number;
 }
 
 const AMBER_PALETTE = ['#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e', '#fcd34d', '#fde68a', '#78350f'];
@@ -55,9 +65,91 @@ function EmptyState({ icon: Icon, label }: { icon: React.ElementType; label: str
   );
 }
 
-export function AnalyticsClient({ monthlyTrend, categoryBreakdown, currentMonthIncome, currentMonthExpenses }: AnalyticsClientProps) {
+export function AnalyticsClient({
+  monthlyTrend: initialMonthlyTrend,
+  categoryBreakdown: initialCategoryBreakdown,
+  currentMonthIncome: initialCurrentMonthIncome,
+  currentMonthExpenses: initialCurrentMonthExpenses,
+  accounts,
+  currentMonth,
+  currentYear,
+}: AnalyticsClientProps) {
   const t = useTranslations('analytics');
+  const tCommon = useTranslations('common');
   const { formatCurrency: fmt, currency } = useSettings();
+
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
+  const [loading, setLoading] = useState(false);
+  const [monthlyTrend, setMonthlyTrend] = useState(initialMonthlyTrend);
+  const [categoryBreakdown, setCategoryBreakdown] = useState(initialCategoryBreakdown);
+  const [currentMonthIncome, setCurrentMonthIncome] = useState(initialCurrentMonthIncome);
+  const [currentMonthExpenses, setCurrentMonthExpenses] = useState(initialCurrentMonthExpenses);
+
+  const fetchForAccount = useCallback(async (accountId: string | undefined) => {
+    setLoading(true);
+    try {
+      const trendMonths: Array<{ month: number; year: number; label: string }> = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentYear, currentMonth - 1 - i, 1);
+        trendMonths.push({
+          month: d.getMonth() + 1,
+          year: d.getFullYear(),
+          label: d.toLocaleDateString('de-DE', { month: 'short' }),
+        });
+      }
+
+      const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+      const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+
+      const [overviewResults, breakdownResult] = await Promise.all([
+        Promise.all(trendMonths.map(({ month, year }) => getMonthlyOverview(month, year, accountId))),
+        getCategoryBreakdown(startOfMonth, endOfMonth, accountId),
+      ]);
+
+      const newTrend: MonthlyTrendItem[] = trendMonths.map(({ label }, i) => {
+        const result = overviewResults[i];
+        if (result.success && result.data) {
+          return {
+            month: label,
+            income: result.data.totalIncome,
+            expenses: result.data.totalExpenses,
+            savings: result.data.totalIncome - result.data.totalExpenses,
+          };
+        }
+        return { month: label, income: 0, expenses: 0, savings: 0 };
+      });
+
+      const currentOverview = overviewResults[5];
+      setCurrentMonthIncome(currentOverview.success && currentOverview.data ? currentOverview.data.totalIncome : 0);
+      setCurrentMonthExpenses(currentOverview.success && currentOverview.data ? currentOverview.data.totalExpenses : 0);
+
+      setMonthlyTrend(newTrend);
+      setCategoryBreakdown(
+        breakdownResult.success && breakdownResult.data
+          ? breakdownResult.data.map((item) => ({
+              name: item.category.name,
+              amount: item.amount,
+              percentage: item.percentage,
+              color: item.category.color,
+              icon: item.category.icon,
+            }))
+          : []
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [currentMonth, currentYear]);
+
+  useEffect(() => {
+    if (selectedAccountId === 'all') {
+      setMonthlyTrend(initialMonthlyTrend);
+      setCategoryBreakdown(initialCategoryBreakdown);
+      setCurrentMonthIncome(initialCurrentMonthIncome);
+      setCurrentMonthExpenses(initialCurrentMonthExpenses);
+    } else {
+      fetchForAccount(selectedAccountId);
+    }
+  }, [selectedAccountId, initialMonthlyTrend, initialCategoryBreakdown, initialCurrentMonthIncome, initialCurrentMonthExpenses, fetchForAccount]);
 
   const fmtShort = (amount: number) => {
     const locale = currency === 'USD' ? 'en-US' : currency === 'GBP' ? 'en-GB' : currency === 'DKK' ? 'da-DK' : 'de-DE';
@@ -82,9 +174,27 @@ export function AnalyticsClient({ monthlyTrend, categoryBreakdown, currentMonthI
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">{t('title')}</h2>
-        <p className="text-sm text-muted-foreground/60 mt-1.5">{t('description')}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">{t('title')}</h2>
+          <p className="text-sm text-muted-foreground/60 mt-1.5">{t('description')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          {accounts.length > 1 && (
+            <Select value={selectedAccountId} onValueChange={setSelectedAccountId} disabled={loading}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tCommon('allAccounts')}</SelectItem>
+                {accounts.map(account => (
+                  <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {/* KPI Row */}

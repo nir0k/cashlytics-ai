@@ -22,7 +22,8 @@
     "more": "more",
     "all": "All",
     "withoutCategory": "Without Category",
-    "subscription": "Subscription"
+    "subscription": "Subscription",
+    "allAccounts": "All Accounts"
   },
   "nav": {
     "dashboard": "Dashboard",

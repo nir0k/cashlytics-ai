@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   TrendingUp,
   TrendingDown,
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '@/lib/settings-context';
 import { getMonthlyPaymentsCalendar } from '@/actions/analytics-actions';
-import type { MonthlyOverview, Forecast, CategoryBreakdown, ExpenseWithDetails } from '@/types/database';
+import type { MonthlyOverview, Forecast, CategoryBreakdown, ExpenseWithDetails, Account } from '@/types/database';
 import type { CalendarDay, CalendarPayment } from '@/actions/analytics-actions';
 
 interface OverviewClientProps {
@@ -39,6 +40,7 @@ interface OverviewClientProps {
   normalizedExpenses: Array<{ expense: ExpenseWithDetails; monthlyAmount: number }>;
   subscriptions: Array<{ expense: ExpenseWithDetails; monthlyAmount: number }>;
   initialCalendarDays: CalendarDay[];
+  accounts: Account[];
 }
 
 function getNextPaymentDate(expense: { recurrenceType: string; startDate: Date | string; recurrenceInterval: number | null; endDate?: Date | string | null }): Date | null {
@@ -109,6 +111,7 @@ export function OverviewClient({
   normalizedExpenses,
   subscriptions,
   initialCalendarDays,
+  accounts,
 }: OverviewClientProps) {
   const t = useTranslations('overview');
   const tCommon = useTranslations('common');
@@ -121,6 +124,7 @@ export function OverviewClient({
   const [calendarYear, setCalendarYear] = useState(year);
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>(initialCalendarDays);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
 
   const getMonthName = useCallback((m: number): string => {
     return new Date(2024, m - 1).toLocaleDateString(locale, { month: 'long' });
@@ -203,16 +207,24 @@ export function OverviewClient({
   const totalIncome = overview?.totalIncome ?? 0;
   const totalExpenses = overview?.totalExpenses ?? 0;
   const balance = overview?.balance ?? 0;
-  const hasBreakdown = categoryBreakdown.length > 0;
-  const hasExpenses = normalizedExpenses.length > 0;
   const hasForecast = forecast && forecast.monthlyDetails.length > 0;
-  const hasSubscriptions = subscriptions.length > 0;
 
-  const totalNormalizedMonthly = normalizedExpenses.reduce((sum, e) => sum + e.monthlyAmount, 0);
-  const totalSubscriptionsMonthly = subscriptions.reduce((sum, s) => sum + s.monthlyAmount, 0);
+  const filteredNormalizedExpenses = selectedAccountId === 'all'
+    ? normalizedExpenses
+    : normalizedExpenses.filter(e => e.expense.accountId === selectedAccountId);
+  const filteredSubscriptions = selectedAccountId === 'all'
+    ? subscriptions
+    : subscriptions.filter(s => s.expense.accountId === selectedAccountId);
 
-  const monthlyFixed = normalizedExpenses.filter(e => e.expense.recurrenceType === 'monthly');
-  const periodicReserves = normalizedExpenses.filter(e => e.expense.recurrenceType !== 'monthly' && e.expense.recurrenceType !== 'once');
+  const hasBreakdown = categoryBreakdown.length > 0;
+  const hasExpenses = filteredNormalizedExpenses.length > 0;
+  const hasSubscriptions = filteredSubscriptions.length > 0;
+
+  const totalNormalizedMonthly = filteredNormalizedExpenses.reduce((sum, e) => sum + e.monthlyAmount, 0);
+  const totalSubscriptionsMonthly = filteredSubscriptions.reduce((sum, s) => sum + s.monthlyAmount, 0);
+
+  const monthlyFixed = filteredNormalizedExpenses.filter(e => e.expense.recurrenceType === 'monthly');
+  const periodicReserves = filteredNormalizedExpenses.filter(e => e.expense.recurrenceType !== 'monthly' && e.expense.recurrenceType !== 'once');
   const totalMonthlyFixed = monthlyFixed.reduce((sum, e) => sum + e.monthlyAmount, 0);
   const totalReserves = periodicReserves.reduce((sum, e) => sum + e.monthlyAmount, 0);
 
@@ -243,13 +255,28 @@ export function OverviewClient({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-          {t('title')}
-        </h2>
-        <p className="text-sm text-muted-foreground/60 mt-1.5">
-          {t('subtitle', { month: getMonthName(month), year })}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+            {t('title')}
+          </h2>
+          <p className="text-sm text-muted-foreground/60 mt-1.5">
+            {t('subtitle', { month: getMonthName(month), year })}
+          </p>
+        </div>
+        {accounts.length > 1 && (
+          <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{tCommon('allAccounts')}</SelectItem>
+              {accounts.map(account => (
+                <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <Card>
@@ -538,7 +565,7 @@ export function OverviewClient({
                 <div>
                   <CardTitle>{t('activeSubscriptions')}</CardTitle>
                   <CardDescription>
-                    {t('subscriptionsCount', { count: subscriptions.length, s: subscriptions.length !== 1 ? 's' : '' })} &middot; {t('monthlyLabel')} <span className="font-semibold text-foreground">{formatCurrency(totalSubscriptionsMonthly)}</span>
+                    {t('subscriptionsCount', { count: filteredSubscriptions.length, s: filteredSubscriptions.length !== 1 ? 's' : '' })} &middot; {t('monthlyLabel')} <span className="font-semibold text-foreground">{formatCurrency(totalSubscriptionsMonthly)}</span>
                   </CardDescription>
                 </div>
               </div>
@@ -546,7 +573,7 @@ export function OverviewClient({
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              {subscriptions
+              {filteredSubscriptions
                 .sort((a, b) => b.monthlyAmount - a.monthlyAmount)
                 .map((item) => (
                   <div key={item.expense.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-accent/30 dark:hover:bg-white/5 transition-colors duration-200">

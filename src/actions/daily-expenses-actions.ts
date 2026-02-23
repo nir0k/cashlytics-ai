@@ -12,6 +12,8 @@ export async function getDailyExpenses(filters?: {
   categoryId?: string;
   startDate?: Date;
   endDate?: Date;
+  minAmount?: number;
+  maxAmount?: number;
 }): Promise<ApiResponse<DailyExpenseWithDetails[]>> {
   try {
     const conditions = [];
@@ -27,6 +29,12 @@ export async function getDailyExpenses(filters?: {
     }
     if (filters?.endDate) {
       conditions.push(lte(dailyExpenses.date, filters.endDate));
+    }
+    if (filters?.minAmount !== undefined) {
+      conditions.push(gte(dailyExpenses.amount, filters.minAmount.toString()));
+    }
+    if (filters?.maxAmount !== undefined) {
+      conditions.push(lte(dailyExpenses.amount, filters.maxAmount.toString()));
     }
 
     const result = await db

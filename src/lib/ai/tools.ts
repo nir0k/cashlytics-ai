@@ -191,29 +191,31 @@ export const tools = {
       maxAmount: z.number().positive().optional().describe('Höchstbetrag als Zahl, z.B. 100 für "Ausgaben unter 100€"'),
     }),
     execute: async ({ accountId, categoryId, description, startDate, endDate, minAmount, maxAmount }) => {
-      const filters: { accountId?: string; categoryId?: string; description?: string; startDate?: Date; endDate?: Date } = {};
+      const filters: { accountId?: string; categoryId?: string; description?: string; startDate?: Date; endDate?: Date; minAmount?: number; maxAmount?: number } = {};
       if (accountId) filters.accountId = accountId;
       if (categoryId) filters.categoryId = categoryId;
       if (description) filters.description = description;
       if (startDate) filters.startDate = new Date(startDate);
       if (endDate) filters.endDate = new Date(endDate);
+      if (minAmount) filters.minAmount = minAmount;
+      if (maxAmount) filters.maxAmount = maxAmount;
       const result = await getDailyExpenses(filters);
       if (!result.success) return result;
       // Explicit allowlist: only return fields the AI needs.
       // Documents are intentionally excluded — uploaded files (invoices, bank statements)
       // may contain sensitive personal data and must never reach the AI context.
-      let data = result.data.map((e) => ({
-        id: e.id,
-        description: e.description,
-        amount: e.amount,
-        date: e.date,
-        info: e.info,
-        category: e.category ? { id: e.category.id, name: e.category.name, icon: e.category.icon } : null,
-        account: e.account ? { id: e.account.id, name: e.account.name, type: e.account.type } : null,
-      }));
-      if (minAmount) data = data.filter((e) => parseFloat(String(e.amount)) >= minAmount);
-      if (maxAmount) data = data.filter((e) => parseFloat(String(e.amount)) <= maxAmount);
-      return { success: true, data };
+      return {
+        success: true,
+        data: result.data.map((e) => ({
+          id: e.id,
+          description: e.description,
+          amount: e.amount,
+          date: e.date,
+          info: e.info,
+          category: e.category ? { id: e.category.id, name: e.category.name, icon: e.category.icon } : null,
+          account: e.account ? { id: e.account.id, name: e.account.name, type: e.account.type } : null,
+        })),
+      };
     },
   }),
 

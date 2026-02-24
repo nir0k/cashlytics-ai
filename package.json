@@ -60,6 +60,7 @@
     "@semantic-release/github": "^10.0.0",
     "@semantic-release/release-notes-generator": "^14.0.0",
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

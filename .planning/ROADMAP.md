@@ -67,27 +67,30 @@ Plans:
 **Goal**: All data access is filtered by authenticated user with FK validation
 **Depends on**: Phase 2
 **Requirements**: AUTHZ-02, AUTHZ-03, DATA-01, DATA-10
+**Plans**: 5 plans in 3 waves
+
 **Success Criteria** (what must be TRUE):
 
 1. Every server action calls auth() and returns unauthorized if no session
 2. All SELECT queries filter by userId from session
 3. All INSERT operations include userId from session
 4. User cannot create records referencing another user's accounts or categories
-   **Plans**: TBD
 
 Plans:
 
-- [ ] 03-01: Create auth helper utilities (requireAuth, unauthorizedResponse)
-- [ ] 03-02: Refactor account and category server actions with userId filtering
-- [ ] 03-03: Refactor expense and income server actions with userId filtering
-- [ ] 03-04: Refactor transfer and document server actions with userId filtering
-- [ ] 03-05: Refactor AI conversation server actions with userId filtering
+- [ ] 03-01-PLAN.md — Create requireAuth helper utility and deprecate user-id.ts — Wave 1
+- [ ] 03-02-PLAN.md — Refactor accounts-actions.ts, account-actions.ts, category-actions.ts with userId filtering — Wave 2 (depends on 03-01)
+- [ ] 03-03-PLAN.md — Refactor expense, income, and daily-expense actions with userId filtering and FK validation — Wave 2 (depends on 03-01)
+- [ ] 03-04-PLAN.md — Refactor transfer, conversation, document actions and /api/documents route handler — Wave 2 (depends on 03-01)
+- [ ] 03-05-PLAN.md — Refactor analytics, dashboard, account-detail, search, forecast actions — Wave 3 (depends on 03-02, 03-03, 03-04)
 
 ### Phase 4: Auth UI Components
 
 **Goal**: Users can register, login, and logout through a complete UI flow
 **Depends on**: Phase 3
 **Requirements**: AUTH-01, AUTH-02, AUTH-04, AUTH-06, AUTH-07, INFRA-04
+**Plans**: TBD
+
 **Success Criteria** (what must be TRUE):
 
 1. User can navigate to /register and create account with email/password
@@ -95,7 +98,6 @@ Plans:
 3. User stays logged in across browser refreshes (session persistence)
 4. User can logout and is redirected to login page
 5. SessionProvider makes session available to all client components
-   **Plans**: TBD
 
 Plans:
 
@@ -109,13 +111,14 @@ Plans:
 **Goal**: Registration behavior is controlled by environment configuration
 **Depends on**: Phase 4
 **Requirements**: MODE-01, MODE-02, MODE-03, MODE-04
+**Plans**: TBD
+
 **Success Criteria** (what must be TRUE):
 
 1. SINGLE_USER_MODE=true prevents new registrations after first user exists
 2. SINGLE_USER_MODE=false allows any visitor to register
 3. SINGLE_USER_EMAIL defines which email owns migrated data in single-user mode
 4. App functions correctly with both mode configurations
-   **Plans**: TBD
 
 Plans:
 

@@ -18,8 +18,8 @@
 ### Authorization
 
 - [x] **AUTHZ-01**: Unauthentifizierte User werden von geschützten Routen zu /login redirected
-- [ ] **AUTHZ-02**: Server Actions verifizieren Session vor jeder Mutation
-- [ ] **AUTHZ-03**: Server Actions verifizieren Session vor jedem Lesezugriff
+- [x] **AUTHZ-02**: Server Actions verifizieren Session vor jeder Mutation
+- [x] **AUTHZ-03**: Server Actions verifizieren Session vor jedem Lesezugriff
 
 ### Data Isolation
 
@@ -101,8 +101,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-06     | Phase 4 | Pending   |
 | AUTH-07     | Phase 4 | Pending   |
 | AUTHZ-01    | Phase 1 | Complete  |
-| AUTHZ-02    | Phase 3 | Pending   |
-| AUTHZ-03    | Phase 3 | Pending   |
+| AUTHZ-02    | Phase 3 | Complete  |
+| AUTHZ-03    | Phase 3 | Complete  |
 | DATA-01     | Phase 3 | Pending   |
 | DATA-02     | Phase 2 | Complete  |
 | DATA-03     | Phase 2 | Complete  |

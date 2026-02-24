@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database- und Middleware-Ebene.
-**Current focus:** Phase 2: Database Migration
+**Current focus:** Phase 3: Server Actions Refactor
 
 ## Current Position
 
-Phase: 2 of 5 (Database Migration)
-Plan: 4 of 4 in current phase
-Status: In Progress
-Last activity: 2026-02-24 — Completed 02-04 (Demo Data Seeder Sync)
+Phase: 3 of 5 (Server Actions Refactor)
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-02-24 — 03-01 complete (requireAuth helper created)
 
-Progress: [█████████░] 90%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [█████████░] 90%
 | --------------------------- | ----- | ----- | -------- |
 | 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
 | 2. Database Migration       | 3     | 4     | 16 min   |
-| 3. Server Actions Refactor  | 0     | 5     | -        |
+| 3. Server Actions Refactor  | 1     | 5     | 2 min    |
 | 4. Auth UI Components       | 0     | 4     | -        |
 | 5. Registration Mode Logic  | 0     | 3     | -        |
 
@@ -58,6 +58,9 @@ Recent decisions affecting current work:
 - [Phase 02-database-migration]: userId columns are nullable to allow existing data migration before backfill
 - [Phase 02-database-migration]: Cascade delete on userId FK ensures user data is removed when user is deleted
 - 02-04: Demo user uses deterministic UUID (u0000000-0000-0000-0000-000000000001) for consistent testing
+- 03-01: requireAuth() has no SINGLE_USER_EMAIL fallback — unauthenticated always returns { error: "Unauthorized" }
+- 03-01: AuthResult uses never-based discriminated union for correct TypeScript narrowing of userId to string
+- 03-01: No "use server" on require-auth.ts — utility function imported by actions, not a Server Action itself
 
 ### Pending Todos
 
@@ -70,5 +73,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-04-PLAN.md (Demo Data Seeder Sync)
+Stopped at: Completed 03-01-PLAN.md — requireAuth helper created, starting 03-02
 Resume file: None

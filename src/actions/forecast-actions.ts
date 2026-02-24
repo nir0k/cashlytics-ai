@@ -1,11 +1,12 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { accounts, incomes, expenses, transfers } from '@/lib/db/schema';
-import { eq, or } from 'drizzle-orm';
-import type { ApiResponse, Account, Expense, Income, Transfer } from '@/types/database';
-import { safeParseFloat } from '@/lib/safe-parse';
-import { logger } from '@/lib/logger';
+import { db } from "@/lib/db";
+import { accounts, incomes, expenses, transfers } from "@/lib/db/schema";
+import { eq, or, and } from "drizzle-orm";
+import type { ApiResponse, Account, Expense, Income, Transfer } from "@/types/database";
+import { safeParseFloat } from "@/lib/safe-parse";
+import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export type AccountForecast = {
   account: Account;
@@ -25,8 +26,18 @@ export type AccountForecast = {
 };
 
 const MONTH_NAMES = [
-  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
 ];
 
 function getMonthsInBetween(start: Date, end: Date): number {
@@ -51,13 +62,13 @@ function calculateIncomeForMonth(income: Income, targetMonth: number, targetYear
   const amount = safeParseFloat(income.amount);
 
   switch (income.recurrenceType) {
-    case 'once':
+    case "once":
       return isSameMonthAndYear(startDate, targetDate) ? amount : 0;
 
-    case 'monthly':
+    case "monthly":
       return amount;
 
-    case 'yearly':
+    case "yearly":
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();
         if (yearsDiff >= 0) return amount;
@@ -69,7 +80,11 @@ function calculateIncomeForMonth(income: Income, targetMonth: number, targetYear
   }
 }
 
-function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetYear: number): number {
+function calculateExpenseForMonth(
+  expense: Expense,
+  targetMonth: number,
+  targetYear: number
+): number {
   const startDate = new Date(expense.startDate);
   const targetDate = new Date(targetYear, targetMonth - 1, 15);
 
@@ -83,36 +98,36 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
   const amount = safeParseFloat(expense.amount);
 
   switch (expense.recurrenceType) {
-    case 'once':
+    case "once":
       return isSameMonthAndYear(startDate, targetDate) ? amount : 0;
 
-    case 'daily': {
+    case "daily": {
       const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
       return amount * daysInMonth;
     }
 
-    case 'weekly': {
+    case "weekly": {
       const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
       const weeksInMonth = daysInMonth / 7;
       return amount * weeksInMonth;
     }
 
-    case 'monthly':
+    case "monthly":
       return amount;
 
-    case 'quarterly': {
+    case "quarterly": {
       const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
       if (monthsSinceStart >= 0 && monthsSinceStart % 3 === 0) return amount;
       return 0;
     }
 
-    case 'semiannual': {
+    case "semiannual": {
       const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
       if (monthsSinceStart >= 0 && monthsSinceStart % 6 === 0) return amount;
       return 0;
     }
 
-    case 'yearly': {
+    case "yearly": {
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();
         if (yearsDiff >= 0) return amount;
@@ -120,7 +135,7 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
       return 0;
     }
 
-    case 'custom': {
+    case "custom": {
       const interval = expense.recurrenceInterval ?? 1;
       if (interval <= 0) return 0;
       const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
@@ -133,7 +148,11 @@ function calculateExpenseForMonth(expense: Expense, targetMonth: number, targetY
   }
 }
 
-function calculateTransferForMonth(transfer: Transfer, targetMonth: number, targetYear: number): number {
+function calculateTransferForMonth(
+  transfer: Transfer,
+  targetMonth: number,
+  targetYear: number
+): number {
   const startDate = new Date(transfer.startDate);
   const targetDate = new Date(targetYear, targetMonth - 1, 15);
 
@@ -147,19 +166,19 @@ function calculateTransferForMonth(transfer: Transfer, targetMonth: number, targ
   const amount = safeParseFloat(transfer.amount);
 
   switch (transfer.recurrenceType) {
-    case 'once':
+    case "once":
       return isSameMonthAndYear(startDate, targetDate) ? amount : 0;
 
-    case 'monthly':
+    case "monthly":
       return amount;
 
-    case 'quarterly': {
+    case "quarterly": {
       const monthsSinceStart = getMonthsInBetween(startDate, targetDate);
       if (monthsSinceStart >= 0 && monthsSinceStart % 3 === 0) return amount;
       return 0;
     }
 
-    case 'yearly': {
+    case "yearly": {
       if (startDate.getMonth() === targetMonth - 1) {
         const yearsDiff = targetYear - startDate.getFullYear();
         if (yearsDiff >= 0) return amount;
@@ -176,31 +195,46 @@ export async function getAccountForecast(
   accountId: string,
   months: number
 ): Promise<ApiResponse<AccountForecast>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const [account] = await db
       .select()
       .from(accounts)
-      .where(eq(accounts.id, accountId))
+      .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
       .limit(1);
 
     if (!account) {
-      return { success: false, error: 'Konto nicht gefunden.' };
+      return { success: false, error: "Konto nicht gefunden." };
     }
 
     const [accountIncomes, accountExpenses, accountTransfers] = await Promise.all([
-      db.select().from(incomes).where(eq(incomes.accountId, accountId)),
-      db.select().from(expenses).where(eq(expenses.accountId, accountId)),
-      db.select().from(transfers).where(or(
-        eq(transfers.sourceAccountId, accountId),
-        eq(transfers.targetAccountId, accountId)
-      )),
+      db
+        .select()
+        .from(incomes)
+        .where(and(eq(incomes.accountId, accountId), eq(incomes.userId, userId))),
+      db
+        .select()
+        .from(expenses)
+        .where(and(eq(expenses.accountId, accountId), eq(expenses.userId, userId))),
+      db
+        .select()
+        .from(transfers)
+        .where(
+          and(
+            eq(transfers.userId, userId),
+            or(eq(transfers.sourceAccountId, accountId), eq(transfers.targetAccountId, accountId))
+          )
+        ),
     ]);
 
     const currentBalance = safeParseFloat(account.balance);
     const today = new Date();
-    const projectedMonths: AccountForecast['projectedMonths'] = [];
+    const projectedMonths: AccountForecast["projectedMonths"] = [];
 
-    const isCumulativeAccount = account.type === 'savings' || account.type === 'etf';
+    const isCumulativeAccount = account.type === "savings" || account.type === "etf";
     let cumulativeBalance = isCumulativeAccount ? currentBalance : 0;
 
     for (let i = 1; i <= months; i++) {
@@ -262,7 +296,7 @@ export async function getAccountForecast(
       },
     };
   } catch (error) {
-    logger.error('Failed to generate forecast', 'getAccountForecast', error);
-    return { success: false, error: 'Prognose konnte nicht erstellt werden.' };
+    logger.error("Failed to generate forecast", "getAccountForecast", error);
+    return { success: false, error: "Prognose konnte nicht erstellt werden." };
   }
 }

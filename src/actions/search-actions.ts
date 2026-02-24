@@ -1,12 +1,13 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { accounts, expenses, incomes, transfers, dailyExpenses, categories } from '@/lib/db/schema';
-import { or, ilike, sql } from 'drizzle-orm';
+import { db } from "@/lib/db";
+import { accounts, expenses, incomes, transfers, dailyExpenses, categories } from "@/lib/db/schema";
+import { or, and, ilike, sql, eq } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export interface SearchResult {
   id: string;
-  type: 'account' | 'expense' | 'daily_expense' | 'income' | 'transfer';
+  type: "account" | "expense" | "daily_expense" | "income" | "transfer";
   title: string;
   subtitle?: string;
   amount?: string;
@@ -15,6 +16,10 @@ export interface SearchResult {
 }
 
 export async function globalSearch(query: string): Promise<SearchResult[]> {
+  const auth = await requireAuth();
+  if (auth.error) return [];
+  const { userId } = auth;
+
   if (!query || query.trim().length < 2) {
     return [];
   }
@@ -26,17 +31,22 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   const accountResults = await db
     .select()
     .from(accounts)
-    .where(ilike(accounts.name, searchTerm));
+    .where(and(eq(accounts.userId, userId), ilike(accounts.name, searchTerm)));
 
   for (const account of accountResults) {
     results.push({
       id: account.id,
-      type: 'account',
+      type: "account",
       title: account.name,
-      subtitle: account.type === 'checking' ? 'Girokonto' : account.type === 'savings' ? 'Sparkonto' : 'ETF-Konto',
+      subtitle:
+        account.type === "checking"
+          ? "Girokonto"
+          : account.type === "savings"
+            ? "Sparkonto"
+            : "ETF-Konto",
       amount: account.balance,
       href: `/accounts/${account.id}`,
-      icon: account.type === 'checking' ? '🏦' : account.type === 'savings' ? '🐷' : '📈',
+      icon: account.type === "checking" ? "🏦" : account.type === "savings" ? "🐷" : "📈",
     });
   }
 
@@ -51,17 +61,17 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     })
     .from(expenses)
     .leftJoin(categories, sql`${expenses.categoryId} = ${categories.id}`)
-    .where(ilike(expenses.name, searchTerm));
+    .where(and(eq(expenses.userId, userId), ilike(expenses.name, searchTerm)));
 
   for (const expense of expenseResults) {
     results.push({
       id: expense.id,
-      type: 'expense',
+      type: "expense",
       title: expense.name,
-      subtitle: 'Periodische Ausgabe',
+      subtitle: "Periodische Ausgabe",
       amount: expense.amount,
       href: `/expenses`,
-      icon: '💸',
+      icon: "💸",
     });
   }
 
@@ -74,17 +84,17 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       date: dailyExpenses.date,
     })
     .from(dailyExpenses)
-    .where(ilike(dailyExpenses.description, searchTerm));
+    .where(and(eq(dailyExpenses.userId, userId), ilike(dailyExpenses.description, searchTerm)));
 
   for (const expense of dailyExpenseResults) {
     results.push({
       id: expense.id,
-      type: 'daily_expense',
+      type: "daily_expense",
       title: expense.description,
       subtitle: `Tägliche Ausgabe`,
       amount: expense.amount,
       href: `/expenses`,
-      icon: '🧾',
+      icon: "🧾",
     });
   }
 
@@ -92,17 +102,17 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   const incomeResults = await db
     .select()
     .from(incomes)
-    .where(ilike(incomes.source, searchTerm));
+    .where(and(eq(incomes.userId, userId), ilike(incomes.source, searchTerm)));
 
   for (const income of incomeResults) {
     results.push({
       id: income.id,
-      type: 'income',
+      type: "income",
       title: income.source,
-      subtitle: 'Einnahme',
+      subtitle: "Einnahme",
       amount: income.amount,
       href: `/income`,
-      icon: '💰',
+      icon: "💰",
     });
   }
 
@@ -110,17 +120,17 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   const transferResults = await db
     .select()
     .from(transfers)
-    .where(ilike(transfers.description, searchTerm));
+    .where(and(eq(transfers.userId, userId), ilike(transfers.description, searchTerm)));
 
   for (const transfer of transferResults) {
     results.push({
       id: transfer.id,
-      type: 'transfer',
-      title: transfer.description || 'Transfer',
-      subtitle: 'Umbuchung',
+      type: "transfer",
+      title: transfer.description || "Transfer",
+      subtitle: "Umbuchung",
       amount: transfer.amount,
       href: `/transfers`,
-      icon: '🔄',
+      icon: "🔄",
     });
   }
 

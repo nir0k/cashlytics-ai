@@ -24,14 +24,14 @@
 ### Data Isolation
 
 - [ ] **DATA-01**: Alle Queries filtern nach userId aus Session
-- [ ] **DATA-02**: accounts Tabelle hat userId Foreign Key
-- [ ] **DATA-03**: expenses Tabelle hat userId Foreign Key
-- [ ] **DATA-04**: income Tabelle hat userId Foreign Key
-- [ ] **DATA-05**: daily_expenses Tabelle hat userId Foreign Key
-- [ ] **DATA-06**: transfers Tabelle hat userId Foreign Key
-- [ ] **DATA-07**: categories Tabelle hat userId Foreign Key
-- [ ] **DATA-08**: documents Tabelle hat userId Foreign Key
-- [ ] **DATA-09**: conversations Tabelle hat userId Foreign Key
+- [x] **DATA-02**: accounts Tabelle hat userId Foreign Key
+- [x] **DATA-03**: expenses Tabelle hat userId Foreign Key
+- [x] **DATA-04**: income Tabelle hat userId Foreign Key
+- [x] **DATA-05**: daily_expenses Tabelle hat userId Foreign Key
+- [x] **DATA-06**: transfers Tabelle hat userId Foreign Key
+- [x] **DATA-07**: categories Tabelle hat userId Foreign Key
+- [x] **DATA-08**: documents Tabelle hat userId Foreign Key
+- [x] **DATA-09**: conversations Tabelle hat userId Foreign Key
 - [ ] **DATA-10**: FK-Validierung: User kann nur eigene Accounts/Categories in Queries nutzen
 
 ### Registration Mode
@@ -44,7 +44,7 @@
 ### Migration
 
 - [x] **MIG-01**: Drizzle Migration für Auth.js Tabellen (users, accounts, sessions, verificationTokens)
-- [ ] **MIG-02**: Drizzle Migration für userId FK auf allen existierenden Tabellen
+- [x] **MIG-02**: Drizzle Migration für userId FK auf allen existierenden Tabellen
 - [ ] **MIG-03**: Migration Script weist existierende Daten SINGLE_USER_EMAIL zu
 - [ ] **MIG-04**: seed-demo.sql wird mit userId angepasst
 
@@ -104,21 +104,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTHZ-02    | Phase 3 | Pending   |
 | AUTHZ-03    | Phase 3 | Pending   |
 | DATA-01     | Phase 3 | Pending   |
-| DATA-02     | Phase 2 | Pending   |
-| DATA-03     | Phase 2 | Pending   |
-| DATA-04     | Phase 2 | Pending   |
-| DATA-05     | Phase 2 | Pending   |
-| DATA-06     | Phase 2 | Pending   |
-| DATA-07     | Phase 2 | Pending   |
-| DATA-08     | Phase 2 | Pending   |
-| DATA-09     | Phase 2 | Pending   |
+| DATA-02     | Phase 2 | Complete  |
+| DATA-03     | Phase 2 | Complete  |
+| DATA-04     | Phase 2 | Complete  |
+| DATA-05     | Phase 2 | Complete  |
+| DATA-06     | Phase 2 | Complete  |
+| DATA-07     | Phase 2 | Complete  |
+| DATA-08     | Phase 2 | Complete  |
+| DATA-09     | Phase 2 | Complete  |
 | DATA-10     | Phase 3 | Pending   |
 | MODE-01     | Phase 5 | Pending   |
 | MODE-02     | Phase 5 | Pending   |
 | MODE-03     | Phase 5 | Pending   |
 | MODE-04     | Phase 5 | Pending   |
 | MIG-01      | Phase 2 | Complete  |
-| MIG-02      | Phase 2 | Pending   |
+| MIG-02      | Phase 2 | Complete  |
 | MIG-03      | Phase 2 | Pending   |
 | MIG-04      | Phase 2 | Pending   |
 | INFRA-01    | Phase 1 | Completed |

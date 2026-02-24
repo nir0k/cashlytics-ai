@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 2 of 5 (Database Migration)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In Progress
-Last activity: 2026-02-24 — Completed 02-01 (Auth.js adapter tables)
+Last activity: 2026-02-24 — Completed 02-02 (Nullable userId FK columns)
 
 Progress: [███████░░░] 70%
 
@@ -20,23 +20,23 @@ Progress: [███████░░░] 70%
 
 **Velocity:**
 
-- Total plans completed: 4
-- Average duration: 10 min
-- Total execution time: 0.7 hours
+- Total plans completed: 5
+- Average duration: 11 min
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
 | Phase                       | Plans | Total | Avg/Plan |
 | --------------------------- | ----- | ----- | -------- |
 | 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
-| 2. Database Migration       | 1     | 4     | 21 min   |
+| 2. Database Migration       | 2     | 4     | 22 min   |
 | 3. Server Actions Refactor  | 0     | 5     | -        |
 | 4. Auth UI Components       | 0     | 4     | -        |
 | 5. Registration Mode Logic  | 0     | 3     | -        |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-01 (21 min), 01-03 (5 min), 01-02 (3 min), 01-01 (14 min)
+- Last 5 plans: 02-02 (23 min), 02-01 (21 min), 01-03 (5 min), 01-02 (3 min), 01-01 (14 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -55,6 +55,8 @@ Recent decisions affecting current work:
 - 01-03: Full app service added to docker-compose.yml (not just AUTH_SECRET) since app service was missing
 - 02-01: Prefixed Auth.js tables with 'auth\_' to avoid conflict with financial accounts table
 - 02-01: Composite primary key (identifier, token) for auth_verification_tokens per Auth.js spec
+- [Phase 02-database-migration]: userId columns are nullable to allow existing data migration before backfill
+- [Phase 02-database-migration]: Cascade delete on userId FK ensures user data is removed when user is deleted
 
 ### Pending Todos
 
@@ -62,10 +64,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Migration 0004 needs to be run when database is available (Docker not running during execution)
+None - Migration 0004 applied successfully.
 
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-01-PLAN.md (Auth.js adapter tables)
+Stopped at: Completed 02-02-PLAN.md (Nullable userId FK columns)
 Resume file: None

@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 3 of 5 (Server Actions Refactor)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-24 — 03-01 complete (requireAuth helper created)
+Last activity: 2026-02-24 — 03-02 complete (account/category actions refactored with requireAuth and userId filtering)
 
 Progress: [████████░░] 80%
 
@@ -30,13 +30,13 @@ Progress: [████████░░] 80%
 | --------------------------- | ----- | ----- | -------- |
 | 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
 | 2. Database Migration       | 3     | 4     | 16 min   |
-| 3. Server Actions Refactor  | 1     | 5     | 2 min    |
+| 3. Server Actions Refactor  | 2     | 5     | 3 min    |
 | 4. Auth UI Components       | 0     | 4     | -        |
 | 5. Registration Mode Logic  | 0     | 3     | -        |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-04 (5 min), 02-02 (23 min), 02-01 (21 min), 01-03 (5 min), 01-02 (3 min)
+- Last 5 plans: 03-02 (3 min), 03-01 (2 min), 02-04 (5 min), 02-02 (23 min), 02-01 (21 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -61,6 +61,8 @@ Recent decisions affecting current work:
 - 03-01: requireAuth() has no SINGLE_USER_EMAIL fallback — unauthenticated always returns { error: "Unauthorized" }
 - 03-01: AuthResult uses never-based discriminated union for correct TypeScript narrowing of userId to string
 - 03-01: No "use server" on require-auth.ts — utility function imported by actions, not a Server Action itself
+- [Phase 03-02]: compound AND(id, userId) WHERE for UPDATE/DELETE prevents cross-user mutation without extra ownership query
+- [Phase 03-02]: requireAuth() replaces getCurrentUserId() in all account/category actions — no SINGLE_USER_EMAIL fallback
 
 ### Pending Todos
 
@@ -73,5 +75,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 03-01-PLAN.md — requireAuth helper created, starting 03-02
+Stopped at: Completed 03-02-PLAN.md — account/category actions refactored with requireAuth and userId filtering
 Resume file: None

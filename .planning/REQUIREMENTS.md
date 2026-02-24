@@ -23,7 +23,7 @@
 
 ### Data Isolation
 
-- [ ] **DATA-01**: Alle Queries filtern nach userId aus Session
+- [x] **DATA-01**: Alle Queries filtern nach userId aus Session
 - [x] **DATA-02**: accounts Tabelle hat userId Foreign Key
 - [x] **DATA-03**: expenses Tabelle hat userId Foreign Key
 - [x] **DATA-04**: income Tabelle hat userId Foreign Key
@@ -103,7 +103,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTHZ-01    | Phase 1 | Complete  |
 | AUTHZ-02    | Phase 3 | Complete  |
 | AUTHZ-03    | Phase 3 | Complete  |
-| DATA-01     | Phase 3 | Pending   |
+| DATA-01     | Phase 3 | Complete  |
 | DATA-02     | Phase 2 | Complete  |
 | DATA-03     | Phase 2 | Complete  |
 | DATA-04     | Phase 2 | Complete  |

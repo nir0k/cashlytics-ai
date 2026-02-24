@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 2 of 5 (Database Migration)
-Plan: 2 of 4 in current phase
+Plan: 4 of 4 in current phase
 Status: In Progress
-Last activity: 2026-02-24 — Completed 02-02 (Nullable userId FK columns)
+Last activity: 2026-02-24 — Completed 02-04 (Demo Data Seeder Sync)
 
-Progress: [███████░░░] 70%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -29,14 +29,14 @@ Progress: [███████░░░] 70%
 | Phase                       | Plans | Total | Avg/Plan |
 | --------------------------- | ----- | ----- | -------- |
 | 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
-| 2. Database Migration       | 2     | 4     | 22 min   |
+| 2. Database Migration       | 3     | 4     | 16 min   |
 | 3. Server Actions Refactor  | 0     | 5     | -        |
 | 4. Auth UI Components       | 0     | 4     | -        |
 | 5. Registration Mode Logic  | 0     | 3     | -        |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-02 (23 min), 02-01 (21 min), 01-03 (5 min), 01-02 (3 min), 01-01 (14 min)
+- Last 5 plans: 02-04 (5 min), 02-02 (23 min), 02-01 (21 min), 01-03 (5 min), 01-02 (3 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -57,6 +57,7 @@ Recent decisions affecting current work:
 - 02-01: Composite primary key (identifier, token) for auth_verification_tokens per Auth.js spec
 - [Phase 02-database-migration]: userId columns are nullable to allow existing data migration before backfill
 - [Phase 02-database-migration]: Cascade delete on userId FK ensures user data is removed when user is deleted
+- 02-04: Demo user uses deterministic UUID (u0000000-0000-0000-0000-000000000001) for consistent testing
 
 ### Pending Todos
 
@@ -69,5 +70,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-02-PLAN.md (Nullable userId FK columns)
+Stopped at: Completed 02-04-PLAN.md (Demo Data Seeder Sync)
 Resume file: None

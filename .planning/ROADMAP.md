@@ -26,19 +26,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal**: Authentication primitives exist and route protection is active
 **Depends on**: Nothing (first phase)
 **Requirements**: AUTH-03, AUTH-05, AUTHZ-01, INFRA-01, INFRA-02, INFRA-03, INFRA-05, INFRA-06, INFRA-07
+**Plans**: 3 plans in 3 waves
+
 **Success Criteria** (what must be TRUE):
 
 1. Auth.js v5 is configured with Drizzle adapter and JWT session strategy
 2. Unauthenticated requests to protected routes redirect to /login
 3. Session type includes user.id for use in server actions
 4. Docker build succeeds with all auth dependencies
-   **Plans**: TBD
 
 Plans:
 
-- [ ] 01-01: Install and configure Auth.js v5 with Drizzle adapter
-- [ ] 01-02: Implement proxy.ts route protection
-- [ ] 01-03: Extend TypeScript session types and verify Docker build
+- [ ] 01-01: Install and configure Auth.js v5 with Drizzle adapter — Wave 1
+- [ ] 01-02: Implement proxy.ts route protection — Wave 2 (depends on 01-01)
+- [ ] 01-03: Verify Docker build and configure AUTH_SECRET — Wave 3 (depends on 01-01, 01-02)
 
 ### Phase 2: Database Migration
 

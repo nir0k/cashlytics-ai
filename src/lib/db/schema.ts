@@ -33,18 +33,66 @@ export const transferRecurrenceTypeEnum = pgEnum("transfer_recurrence_type", [
   "yearly",
 ]);
 
-// Auth.js user table - minimal definition for Phase 1
-// Will be extended with additional fields in Phase 2
+// Auth.js user table - extended with Auth.js adapter fields
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
+  emailVerified: timestamp("email_verified", { mode: "date" }),
   name: text("name"),
   password: text("password"),
+  image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Auth.js accounts table (OAuth provider linking)
+// Prefixed with "auth_" to avoid conflict with financial accounts table
+export const authAccounts = pgTable("auth_accounts", {
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
+  scope: text("scope"),
+  id_token: text("id_token"),
+  session_state: text("session_state"),
+});
+
+// Auth.js sessions table (for database session strategy - future-proofing)
+export const authSessions = pgTable("auth_sessions", {
+  sessionToken: text("session_token").notNull().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+});
+
+// Auth.js verification tokens (for password reset / magic links)
+export const authVerificationTokens = pgTable("auth_verification_tokens", {
+  identifier: text("identifier").notNull(),
+  token: text("token").notNull().primaryKey(),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+});
+
+// User relations - enables querying user's data with Drizzle relational queries
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  categories: many(categories),
+  expenses: many(expenses),
+  incomes: many(incomes),
+  dailyExpenses: many(dailyExpenses),
+  transfers: many(transfers),
+  documents: many(documents),
+  conversations: many(conversations),
+}));
+
 export const accounts = pgTable("accounts", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   type: accountTypeEnum("type").notNull(),
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -54,6 +102,7 @@ export const accounts = pgTable("accounts", {
 
 export const categories = pgTable("categories", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   icon: text("icon"),
   color: text("color"),
@@ -62,6 +111,7 @@ export const categories = pgTable("categories", {
 
 export const expenses = pgTable("expenses", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   categoryId: uuid("category_id").references(() => categories.id),
   name: text("name").notNull(),
@@ -77,6 +127,7 @@ export const expenses = pgTable("expenses", {
 
 export const incomes = pgTable("incomes", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   source: text("source").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
@@ -89,6 +140,7 @@ export const incomes = pgTable("incomes", {
 
 export const dailyExpenses = pgTable("daily_expenses", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   categoryId: uuid("category_id").references(() => categories.id),
   description: text("description").notNull(),
@@ -100,6 +152,7 @@ export const dailyExpenses = pgTable("daily_expenses", {
 
 export const transfers = pgTable("transfers", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   sourceAccountId: uuid("source_account_id")
     .references(() => accounts.id, { onDelete: "cascade" })
     .notNull(),
@@ -116,6 +169,7 @@ export const transfers = pgTable("transfers", {
 
 export const documents = pgTable("documents", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   expenseId: uuid("expense_id").references(() => expenses.id, { onDelete: "cascade" }),
   dailyExpenseId: uuid("daily_expense_id").references(() => dailyExpenses.id, {
     onDelete: "cascade",
@@ -197,6 +251,7 @@ export const documentsRelations = relations(documents, ({ one }) => ({
 
 export const conversations = pgTable("conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull().default("Neuer Chat"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

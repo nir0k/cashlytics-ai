@@ -1,34 +1,55 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { conversations, messages } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import type { ApiResponse, Conversation, Message, ConversationWithMessages } from '@/types/database';
-import { logger } from '@/lib/logger';
+import { db } from "@/lib/db";
+import { conversations, messages } from "@/lib/db/schema";
+import { eq, and, desc } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import type {
+  ApiResponse,
+  Conversation,
+  Message,
+  ConversationWithMessages,
+} from "@/types/database";
+import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function getConversations(): Promise<ApiResponse<Conversation[]>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const allConversations = await db
       .select()
       .from(conversations)
+      .where(eq(conversations.userId, userId))
       .orderBy(desc(conversations.updatedAt));
     return { success: true, data: allConversations };
   } catch (error) {
-    logger.error('Failed to fetch conversations', 'getConversations', error);
-    return { success: false, error: 'Failed to fetch conversations' };
+    logger.error("Failed to fetch conversations", "getConversations", error);
+    return { success: false, error: "Failed to fetch conversations" };
   }
 }
 
-export async function getConversationById(id: string): Promise<ApiResponse<ConversationWithMessages>> {
+export async function getConversationById(
+  id: string
+): Promise<ApiResponse<ConversationWithMessages>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const [conversation] = await db
       .select()
       .from(conversations)
-      .where(eq(conversations.id, id));
+      .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
 
     if (!conversation) {
-      return { success: false, error: 'Conversation not found' };
+      return { success: false, error: "Conversation not found" };
     }
 
     const conversationMessages = await db
@@ -42,27 +63,34 @@ export async function getConversationById(id: string): Promise<ApiResponse<Conve
       data: { ...conversation, messages: conversationMessages },
     };
   } catch (error) {
-    logger.error('Failed to fetch conversation', 'getConversationById', error);
-    return { success: false, error: 'Failed to fetch conversation' };
+    logger.error("Failed to fetch conversation", "getConversationById", error);
+    return { success: false, error: "Failed to fetch conversation" };
   }
 }
 
 export async function createConversation(title?: string): Promise<ApiResponse<Conversation>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const now = new Date();
     const [conversation] = await db
       .insert(conversations)
       .values({
-        title: title || 'Neuer Chat',
+        userId,
+        title: title || "Neuer Chat",
         createdAt: now,
         updatedAt: now,
       })
       .returning();
-    revalidatePath('/assistant');
+    revalidatePath("/assistant");
     return { success: true, data: conversation };
   } catch (error) {
-    logger.error('Failed to create conversation', 'createConversation', error);
-    return { success: false, error: 'Failed to create conversation' };
+    logger.error("Failed to create conversation", "createConversation", error);
+    return { success: false, error: "Failed to create conversation" };
   }
 }
 
@@ -71,40 +99,70 @@ export async function updateConversationTitle(
   title: string
 ): Promise<ApiResponse<Conversation>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const [conversation] = await db
       .update(conversations)
       .set({ title, updatedAt: new Date() })
-      .where(eq(conversations.id, id))
+      .where(and(eq(conversations.id, id), eq(conversations.userId, userId)))
       .returning();
 
     if (!conversation) {
-      return { success: false, error: 'Conversation not found' };
+      return { success: false, error: "Conversation not found" };
     }
-    revalidatePath('/assistant');
+    revalidatePath("/assistant");
     return { success: true, data: conversation };
   } catch (error) {
-    logger.error('Failed to update conversation', 'updateConversationTitle', error);
-    return { success: false, error: 'Failed to update conversation' };
+    logger.error("Failed to update conversation", "updateConversationTitle", error);
+    return { success: false, error: "Failed to update conversation" };
   }
 }
 
 export async function deleteConversation(id: string): Promise<ApiResponse<void>> {
   try {
-    await db.delete(conversations).where(eq(conversations.id, id));
-    revalidatePath('/assistant');
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    await db
+      .delete(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+    revalidatePath("/assistant");
     return { success: true, data: undefined };
   } catch (error) {
-    logger.error('Failed to delete conversation', 'deleteConversation', error);
-    return { success: false, error: 'Failed to delete conversation' };
+    logger.error("Failed to delete conversation", "deleteConversation", error);
+    return { success: false, error: "Failed to delete conversation" };
   }
 }
 
 export async function saveMessage(
   conversationId: string,
-  role: 'user' | 'assistant',
+  role: "user" | "assistant",
   content: string
 ): Promise<ApiResponse<Message>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    // Verify conversation ownership before inserting a message
+    const [ownedConv] = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
+      .limit(1);
+    if (!ownedConv) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     await db
       .update(conversations)
       .set({ updatedAt: new Date() })
@@ -115,16 +173,32 @@ export async function saveMessage(
       .values({ conversationId, role, content })
       .returning();
 
-    revalidatePath('/assistant');
+    revalidatePath("/assistant");
     return { success: true, data: message };
   } catch (error) {
-    logger.error('Failed to save message', 'saveMessage', error);
-    return { success: false, error: 'Failed to save message' };
+    logger.error("Failed to save message", "saveMessage", error);
+    return { success: false, error: "Failed to save message" };
   }
 }
 
 export async function getMessages(conversationId: string): Promise<ApiResponse<Message[]>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    // Verify conversation ownership before fetching messages
+    const [ownedConv] = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
+      .limit(1);
+    if (!ownedConv) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     const conversationMessages = await db
       .select()
       .from(messages)
@@ -132,8 +206,8 @@ export async function getMessages(conversationId: string): Promise<ApiResponse<M
       .orderBy(messages.createdAt);
     return { success: true, data: conversationMessages };
   } catch (error) {
-    logger.error('Failed to fetch messages', 'getMessages', error);
-    return { success: false, error: 'Failed to fetch messages' };
+    logger.error("Failed to fetch messages", "getMessages", error);
+    return { success: false, error: "Failed to fetch messages" };
   }
 }
 
@@ -141,6 +215,6 @@ export async function updateConversationTitleFromFirstMessage(
   conversationId: string,
   firstMessage: string
 ): Promise<ApiResponse<Conversation>> {
-  const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+  const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : "");
   return updateConversationTitle(conversationId, title);
 }

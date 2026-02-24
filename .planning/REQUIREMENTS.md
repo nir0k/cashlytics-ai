@@ -43,7 +43,7 @@
 
 ### Migration
 
-- [ ] **MIG-01**: Drizzle Migration für Auth.js Tabellen (users, accounts, sessions, verificationTokens)
+- [x] **MIG-01**: Drizzle Migration für Auth.js Tabellen (users, accounts, sessions, verificationTokens)
 - [ ] **MIG-02**: Drizzle Migration für userId FK auf allen existierenden Tabellen
 - [ ] **MIG-03**: Migration Script weist existierende Daten SINGLE_USER_EMAIL zu
 - [ ] **MIG-04**: seed-demo.sql wird mit userId angepasst
@@ -117,7 +117,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MODE-02     | Phase 5 | Pending   |
 | MODE-03     | Phase 5 | Pending   |
 | MODE-04     | Phase 5 | Pending   |
-| MIG-01      | Phase 2 | Pending   |
+| MIG-01      | Phase 2 | Complete  |
 | MIG-02      | Phase 2 | Pending   |
 | MIG-03      | Phase 2 | Pending   |
 | MIG-04      | Phase 2 | Pending   |

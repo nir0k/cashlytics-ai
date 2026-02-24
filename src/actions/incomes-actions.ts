@@ -1,11 +1,12 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { incomes, accounts } from '@/lib/db/schema';
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import type { ApiResponse, Income, IncomeWithAccount, NewIncome } from '@/types/database';
-import { logger } from '@/lib/logger';
+import { db } from "@/lib/db";
+import { incomes, accounts } from "@/lib/db/schema";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import type { ApiResponse, Income, IncomeWithAccount, NewIncome } from "@/types/database";
+import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function getIncomes(filters?: {
   accountId?: string;
@@ -13,7 +14,13 @@ export async function getIncomes(filters?: {
   endDate?: Date;
 }): Promise<ApiResponse<IncomeWithAccount[]>> {
   try {
-    const conditions = [];
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    const conditions = [eq(incomes.userId, userId)];
 
     if (filters?.accountId) {
       conditions.push(eq(incomes.accountId, filters.accountId));
@@ -32,7 +39,7 @@ export async function getIncomes(filters?: {
       })
       .from(incomes)
       .leftJoin(accounts, eq(incomes.accountId, accounts.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .where(and(...conditions))
       .orderBy(desc(incomes.createdAt));
 
     const incomesWithAccount: IncomeWithAccount[] = result.map((r) => ({
@@ -42,13 +49,19 @@ export async function getIncomes(filters?: {
 
     return { success: true, data: incomesWithAccount };
   } catch (error) {
-    logger.error('Failed to fetch incomes', 'getIncomes', error);
-    return { success: false, error: 'Einnahmen konnten nicht geladen werden.' };
+    logger.error("Failed to fetch incomes", "getIncomes", error);
+    return { success: false, error: "Einnahmen konnten nicht geladen werden." };
   }
 }
 
 export async function getIncomeById(id: string): Promise<ApiResponse<IncomeWithAccount>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const [result] = await db
       .select({
         income: incomes,
@@ -56,11 +69,11 @@ export async function getIncomeById(id: string): Promise<ApiResponse<IncomeWithA
       })
       .from(incomes)
       .leftJoin(accounts, eq(incomes.accountId, accounts.id))
-      .where(eq(incomes.id, id))
+      .where(and(eq(incomes.id, id), eq(incomes.userId, userId)))
       .limit(1);
 
     if (!result) {
-      return { success: false, error: 'Einnahme nicht gefunden.' };
+      return { success: false, error: "Einnahme nicht gefunden." };
     }
 
     return {
@@ -71,8 +84,8 @@ export async function getIncomeById(id: string): Promise<ApiResponse<IncomeWithA
       },
     };
   } catch (error) {
-    logger.error('Failed to fetch income', 'getIncomeById', error);
-    return { success: false, error: 'Einnahme konnte nicht geladen werden.' };
+    logger.error("Failed to fetch income", "getIncomeById", error);
+    return { success: false, error: "Einnahme konnte nicht geladen werden." };
   }
 }
 
@@ -80,75 +93,104 @@ export async function createIncome(data: {
   accountId: string;
   source: string;
   amount: number;
-  recurrenceType: 'once' | 'monthly' | 'yearly';
+  recurrenceType: "once" | "monthly" | "yearly";
   startDate: Date | string;
 }): Promise<ApiResponse<Income>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    // FK Validation: accountId must belong to authenticated user (DATA-10)
+    const [ownedAccount] = await db
+      .select({ id: accounts.id })
+      .from(accounts)
+      .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, userId)))
+      .limit(1);
+    if (!ownedAccount) {
+      return { success: false, error: "Konto nicht gefunden oder kein Zugriff." };
+    }
+
     const [newIncome] = await db
       .insert(incomes)
       .values({
+        userId,
         accountId: data.accountId,
         source: data.source,
         amount: data.amount.toString(),
         recurrenceType: data.recurrenceType,
-        startDate: typeof data.startDate === 'string' ? new Date(data.startDate) : data.startDate,
+        startDate: typeof data.startDate === "string" ? new Date(data.startDate) : data.startDate,
       })
       .returning();
 
-    revalidatePath('/income');
-    revalidatePath('/dashboard');
+    revalidatePath("/income");
+    revalidatePath("/dashboard");
     return { success: true, data: newIncome };
   } catch (error) {
-    logger.error('Failed to create income', 'createIncome', error);
-    return { success: false, error: 'Einnahme konnte nicht erstellt werden.' };
+    logger.error("Failed to create income", "createIncome", error);
+    return { success: false, error: "Einnahme konnte nicht erstellt werden." };
   }
 }
 
 export async function updateIncome(
   id: string,
-  data: Partial<Omit<NewIncome, 'id' | 'createdAt'>>
+  data: Partial<Omit<NewIncome, "id" | "createdAt">>
 ): Promise<ApiResponse<Income>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const updateData = { ...data };
-    if (data.startDate && typeof data.startDate === 'string') {
+    if (data.startDate && typeof data.startDate === "string") {
       updateData.startDate = new Date(data.startDate);
     }
 
     const [updatedIncome] = await db
       .update(incomes)
       .set(updateData)
-      .where(eq(incomes.id, id))
+      .where(and(eq(incomes.id, id), eq(incomes.userId, userId)))
       .returning();
 
     if (!updatedIncome) {
-      return { success: false, error: 'Einnahme nicht gefunden.' };
+      return { success: false, error: "Einnahme nicht gefunden." };
     }
 
-    revalidatePath('/income');
-    revalidatePath('/dashboard');
+    revalidatePath("/income");
+    revalidatePath("/dashboard");
     return { success: true, data: updatedIncome };
   } catch (error) {
-    logger.error('Failed to update income', 'updateIncome', error);
-    return { success: false, error: 'Einnahme konnte nicht aktualisiert werden.' };
+    logger.error("Failed to update income", "updateIncome", error);
+    return { success: false, error: "Einnahme konnte nicht aktualisiert werden." };
   }
 }
 
 export async function deleteIncome(id: string): Promise<ApiResponse<void>> {
   try {
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
     const [deletedIncome] = await db
       .delete(incomes)
-      .where(eq(incomes.id, id))
+      .where(and(eq(incomes.id, id), eq(incomes.userId, userId)))
       .returning();
 
     if (!deletedIncome) {
-      return { success: false, error: 'Einnahme nicht gefunden.' };
+      return { success: false, error: "Einnahme nicht gefunden." };
     }
 
-    revalidatePath('/income');
-    revalidatePath('/dashboard');
+    revalidatePath("/income");
+    revalidatePath("/dashboard");
     return { success: true, data: undefined };
   } catch (error) {
-    logger.error('Failed to delete income', 'deleteIncome', error);
-    return { success: false, error: 'Einnahme konnte nicht gelöscht werden.' };
+    logger.error("Failed to delete income", "deleteIncome", error);
+    return { success: false, error: "Einnahme konnte nicht gelöscht werden." };
   }
 }

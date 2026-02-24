@@ -1,33 +1,49 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { categories } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import type { ApiResponse, Category, NewCategory } from '@/types/database';
-import { logger } from '@/lib/logger';
+import { db } from "@/lib/db";
+import { categories } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import type { ApiResponse, Category, NewCategory } from "@/types/database";
+import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function getCategories(): Promise<ApiResponse<Category[]>> {
   try {
-    const allCategories = await db.select().from(categories).orderBy(categories.name);
+    const authResult = await requireAuth();
+    if (authResult.error) return { success: false, error: "Unauthorized" };
+
+    const allCategories = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, authResult.userId))
+      .orderBy(categories.name);
     return { success: true, data: allCategories };
   } catch (error) {
-    logger.error('Failed to fetch categories', 'getCategories', error);
-    return { success: false, error: 'Failed to fetch categories' };
+    logger.error("Failed to fetch categories", "getCategories", error);
+    return { success: false, error: "Failed to fetch categories" };
   }
 }
 
-export async function createCategory(data: NewCategory): Promise<ApiResponse<Category>> {
+export async function createCategory(
+  data: Omit<NewCategory, "userId">
+): Promise<ApiResponse<Category>> {
   try {
-    const [category] = await db.insert(categories).values(data).returning();
-    revalidatePath('/settings');
-    revalidatePath('/settings/categories');
-    revalidatePath('/categories');
-    revalidatePath('/expenses');
+    const authResult = await requireAuth();
+    if (authResult.error) return { success: false, error: "Unauthorized" };
+
+    const [category] = await db
+      .insert(categories)
+      .values({ ...data, userId: authResult.userId })
+      .returning();
+    revalidatePath("/settings");
+    revalidatePath("/settings/categories");
+    revalidatePath("/categories");
+    revalidatePath("/expenses");
     return { success: true, data: category };
   } catch (error) {
-    logger.error('Failed to create category', 'createCategory', error);
-    return { success: false, error: 'Failed to create category' };
+    logger.error("Failed to create category", "createCategory", error);
+    return { success: false, error: "Failed to create category" };
   }
 }
 
@@ -36,31 +52,43 @@ export async function updateCategory(
   data: Partial<NewCategory>
 ): Promise<ApiResponse<Category>> {
   try {
-    const [category] = await db.update(categories).set(data).where(eq(categories.id, id)).returning();
+    const authResult = await requireAuth();
+    if (authResult.error) return { success: false, error: "Unauthorized" };
+
+    const [category] = await db
+      .update(categories)
+      .set(data)
+      .where(and(eq(categories.id, id), eq(categories.userId, authResult.userId)))
+      .returning();
     if (!category) {
-      return { success: false, error: 'Category not found' };
+      return { success: false, error: "Category not found" };
     }
-    revalidatePath('/settings');
-    revalidatePath('/settings/categories');
-    revalidatePath('/categories');
-    revalidatePath('/expenses');
+    revalidatePath("/settings");
+    revalidatePath("/settings/categories");
+    revalidatePath("/categories");
+    revalidatePath("/expenses");
     return { success: true, data: category };
   } catch (error) {
-    logger.error('Failed to update category', 'updateCategory', error);
-    return { success: false, error: 'Failed to update category' };
+    logger.error("Failed to update category", "updateCategory", error);
+    return { success: false, error: "Failed to update category" };
   }
 }
 
 export async function deleteCategory(id: string): Promise<ApiResponse<void>> {
   try {
-    await db.delete(categories).where(eq(categories.id, id));
-    revalidatePath('/settings');
-    revalidatePath('/settings/categories');
-    revalidatePath('/categories');
-    revalidatePath('/expenses');
+    const authResult = await requireAuth();
+    if (authResult.error) return { success: false, error: "Unauthorized" };
+
+    await db
+      .delete(categories)
+      .where(and(eq(categories.id, id), eq(categories.userId, authResult.userId)));
+    revalidatePath("/settings");
+    revalidatePath("/settings/categories");
+    revalidatePath("/categories");
+    revalidatePath("/expenses");
     return { success: true, data: undefined };
   } catch (error) {
-    logger.error('Failed to delete category', 'deleteCategory', error);
-    return { success: false, error: 'Failed to delete category' };
+    logger.error("Failed to delete category", "deleteCategory", error);
+    return { success: false, error: "Failed to delete category" };
   }
 }

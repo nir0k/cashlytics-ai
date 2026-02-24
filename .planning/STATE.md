@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 4 of 5 (Auth UI Components)
-Plan: 1 of 4 in current phase
+Plan: 4 of 4 in current phase (awaiting human-verify checkpoint)
 Status: In progress
-Last activity: 2026-02-24 — Completed 04-01 auth server foundation
+Last activity: 2026-02-24 — Completed 04-04 logout button; awaiting checkpoint verification
 
 Progress: [████████████] 65% (3/5 phases, 1/4 plans in phase 4)
 
@@ -39,6 +39,7 @@ Progress: [████████████] 65% (3/5 phases, 1/4 plans in p
 - Last 5 plans: 03-05 (8 min), 03-04 (4 min), 03-02 (3 min), 03-01 (2 min), 02-04 (5 min)
 - Trend: Stable
   | Phase 04 P01 | 2 | 3 tasks | 3 files |
+  | Phase 04 P04 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 04-01]: redirect() placed after try/catch block — NEXT_REDIRECT errors cannot be caught inside try/catch
 - [Phase 04-01]: signIn() called with redirect:false to prevent Auth.js from internally throwing NEXT_REDIRECT, then redirect manually
 - [Phase 04-01]: SessionProvider wraps outermost Providers layer so useSession() is available to all client components
+- [Phase 04]: form action={logoutAction} pattern used in client component — avoids onClick handlers, correct server action calling convention
 
 ### Pending Todos
 
@@ -96,5 +98,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 04-01-PLAN.md (auth server foundation — auth-actions.ts, registerSchema, SessionProvider)
+Stopped at: Completed 04-04 task 1; dev server running; awaiting human-verify checkpoint for full auth round-trip
 Resume file: None

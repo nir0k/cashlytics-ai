@@ -14,8 +14,8 @@ This roadmap transforms Cashlytics from a single-user self-hosted finance app in
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Core Auth Infrastructure** - Install and configure Auth.js v5 with Drizzle adapter, implement route protection via proxy.ts
-- [ ] **Phase 2: Database Migration** - Add userId FK to all tables, migrate existing data to single user
-- [ ] **Phase 3: Server Actions Refactor** - Update all server actions to verify session and filter by userId
+- [x] **Phase 2: Database Migration** - Add userId FK to all tables, migrate existing data to single user
+- [x] **Phase 3: Server Actions Refactor** - Update all server actions to verify session and filter by userId
 - [ ] **Phase 4: Auth UI Components** - Build login/register pages with session provider integration
 - [ ] **Phase 5: Registration Mode Logic** - Implement SINGLE_USER_MODE env var control
 
@@ -38,8 +38,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 
 - [x] 01-01: Install and configure Auth.js v5 with Drizzle adapter — Wave 1
-- [ ] 01-02: Implement proxy.ts route protection — Wave 2 (depends on 01-01)
-- [ ] 01-03: Verify Docker build and configure AUTH_SECRET — Wave 3 (depends on 01-01, 01-02)
+- [x] 01-02: Implement proxy.ts route protection — Wave 2 (depends on 01-01)
+- [x] 01-03: Verify Docker build and configure AUTH_SECRET — Wave 3 (depends on 01-01, 01-02)
 
 ### Phase 2: Database Migration
 
@@ -57,10 +57,10 @@ Plans:
 
 Plans:
 
-- [ ] 02-01-PLAN.md — Add Auth.js schema tables (auth_accounts, auth_sessions, auth_verification_tokens) with prefixed names — Wave 1
-- [ ] 02-02-PLAN.md — Add nullable userId FK to all 8 data tables — Wave 1
-- [ ] 02-03-PLAN.md — Backfill existing data to SINGLE_USER_EMAIL user, make userId NOT NULL — Wave 2 (depends on 02-01, 02-02)
-- [ ] 02-04-PLAN.md — Update seed-demo.sql with userId values — Wave 2 (depends on 02-01)
+- [x] 02-01-PLAN.md — Add Auth.js schema tables (auth_accounts, auth_sessions, auth_verification_tokens) with prefixed names — Wave 1
+- [x] 02-02-PLAN.md — Add nullable userId FK to all 8 data tables — Wave 1
+- [x] 02-03-PLAN.md — Backfill existing data to SINGLE_USER_EMAIL user, make userId NOT NULL — Wave 2 (depends on 02-01, 02-02)
+- [x] 02-04-PLAN.md — Update seed-demo.sql with userId values — Wave 2 (depends on 02-01)
 
 ### Phase 3: Server Actions Refactor
 
@@ -78,11 +78,11 @@ Plans:
 
 Plans:
 
-- [ ] 03-01-PLAN.md — Create requireAuth helper utility and deprecate user-id.ts — Wave 1
-- [ ] 03-02-PLAN.md — Refactor accounts-actions.ts, account-actions.ts, category-actions.ts with userId filtering — Wave 2 (depends on 03-01)
-- [ ] 03-03-PLAN.md — Refactor expense, income, and daily-expense actions with userId filtering and FK validation — Wave 2 (depends on 03-01)
-- [ ] 03-04-PLAN.md — Refactor transfer, conversation, document actions and /api/documents route handler — Wave 2 (depends on 03-01)
-- [ ] 03-05-PLAN.md — Refactor analytics, dashboard, account-detail, search, forecast actions — Wave 3 (depends on 03-02, 03-03, 03-04)
+- [x] 03-01-PLAN.md — Create requireAuth helper utility and deprecate user-id.ts — Wave 1
+- [x] 03-02-PLAN.md — Refactor accounts-actions.ts, account-actions.ts, category-actions.ts with userId filtering — Wave 2 (depends on 03-01)
+- [x] 03-03-PLAN.md — Refactor expense, income, and daily-expense actions with userId filtering and FK validation — Wave 2 (depends on 03-01)
+- [x] 03-04-PLAN.md — Refactor transfer, conversation, document actions and /api/documents route handler — Wave 2 (depends on 03-01)
+- [x] 03-05-PLAN.md — Refactor analytics, dashboard, account-detail, search, forecast actions — Wave 3 (depends on 03-02, 03-03, 03-04)
 
 ### Phase 4: Auth UI Components
 
@@ -131,13 +131,13 @@ Plans:
 **Execution Order:**
 Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
-| Phase                       | Plans Complete | Status      | Completed |
-| --------------------------- | -------------- | ----------- | --------- |
-| 1. Core Auth Infrastructure | 1/3            | In progress | -         |
-| 2. Database Migration       | 0/4            | Not started | -         |
-| 3. Server Actions Refactor  | 4/5            | In Progress |           |
-| 4. Auth UI Components       | 0/4            | Not started | -         |
-| 5. Registration Mode Logic  | 0/3            | Not started | -         |
+| Phase                       | Plans Complete | Status      | Completed  |
+| --------------------------- | -------------- | ----------- | ---------- |
+| 1. Core Auth Infrastructure | 3/3            | Complete    | 2026-02-24 |
+| 2. Database Migration       | 4/4            | Complete    | 2026-02-24 |
+| 3. Server Actions Refactor  | 5/5            | Complete    | 2026-02-24 |
+| 4. Auth UI Components       | 0/4            | Not started | -          |
+| 5. Registration Mode Logic  | 0/3            | Not started | -          |
 
 ---
 

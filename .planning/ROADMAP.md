@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Core Auth Infrastructure** - Install and configure Auth.js v5 with Drizzle adapter, implement route protection via proxy.ts
 - [x] **Phase 2: Database Migration** - Add userId FK to all tables, migrate existing data to single user
 - [x] **Phase 3: Server Actions Refactor** - Update all server actions to verify session and filter by userId
-- [ ] **Phase 4: Auth UI Components** - Build login/register pages with session provider integration
+- [x] **Phase 4: Auth UI Components** - Build login/register pages with session provider integration (completed 2026-02-24)
 - [ ] **Phase 5: Registration Mode Logic** - Implement SINGLE_USER_MODE env var control
 
 ## Phase Details
@@ -136,7 +136,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Core Auth Infrastructure | 3/3            | Complete    | 2026-02-24 |
 | 2. Database Migration       | 4/4            | Complete    | 2026-02-24 |
 | 3. Server Actions Refactor  | 5/5            | Complete    | 2026-02-24 |
-| 4. Auth UI Components       | 3/4            | In Progress |            |
+| 4. Auth UI Components       | 4/4            | Complete    | 2026-02-24 |
 | 5. Registration Mode Logic  | 0/3            | Not started | -          |
 
 ---

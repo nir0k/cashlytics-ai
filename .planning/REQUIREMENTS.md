@@ -8,11 +8,11 @@
 ### Authentication
 
 - [x] **AUTH-01**: User kann sich mit Email und Passwort registrieren
-- [ ] **AUTH-02**: User kann sich mit Email und Passwort einloggen
+- [x] **AUTH-02**: User kann sich mit Email und Passwort einloggen
 - [x] **AUTH-03**: User bleibt über Browser-Refresh eingeloggt (Session Persistenz)
 - [x] **AUTH-04**: User kann sich ausloggen
 - [x] **AUTH-05**: Passwörter werden mit bcrypt gehasht gespeichert
-- [ ] **AUTH-06**: Login-Seite ist unter /login erreichbar
+- [x] **AUTH-06**: Login-Seite ist unter /login erreichbar
 - [x] **AUTH-07**: Registrierungs-Seite ist unter /register erreichbar
 
 ### Authorization
@@ -94,11 +94,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase   | Status    |
 | ----------- | ------- | --------- |
 | AUTH-01     | Phase 4 | Complete  |
-| AUTH-02     | Phase 4 | Pending   |
+| AUTH-02     | Phase 4 | Complete  |
 | AUTH-03     | Phase 1 | Complete  |
 | AUTH-04     | Phase 4 | Complete  |
 | AUTH-05     | Phase 1 | Completed |
-| AUTH-06     | Phase 4 | Pending   |
+| AUTH-06     | Phase 4 | Complete  |
 | AUTH-07     | Phase 4 | Complete  |
 | AUTHZ-01    | Phase 1 | Complete  |
 | AUTHZ-02    | Phase 3 | Complete  |

@@ -79,6 +79,9 @@ Recent decisions affecting current work:
 - [Phase 04-01]: redirect() placed after try/catch block — NEXT_REDIRECT errors cannot be caught inside try/catch
 - [Phase 04-01]: signIn() called with redirect:false to prevent Auth.js from internally throwing NEXT_REDIRECT, then redirect manually
 - [Phase 04-01]: SessionProvider wraps outermost Providers layer so useSession() is available to all client components
+- [04-02]: SubmitButton extracted as separate component — useFormStatus must be used inside a component rendered within <form>
+- [04-02]: (auth) route group layout completely separate from dashboard layout — no sidebar/header at /login
+- [04-02]: brightness-0 invert Tailwind filter inverts dark logo SVG for display on dark (#08080a) left panel
 - [Phase 04]: form action={logoutAction} pattern used in client component — avoids onClick handlers, correct server action calling convention
 - [04-03]: RegisterForm mirrors LoginForm — SubmitButton extracted as child component inside form so useFormStatus works correctly
 - [04-03]: confirmPassword inline error driven by registerSchema Zod validation; duplicate email error shown as fieldErrors.email
@@ -101,5 +104,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 04-03-PLAN.md (register page and RegisterForm client component)
+Stopped at: Completed 04-02-PLAN.md (auth layout + login page + LoginForm client component)
 Resume file: None

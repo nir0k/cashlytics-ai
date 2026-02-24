@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { APP_VERSION } from '@/lib/version';
+import { APP_VERSION } from "@/lib/version";
 
 import {
   LayoutDashboard,
@@ -14,7 +14,8 @@ import {
   ArrowRightLeft,
   FolderOpen,
   FileText,
-} from 'lucide-react';
+  LogOut,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -27,14 +28,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
-import { useTranslations } from 'next-intl';
-import { cn } from '@/lib/utils';
-import type { LucideIcon } from 'lucide-react';
+} from "@/components/ui/sidebar";
+import { logoutAction } from "@/actions/auth-actions";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
   titleKey: string;
@@ -43,24 +45,24 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { titleKey: 'dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { titleKey: 'overview', url: '/overview', icon: PieChart },
-  { titleKey: 'expenses', url: '/expenses', icon: Wallet },
-  { titleKey: 'income', url: '/income', icon: TrendingUp },
-  { titleKey: 'transfers', url: '/transfers', icon: ArrowRightLeft },
-  { titleKey: 'categories', url: '/categories', icon: FolderOpen },
-  { titleKey: 'documents', url: '/documents', icon: FileText },
-  { titleKey: 'accounts', url: '/accounts', icon: Building2 },
-  { titleKey: 'analytics', url: '/analytics', icon: PieChart },
+  { titleKey: "dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { titleKey: "overview", url: "/overview", icon: PieChart },
+  { titleKey: "expenses", url: "/expenses", icon: Wallet },
+  { titleKey: "income", url: "/income", icon: TrendingUp },
+  { titleKey: "transfers", url: "/transfers", icon: ArrowRightLeft },
+  { titleKey: "categories", url: "/categories", icon: FolderOpen },
+  { titleKey: "documents", url: "/documents", icon: FileText },
+  { titleKey: "accounts", url: "/accounts", icon: Building2 },
+  { titleKey: "analytics", url: "/analytics", icon: PieChart },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { titleKey: 'settings', url: '/settings', icon: Settings },
-  { titleKey: 'assistant', url: '/assistant', icon: Bot },
+  { titleKey: "settings", url: "/settings", icon: Settings },
+  { titleKey: "assistant", url: "/assistant", icon: Bot },
 ];
 
 function NavItemButton({ item, isActive }: { item: NavItem; isActive: boolean }) {
-  const t = useTranslations('nav');
+  const t = useTranslations("nav");
   const Icon = item.icon;
 
   return (
@@ -68,32 +70,31 @@ function NavItemButton({ item, isActive }: { item: NavItem; isActive: boolean })
       asChild
       isActive={isActive}
       className={cn(
-        'group relative rounded-xl h-10 transition-all duration-200 font-medium text-sm',
+        "group relative h-10 rounded-xl text-sm font-medium transition-all duration-200",
         isActive
-          ? 'bg-gradient-to-r from-amber-400/[0.15] to-amber-400/[0.06] text-amber-600 dark:text-amber-400 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.22),0_0_16px_rgba(245,158,11,0.08)]'
-          : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.05]'
+          ? "bg-gradient-to-r from-amber-400/[0.15] to-amber-400/[0.06] text-amber-600 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.22),0_0_16px_rgba(245,158,11,0.08)] dark:text-amber-400"
+          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
       )}
     >
       <Link href={item.url} className="flex items-center gap-3 px-3">
         <div
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg shrink-0 transition-all duration-200',
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
             isActive
-              ? 'bg-gradient-to-br from-amber-400/[0.22] to-amber-500/[0.08]'
-              : 'bg-transparent group-hover:bg-white/[0.06]'
+              ? "bg-gradient-to-br from-amber-400/[0.22] to-amber-500/[0.08]"
+              : "bg-transparent group-hover:bg-white/[0.06]"
           )}
         >
           <Icon
             className={cn(
-              'h-4 w-4 transition-all duration-200',
-              isActive ? 'text-amber-500 dark:text-amber-400' : 'text-muted-foreground group-hover:text-foreground'
+              "h-4 w-4 transition-all duration-200",
+              isActive
+                ? "text-amber-500 dark:text-amber-400"
+                : "text-muted-foreground group-hover:text-foreground"
             )}
           />
         </div>
-        <span
-          className="font-medium tracking-tight"
-          style={{ fontFamily: 'var(--font-jakarta)' }}
-        >
+        <span className="font-medium tracking-tight" style={{ fontFamily: "var(--font-jakarta)" }}>
           {t(item.titleKey)}
         </span>
         {isActive && (
@@ -106,7 +107,7 @@ function NavItemButton({ item, isActive }: { item: NavItem; isActive: boolean })
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const tCommon = useTranslations('common');
+  const tCommon = useTranslations("common");
   const { setOpenMobile } = useSidebar();
 
   useEffect(() => {
@@ -116,13 +117,13 @@ export function AppSidebar() {
   return (
     <Sidebar
       className={cn(
-        'border-r border-border/50 dark:border-white/[0.06]',
-        'dark:bg-[rgba(12,11,14,0.97)] backdrop-blur-2xl'
+        "border-border/50 border-r dark:border-white/[0.06]",
+        "backdrop-blur-2xl dark:bg-[rgba(12,11,14,0.97)]"
       )}
     >
       {/* Brand Header */}
-      <SidebarHeader className="border-b border-border/40 dark:border-white/[0.05] px-5 py-5">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
+      <SidebarHeader className="border-border/40 border-b px-5 py-5 dark:border-white/[0.05]">
+        <Link href="/dashboard" className="group flex items-center gap-3">
           <Image
             src="/logo.svg"
             alt="Cashlytics"
@@ -137,7 +138,7 @@ export function AppSidebar() {
       <SidebarContent className="px-3 py-4">
         <SidebarGroup>
           {/* Section label */}
-          <div className="separator-label text-[10px] tracking-[0.15em] mb-2 px-2 py-1">
+          <div className="separator-label mb-2 px-2 py-1 text-[10px] tracking-[0.15em]">
             Navigation
           </div>
 
@@ -147,7 +148,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.titleKey}>
                   <NavItemButton
                     item={item}
-                    isActive={pathname === item.url || pathname.startsWith(item.url + '/')}
+                    isActive={pathname === item.url || pathname.startsWith(item.url + "/")}
                   />
                 </SidebarMenuItem>
               ))}
@@ -157,26 +158,37 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* Footer */}
-      <SidebarFooter className="border-t border-border/40 dark:border-white/[0.05] px-3 py-4">
-        <div className="separator-label text-[10px] tracking-[0.15em] mb-2 px-2">
-          Tools
-        </div>
+      <SidebarFooter className="border-border/40 border-t px-3 py-4 dark:border-white/[0.05]">
+        <div className="separator-label mb-2 px-2 text-[10px] tracking-[0.15em]">Tools</div>
         <SidebarMenu className="space-y-0.5">
           {bottomNavItems.map((item) => (
             <SidebarMenuItem key={item.titleKey}>
               <NavItemButton
                 item={item}
-                isActive={pathname === item.url || pathname.startsWith(item.url + '/')}
+                isActive={pathname === item.url || pathname.startsWith(item.url + "/")}
               />
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
 
+        {/* Logout button */}
+        <form action={logoutAction} className="mt-2">
+          <button
+            type="submit"
+            className="group text-muted-foreground/70 hover:text-foreground flex h-10 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition-all duration-200 hover:bg-white/[0.05]"
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-transparent transition-all duration-200 group-hover:bg-white/[0.06]">
+              <LogOut className="h-4 w-4" />
+            </div>
+            <span style={{ fontFamily: "var(--font-jakarta)" }}>Sign out</span>
+          </button>
+        </form>
+
         {/* Version badge */}
-        <div className="mt-4 mx-2 px-3 py-2 rounded-xl bg-white/3 dark:bg-white/[0.03] border border-white/5 dark:border-white/[0.05]">
+        <div className="mx-2 mt-4 rounded-xl border border-white/5 bg-white/3 px-3 py-2 dark:border-white/[0.05] dark:bg-white/[0.03]">
           <p
-            className="text-[10px] text-muted-foreground/40 tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-jakarta)' }}
+            className="text-muted-foreground/40 text-[10px] tracking-widest uppercase"
+            style={{ fontFamily: "var(--font-jakarta)" }}
           >
             Version {APP_VERSION}
           </p>

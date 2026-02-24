@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 3 of 5 (Server Actions Refactor)
-Plan: 4 of 5 in current phase
-Status: In progress
-Last activity: 2026-02-24 — 03-04 complete (transfer/conversation/document actions refactored with requireAuth, bidirectional FK validation, and userId filtering)
+Plan: 5 of 5 in current phase (COMPLETE)
+Status: Phase complete
+Last activity: 2026-02-24 — 03-05 complete (search/forecast actions refactored with requireAuth and userId filtering)
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 8 min
-- Total execution time: 0.9 hours
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
@@ -30,13 +30,13 @@ Progress: [████████░░] 80%
 | --------------------------- | ----- | ----- | -------- |
 | 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
 | 2. Database Migration       | 3     | 4     | 16 min   |
-| 3. Server Actions Refactor  | 4     | 5     | 3 min    |
+| 3. Server Actions Refactor  | 5     | 5     | 4 min    |
 | 4. Auth UI Components       | 0     | 4     | -        |
 | 5. Registration Mode Logic  | 0     | 3     | -        |
 
 **Recent Trend:**
 
-- Last 5 plans: 03-04 (4 min), 03-02 (3 min), 03-01 (2 min), 02-04 (5 min), 02-02 (23 min)
+- Last 5 plans: 03-05 (8 min), 03-04 (4 min), 03-02 (3 min), 03-01 (2 min), 02-04 (5 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -70,6 +70,9 @@ Recent decisions affecting current work:
 - [03-04]: updateTransfer/deleteTransfer return error instead of throw when transfer not found (avoids stack trace exposure)
 - [03-04]: saveMessage/getMessages verify conversation ownership before acting (UUID-guessing prevention)
 - [03-04]: Route handler /api/documents uses auth() directly, not requireAuth — route handlers return NextResponse not ApiResponse
+- [03-05]: search-actions.ts returns empty array on auth failure (graceful UX degradation)
+- [03-05]: forecast-actions.ts returns error on auth failure (explicit feedback for forecast)
+- [03-05]: All 5 search queries scoped to userId (accounts, expenses, dailyExpenses, incomes, transfers)
 
 ### Pending Todos
 
@@ -82,5 +85,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 03-03-PLAN.md — expense/income/daily-expense actions refactored with requireAuth, userId filtering, and FK validation
+Stopped at: Completed 03-05-PLAN.md — search/forecast actions refactored, Phase 3 complete
 Resume file: None

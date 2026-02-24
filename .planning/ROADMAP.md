@@ -89,7 +89,7 @@ Plans:
 **Goal**: Users can register, login, and logout through a complete UI flow
 **Depends on**: Phase 3
 **Requirements**: AUTH-01, AUTH-02, AUTH-04, AUTH-06, AUTH-07, INFRA-04
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 
 **Success Criteria** (what must be TRUE):
 
@@ -101,10 +101,10 @@ Plans:
 
 Plans:
 
-- [ ] 04-01: Create login page with form and server action
-- [ ] 04-02: Create register page with form and server action
-- [ ] 04-03: Add SessionProvider to root layout
-- [ ] 04-04: Implement logout functionality in navigation
+- [ ] 04-01-PLAN.md — Auth validation schema + server actions (login/register/logout) + SessionProvider — Wave 1
+- [ ] 04-02-PLAN.md — (auth) route group layout + login page + LoginForm component — Wave 2 (depends on 04-01)
+- [ ] 04-03-PLAN.md — Register page + RegisterForm component — Wave 2 (depends on 04-01, parallel to 04-02)
+- [ ] 04-04-PLAN.md — Logout button in sidebar footer + end-to-end verification — Wave 2 (depends on 04-01, parallel to 04-02/03)
 
 ### Phase 5: Registration Mode Logic
 

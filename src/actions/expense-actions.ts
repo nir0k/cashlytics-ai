@@ -1,11 +1,20 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { expenses, dailyExpenses, accounts } from '@/lib/db/schema';
-import { eq, and, gte, lte, desc, sql, ilike } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import type { ApiResponse, Expense, NewExpense, DailyExpense, NewDailyExpense, ExpenseWithDetails, DailyExpenseWithDetails } from '@/types/database';
-import { logger } from '@/lib/logger';
+import { db } from "@/lib/db";
+import { expenses, dailyExpenses, accounts, categories } from "@/lib/db/schema";
+import { eq, and, gte, lte, desc, sql, ilike } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import type {
+  ApiResponse,
+  Expense,
+  NewExpense,
+  DailyExpense,
+  NewDailyExpense,
+  ExpenseWithDetails,
+  DailyExpenseWithDetails,
+} from "@/types/database";
+import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function getExpenses(filters?: {
   accountId?: string;
@@ -15,7 +24,13 @@ export async function getExpenses(filters?: {
   endDate?: Date;
 }): Promise<ApiResponse<ExpenseWithDetails[]>> {
   try {
-    const conditions = [];
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    const conditions = [eq(expenses.userId, userId)];
     if (filters?.accountId) {
       conditions.push(eq(expenses.accountId, filters.accountId));
     }
@@ -33,7 +48,7 @@ export async function getExpenses(filters?: {
     }
 
     const result = await db.query.expenses.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
+      where: and(...conditions),
       with: {
         account: true,
         category: true,
@@ -43,14 +58,49 @@ export async function getExpenses(filters?: {
 
     return { success: true, data: result as ExpenseWithDetails[] };
   } catch (error) {
-    logger.error('Failed to fetch expenses', 'getExpenses', error);
-    return { success: false, error: 'Periodische Ausgaben konnten nicht geladen werden.' };
+    logger.error("Failed to fetch expenses", "getExpenses", error);
+    return { success: false, error: "Periodische Ausgaben konnten nicht geladen werden." };
   }
 }
 
-export async function createExpense(data: NewExpense): Promise<ApiResponse<Expense>> {
+export async function createExpense(
+  data: Omit<NewExpense, "userId">
+): Promise<ApiResponse<Expense>> {
   try {
-    const [expense] = await db.insert(expenses).values(data).returning();
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    // FK Validation: accountId must belong to authenticated user (DATA-10)
+    if (data.accountId) {
+      const [ownedAccount] = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, userId)))
+        .limit(1);
+      if (!ownedAccount) {
+        return { success: false, error: "Konto nicht gefunden oder kein Zugriff." };
+      }
+    }
+
+    // FK Validation: categoryId must belong to authenticated user (DATA-10)
+    if (data.categoryId) {
+      const [ownedCategory] = await db
+        .select({ id: categories.id })
+        .from(categories)
+        .where(and(eq(categories.id, data.categoryId), eq(categories.userId, userId)))
+        .limit(1);
+      if (!ownedCategory) {
+        return { success: false, error: "Kategorie nicht gefunden oder kein Zugriff." };
+      }
+    }
+
+    const [expense] = await db
+      .insert(expenses)
+      .values({ ...data, userId })
+      .returning();
 
     // Kontostand aktualisieren (abziehen) mit SQL
     if (data.accountId) {
@@ -62,13 +112,13 @@ export async function createExpense(data: NewExpense): Promise<ApiResponse<Expen
         .where(eq(accounts.id, data.accountId));
     }
 
-    revalidatePath('/expenses');
-    revalidatePath('/dashboard');
-    revalidatePath('/accounts');
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
+    revalidatePath("/accounts");
     return { success: true, data: expense };
   } catch (error) {
-    logger.error('Failed to create expense', 'createExpense', error);
-    return { success: false, error: 'Failed to create expense' };
+    logger.error("Failed to create expense", "createExpense", error);
+    return { success: false, error: "Ausgabe konnte nicht erstellt werden." };
   }
 }
 
@@ -77,23 +127,42 @@ export async function updateExpense(
   data: Partial<NewExpense>
 ): Promise<ApiResponse<Expense>> {
   try {
-    const [expense] = await db.update(expenses).set(data).where(eq(expenses.id, id)).returning();
-    if (!expense) {
-      return { success: false, error: 'Expense not found' };
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
     }
-    revalidatePath('/expenses');
-    revalidatePath('/dashboard');
+    const { userId } = authResult;
+
+    const [expense] = await db
+      .update(expenses)
+      .set(data)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+      .returning();
+    if (!expense) {
+      return { success: false, error: "Ausgabe nicht gefunden." };
+    }
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
     return { success: true, data: expense };
   } catch (error) {
-    logger.error('Failed to update expense', 'updateExpense', error);
-    return { success: false, error: 'Failed to update expense' };
+    logger.error("Failed to update expense", "updateExpense", error);
+    return { success: false, error: "Ausgabe konnte nicht aktualisiert werden." };
   }
 }
 
 export async function deleteExpense(id: string): Promise<ApiResponse<void>> {
   try {
-    // Erst die Expense holen um den Betrag und Account zu kennen
-    const [expense] = await db.select().from(expenses).where(eq(expenses.id, id));
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    // Erst die Expense holen um den Betrag und Account zu kennen (userId filter ensures ownership)
+    const [expense] = await db
+      .select()
+      .from(expenses)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
     if (expense && expense.accountId) {
       // Kontostand aktualisieren (zurückbuchen)
       await db
@@ -104,14 +173,14 @@ export async function deleteExpense(id: string): Promise<ApiResponse<void>> {
         .where(eq(accounts.id, expense.accountId));
     }
 
-    await db.delete(expenses).where(eq(expenses.id, id));
-    revalidatePath('/expenses');
-    revalidatePath('/dashboard');
-    revalidatePath('/accounts');
+    await db.delete(expenses).where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
+    revalidatePath("/accounts");
     return { success: true, data: undefined };
   } catch (error) {
-    logger.error('Failed to delete expense', 'deleteExpense', error);
-    return { success: false, error: 'Failed to delete expense' };
+    logger.error("Failed to delete expense", "deleteExpense", error);
+    return { success: false, error: "Ausgabe konnte nicht gelöscht werden." };
   }
 }
 
@@ -123,7 +192,13 @@ export async function getDailyExpenses(filters?: {
   endDate?: Date;
 }): Promise<ApiResponse<DailyExpenseWithDetails[]>> {
   try {
-    const conditions = [];
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    const conditions = [eq(dailyExpenses.userId, userId)];
     if (filters?.accountId) {
       conditions.push(eq(dailyExpenses.accountId, filters.accountId));
     }
@@ -141,7 +216,7 @@ export async function getDailyExpenses(filters?: {
     }
 
     const result = await db.query.dailyExpenses.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
+      where: and(...conditions),
       with: {
         account: true,
         category: true,
@@ -151,14 +226,37 @@ export async function getDailyExpenses(filters?: {
 
     return { success: true, data: result as DailyExpenseWithDetails[] };
   } catch (error) {
-    logger.error('Failed to fetch daily expenses', 'getDailyExpenses', error);
-    return { success: false, error: 'Tagesausgaben konnten nicht geladen werden.' };
+    logger.error("Failed to fetch daily expenses", "getDailyExpenses", error);
+    return { success: false, error: "Tagesausgaben konnten nicht geladen werden." };
   }
 }
 
-export async function createDailyExpense(data: NewDailyExpense): Promise<ApiResponse<DailyExpense>> {
+export async function createDailyExpense(
+  data: Omit<NewDailyExpense, "userId">
+): Promise<ApiResponse<DailyExpense>> {
   try {
-    const [expense] = await db.insert(dailyExpenses).values(data).returning();
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    // FK Validation: accountId must belong to authenticated user (DATA-10)
+    if (data.accountId) {
+      const [ownedAccount] = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, userId)))
+        .limit(1);
+      if (!ownedAccount) {
+        return { success: false, error: "Konto nicht gefunden oder kein Zugriff." };
+      }
+    }
+
+    const [expense] = await db
+      .insert(dailyExpenses)
+      .values({ ...data, userId })
+      .returning();
 
     // Kontostand aktualisieren (abziehen)
     if (data.accountId) {
@@ -170,13 +268,13 @@ export async function createDailyExpense(data: NewDailyExpense): Promise<ApiResp
         .where(eq(accounts.id, data.accountId));
     }
 
-    revalidatePath('/expenses');
-    revalidatePath('/dashboard');
-    revalidatePath('/accounts');
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
+    revalidatePath("/accounts");
     return { success: true, data: expense };
   } catch (error) {
-    logger.error('Failed to create daily expense', 'createDailyExpense', error);
-    return { success: false, error: 'Failed to create daily expense' };
+    logger.error("Failed to create daily expense", "createDailyExpense", error);
+    return { success: false, error: "Tägliche Ausgabe konnte nicht erstellt werden." };
   }
 }
 
@@ -185,22 +283,41 @@ export async function updateDailyExpense(
   data: Partial<NewDailyExpense>
 ): Promise<ApiResponse<DailyExpense>> {
   try {
-    const [expense] = await db.update(dailyExpenses).set(data).where(eq(dailyExpenses.id, id)).returning();
-    if (!expense) {
-      return { success: false, error: 'Daily expense not found' };
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
     }
-    revalidatePath('/expenses');
-    revalidatePath('/dashboard');
+    const { userId } = authResult;
+
+    const [expense] = await db
+      .update(dailyExpenses)
+      .set(data)
+      .where(and(eq(dailyExpenses.id, id), eq(dailyExpenses.userId, userId)))
+      .returning();
+    if (!expense) {
+      return { success: false, error: "Tägliche Ausgabe nicht gefunden." };
+    }
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
     return { success: true, data: expense };
   } catch (error) {
-    logger.error('Failed to update daily expense', 'updateDailyExpense', error);
-    return { success: false, error: 'Failed to update daily expense' };
+    logger.error("Failed to update daily expense", "updateDailyExpense", error);
+    return { success: false, error: "Tägliche Ausgabe konnte nicht aktualisiert werden." };
   }
 }
 
 export async function deleteDailyExpense(id: string): Promise<ApiResponse<void>> {
   try {
-    const [expense] = await db.select().from(dailyExpenses).where(eq(dailyExpenses.id, id));
+    const authResult = await requireAuth();
+    if (authResult.error) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const { userId } = authResult;
+
+    const [expense] = await db
+      .select()
+      .from(dailyExpenses)
+      .where(and(eq(dailyExpenses.id, id), eq(dailyExpenses.userId, userId)));
     if (expense && expense.accountId) {
       await db
         .update(accounts)
@@ -210,13 +327,15 @@ export async function deleteDailyExpense(id: string): Promise<ApiResponse<void>>
         .where(eq(accounts.id, expense.accountId));
     }
 
-    await db.delete(dailyExpenses).where(eq(dailyExpenses.id, id));
-    revalidatePath('/expenses');
-    revalidatePath('/dashboard');
-    revalidatePath('/accounts');
+    await db
+      .delete(dailyExpenses)
+      .where(and(eq(dailyExpenses.id, id), eq(dailyExpenses.userId, userId)));
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
+    revalidatePath("/accounts");
     return { success: true, data: undefined };
   } catch (error) {
-    logger.error('Failed to delete daily expense', 'deleteDailyExpense', error);
-    return { success: false, error: 'Failed to delete daily expense' };
+    logger.error("Failed to delete daily expense", "deleteDailyExpense", error);
+    return { success: false, error: "Tägliche Ausgabe konnte nicht gelöscht werden." };
   }
 }

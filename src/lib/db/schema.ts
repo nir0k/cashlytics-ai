@@ -97,7 +97,9 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const accounts = pgTable("accounts", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   name: text("name").notNull(),
   type: accountTypeEnum("type").notNull(),
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -107,7 +109,9 @@ export const accounts = pgTable("accounts", {
 
 export const categories = pgTable("categories", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   name: text("name").notNull(),
   icon: text("icon"),
   color: text("color"),
@@ -116,7 +120,9 @@ export const categories = pgTable("categories", {
 
 export const expenses = pgTable("expenses", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   categoryId: uuid("category_id").references(() => categories.id),
   name: text("name").notNull(),
@@ -132,7 +138,9 @@ export const expenses = pgTable("expenses", {
 
 export const incomes = pgTable("incomes", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   source: text("source").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
@@ -145,7 +153,9 @@ export const incomes = pgTable("incomes", {
 
 export const dailyExpenses = pgTable("daily_expenses", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   categoryId: uuid("category_id").references(() => categories.id),
   description: text("description").notNull(),
@@ -157,7 +167,9 @@ export const dailyExpenses = pgTable("daily_expenses", {
 
 export const transfers = pgTable("transfers", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   sourceAccountId: uuid("source_account_id")
     .references(() => accounts.id, { onDelete: "cascade" })
     .notNull(),
@@ -174,7 +186,9 @@ export const transfers = pgTable("transfers", {
 
 export const documents = pgTable("documents", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   expenseId: uuid("expense_id").references(() => expenses.id, { onDelete: "cascade" }),
   dailyExpenseId: uuid("daily_expense_id").references(() => dailyExpenses.id, {
     onDelete: "cascade",
@@ -284,7 +298,9 @@ export const documentsRelations = relations(documents, ({ one }) => ({
 
 export const conversations = pgTable("conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   title: text("title").notNull().default("Neuer Chat"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

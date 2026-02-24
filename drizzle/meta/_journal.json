@@ -36,6 +36,13 @@
       "when": 1771938401888,
       "tag": "0004_slimy_korath",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771941364786,
+      "tag": "0005_high_pandemic",
+      "breakpoints": true
     }
   ]
 }

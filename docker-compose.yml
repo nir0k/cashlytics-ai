@@ -1,6 +1,26 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cashlytics-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - AUTH_SECRET=${AUTH_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+
   postgres:
     image: postgres:16-alpine
     container_name: cashlytics-postgres

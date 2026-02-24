@@ -13,7 +13,7 @@ This roadmap transforms Cashlytics from a single-user self-hosted finance app in
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Core Auth Infrastructure** - Install and configure Auth.js v5 with Drizzle adapter, implement route protection via proxy.ts
+- [x] **Phase 1: Core Auth Infrastructure** - Install and configure Auth.js v5 with Drizzle adapter, implement route protection via proxy.ts
 - [ ] **Phase 2: Database Migration** - Add userId FK to all tables, migrate existing data to single user
 - [ ] **Phase 3: Server Actions Refactor** - Update all server actions to verify session and filter by userId
 - [ ] **Phase 4: Auth UI Components** - Build login/register pages with session provider integration
@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 
-- [ ] 01-01: Install and configure Auth.js v5 with Drizzle adapter — Wave 1
+- [x] 01-01: Install and configure Auth.js v5 with Drizzle adapter — Wave 1
 - [ ] 01-02: Implement proxy.ts route protection — Wave 2 (depends on 01-01)
 - [ ] 01-03: Verify Docker build and configure AUTH_SECRET — Wave 3 (depends on 01-01, 01-02)
 
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase                       | Plans Complete | Status      | Completed |
 | --------------------------- | -------------- | ----------- | --------- |
-| 1. Core Auth Infrastructure | 0/3            | Not started | -         |
+| 1. Core Auth Infrastructure | 1/3            | In progress | -         |
 | 2. Database Migration       | 0/4            | Not started | -         |
 | 3. Server Actions Refactor  | 0/5            | Not started | -         |
 | 4. Auth UI Components       | 0/4            | Not started | -         |

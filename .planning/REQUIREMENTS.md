@@ -11,7 +11,7 @@
 - [ ] **AUTH-02**: User kann sich mit Email und Passwort einloggen
 - [ ] **AUTH-03**: User bleibt über Browser-Refresh eingeloggt (Session Persistenz)
 - [ ] **AUTH-04**: User kann sich ausloggen
-- [ ] **AUTH-05**: Passwörter werden mit bcrypt gehasht gespeichert
+- [x] **AUTH-05**: Passwörter werden mit bcrypt gehasht gespeichert
 - [ ] **AUTH-06**: Login-Seite ist unter /login erreichbar
 - [ ] **AUTH-07**: Registrierungs-Seite ist unter /register erreichbar
 
@@ -50,11 +50,11 @@
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Auth.js v5 mit Drizzle Adapter konfiguriert
+- [x] **INFRA-01**: Auth.js v5 mit Drizzle Adapter konfiguriert
 - [ ] **INFRA-02**: proxy.ts (Next.js 16) für Route Protection
-- [ ] **INFRA-03**: /api/auth/[...nextauth] Route Handler
+- [x] **INFRA-03**: /api/auth/[...nextauth] Route Handler
 - [ ] **INFRA-04**: SessionProvider im Root Layout
-- [ ] **INFRA-05**: TypeScript Types für erweiterte Session (user.id)
+- [x] **INFRA-05**: TypeScript Types für erweiterte Session (user.id)
 - [ ] **INFRA-06**: Dockerfile angepasst (keine Änderungen nötig, nur Verification)
 - [ ] **INFRA-07**: docker-compose.yml angepasst (keine Änderungen nötig, nur Verification)
 
@@ -91,43 +91,43 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase   | Status  |
-| ----------- | ------- | ------- |
-| AUTH-01     | Phase 4 | Pending |
-| AUTH-02     | Phase 4 | Pending |
-| AUTH-03     | Phase 1 | Pending |
-| AUTH-04     | Phase 4 | Pending |
-| AUTH-05     | Phase 1 | Pending |
-| AUTH-06     | Phase 4 | Pending |
-| AUTH-07     | Phase 4 | Pending |
-| AUTHZ-01    | Phase 1 | Pending |
-| AUTHZ-02    | Phase 3 | Pending |
-| AUTHZ-03    | Phase 3 | Pending |
-| DATA-01     | Phase 3 | Pending |
-| DATA-02     | Phase 2 | Pending |
-| DATA-03     | Phase 2 | Pending |
-| DATA-04     | Phase 2 | Pending |
-| DATA-05     | Phase 2 | Pending |
-| DATA-06     | Phase 2 | Pending |
-| DATA-07     | Phase 2 | Pending |
-| DATA-08     | Phase 2 | Pending |
-| DATA-09     | Phase 2 | Pending |
-| DATA-10     | Phase 3 | Pending |
-| MODE-01     | Phase 5 | Pending |
-| MODE-02     | Phase 5 | Pending |
-| MODE-03     | Phase 5 | Pending |
-| MODE-04     | Phase 5 | Pending |
-| MIG-01      | Phase 2 | Pending |
-| MIG-02      | Phase 2 | Pending |
-| MIG-03      | Phase 2 | Pending |
-| MIG-04      | Phase 2 | Pending |
-| INFRA-01    | Phase 1 | Pending |
-| INFRA-02    | Phase 1 | Pending |
-| INFRA-03    | Phase 1 | Pending |
-| INFRA-04    | Phase 4 | Pending |
-| INFRA-05    | Phase 1 | Pending |
-| INFRA-06    | Phase 1 | Pending |
-| INFRA-07    | Phase 1 | Pending |
+| Requirement | Phase   | Status    |
+| ----------- | ------- | --------- |
+| AUTH-01     | Phase 4 | Pending   |
+| AUTH-02     | Phase 4 | Pending   |
+| AUTH-03     | Phase 1 | Pending   |
+| AUTH-04     | Phase 4 | Pending   |
+| AUTH-05     | Phase 1 | Completed |
+| AUTH-06     | Phase 4 | Pending   |
+| AUTH-07     | Phase 4 | Pending   |
+| AUTHZ-01    | Phase 1 | Pending   |
+| AUTHZ-02    | Phase 3 | Pending   |
+| AUTHZ-03    | Phase 3 | Pending   |
+| DATA-01     | Phase 3 | Pending   |
+| DATA-02     | Phase 2 | Pending   |
+| DATA-03     | Phase 2 | Pending   |
+| DATA-04     | Phase 2 | Pending   |
+| DATA-05     | Phase 2 | Pending   |
+| DATA-06     | Phase 2 | Pending   |
+| DATA-07     | Phase 2 | Pending   |
+| DATA-08     | Phase 2 | Pending   |
+| DATA-09     | Phase 2 | Pending   |
+| DATA-10     | Phase 3 | Pending   |
+| MODE-01     | Phase 5 | Pending   |
+| MODE-02     | Phase 5 | Pending   |
+| MODE-03     | Phase 5 | Pending   |
+| MODE-04     | Phase 5 | Pending   |
+| MIG-01      | Phase 2 | Pending   |
+| MIG-02      | Phase 2 | Pending   |
+| MIG-03      | Phase 2 | Pending   |
+| MIG-04      | Phase 2 | Pending   |
+| INFRA-01    | Phase 1 | Completed |
+| INFRA-02    | Phase 1 | Pending   |
+| INFRA-03    | Phase 1 | Completed |
+| INFRA-04    | Phase 4 | Pending   |
+| INFRA-05    | Phase 1 | Completed |
+| INFRA-06    | Phase 1 | Pending   |
+| INFRA-07    | Phase 1 | Pending   |
 
 **Coverage:**
 

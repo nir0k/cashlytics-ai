@@ -53,7 +53,7 @@
 - [x] **INFRA-01**: Auth.js v5 mit Drizzle Adapter konfiguriert
 - [x] **INFRA-02**: proxy.ts (Next.js 16) für Route Protection
 - [x] **INFRA-03**: /api/auth/[...nextauth] Route Handler
-- [ ] **INFRA-04**: SessionProvider im Root Layout
+- [x] **INFRA-04**: SessionProvider im Root Layout
 - [x] **INFRA-05**: TypeScript Types für erweiterte Session (user.id)
 - [x] **INFRA-06**: Dockerfile angepasst (keine Änderungen nötig, nur Verification)
 - [x] **INFRA-07**: docker-compose.yml angepasst (keine Änderungen nötig, nur Verification)
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-07     | Phase 2 | Complete  |
 | DATA-08     | Phase 2 | Complete  |
 | DATA-09     | Phase 2 | Complete  |
-| DATA-10     | Phase 3 | Complete |
+| DATA-10     | Phase 3 | Complete  |
 | MODE-01     | Phase 5 | Pending   |
 | MODE-02     | Phase 5 | Pending   |
 | MODE-03     | Phase 5 | Pending   |
@@ -124,7 +124,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-01    | Phase 1 | Completed |
 | INFRA-02    | Phase 1 | Complete  |
 | INFRA-03    | Phase 1 | Completed |
-| INFRA-04    | Phase 4 | Pending   |
+| INFRA-04    | Phase 4 | Complete  |
 | INFRA-05    | Phase 1 | Completed |
 | INFRA-06    | Phase 1 | Complete  |
 | INFRA-07    | Phase 1 | Complete  |

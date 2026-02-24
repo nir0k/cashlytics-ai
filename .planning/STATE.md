@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 4 of 5 (Auth UI Components)
-Plan: 0 of 4 in current phase
-Status: Ready to plan
-Last activity: 2026-02-24 — Phase 3 complete, transitioning to Phase 4
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-02-24 — Completed 04-01 auth server foundation
 
-Progress: [██████████] 60% (3/5 phases)
+Progress: [████████████] 65% (3/5 phases, 1/4 plans in phase 4)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [██████████] 60% (3/5 phases)
 
 - Last 5 plans: 03-05 (8 min), 03-04 (4 min), 03-02 (3 min), 03-01 (2 min), 02-04 (5 min)
 - Trend: Stable
+  | Phase 04 P01 | 2 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -73,10 +74,20 @@ Recent decisions affecting current work:
 - [03-05]: search-actions.ts returns empty array on auth failure (graceful UX degradation)
 - [03-05]: forecast-actions.ts returns error on auth failure (explicit feedback for forecast)
 - [03-05]: All 5 search queries scoped to userId (accounts, expenses, dailyExpenses, incomes, transfers)
+- [Phase 04-01]: redirect() placed after try/catch block — NEXT_REDIRECT errors cannot be caught inside try/catch
+- [Phase 04-01]: signIn() called with redirect:false to prevent Auth.js from internally throwing NEXT_REDIRECT, then redirect manually
+- [Phase 04-01]: SessionProvider wraps outermost Providers layer so useSession() is available to all client components
 
 ### Pending Todos
 
 None yet.
+
+### Key Decisions (04-01)
+
+- redirect() placed after try/catch block — NEXT_REDIRECT errors cannot be caught inside try/catch
+- signIn() called with redirect:false to prevent Auth.js from internally throwing NEXT_REDIRECT
+- registerAction auto-logins after successful registration, falls back to /login redirect on AuthError
+- SessionProvider wraps outermost layer of Providers, making session available to all client components
 
 ### Blockers/Concerns
 
@@ -85,5 +96,5 @@ None - Migration 0004 applied successfully.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 3 complete, ready for Phase 4 planning
+Stopped at: Completed 04-01-PLAN.md (auth server foundation — auth-actions.ts, registerSchema, SessionProvider)
 Resume file: None

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-export const proxy = auth((req) => {
+export default auth((req) => {
   // req.auth contains the session (or null if not authenticated)
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
@@ -24,7 +24,7 @@ export const proxy = auth((req) => {
   if (pathname === "/login" || pathname === "/register") {
     // If logged in, redirect to dashboard (avoid showing login page when authenticated)
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
   }

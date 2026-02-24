@@ -46,20 +46,21 @@ Plans:
 **Goal**: All data tables support multi-user isolation with existing data assigned to single user
 **Depends on**: Phase 1
 **Requirements**: DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, DATA-07, DATA-08, DATA-09, MIG-01, MIG-02, MIG-03, MIG-04
+**Plans**: 4 plans in 2 waves
+
 **Success Criteria** (what must be TRUE):
 
 1. All 8 data tables have userId FK column (nullable during migration, NOT NULL after backfill)
 2. All existing rows are assigned to the user defined by SINGLE_USER_EMAIL
 3. Auth.js tables (users, accounts, sessions, verificationTokens) exist in schema
 4. seed-demo.sql includes userId for all demo data records
-   **Plans**: TBD
 
 Plans:
 
-- [ ] 02-01: Create Auth.js schema tables (users, accounts, sessions, verificationTokens)
-- [ ] 02-02: Add userId FK to all existing tables
-- [ ] 02-03: Create data migration script to backfill existing data
-- [ ] 02-04: Update seed-demo.sql with userId values
+- [ ] 02-01-PLAN.md — Add Auth.js schema tables (auth_accounts, auth_sessions, auth_verification_tokens) with prefixed names — Wave 1
+- [ ] 02-02-PLAN.md — Add nullable userId FK to all 8 data tables — Wave 1
+- [ ] 02-03-PLAN.md — Backfill existing data to SINGLE_USER_EMAIL user, make userId NOT NULL — Wave 2 (depends on 02-01, 02-02)
+- [ ] 02-04-PLAN.md — Update seed-demo.sql with userId values — Wave 2 (depends on 02-01)
 
 ### Phase 3: Server Actions Refactor
 

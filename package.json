@@ -13,7 +13,8 @@
     "prepare": "husky",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate-userId": "tsx scripts/migrate-add-userId.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [

@@ -29,6 +29,13 @@
       "when": 1771850334477,
       "tag": "0003_chubby_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771938401888,
+      "tag": "0004_slimy_korath",
+      "breakpoints": true
     }
   ]
 }

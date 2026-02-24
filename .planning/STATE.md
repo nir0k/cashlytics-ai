@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 1 of 5 (Core Auth Infrastructure)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-24 — Completed 01-01 (Auth.js v5 configuration)
+Last activity: 2026-02-24 — Completed 01-02 (Route protection)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 14 min
-- Total execution time: 0.2 hours
+- Total plans completed: 2
+- Average duration: 9 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase                       | Plans | Total | Avg/Plan |
 | --------------------------- | ----- | ----- | -------- |
-| 1. Core Auth Infrastructure | 1     | 3     | 14 min   |
+| 1. Core Auth Infrastructure | 2     | 3     | 9 min    |
 | 2. Database Migration       | 0     | 4     | -        |
 | 3. Server Actions Refactor  | 0     | 5     | -        |
 | 4. Auth UI Components       | 0     | 4     | -        |
@@ -36,10 +36,8 @@ Progress: [██░░░░░░░░] 20%
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (14 min)
-- Trend: First plan completed
-
-_Updated after each plan completion_
+- Last 5 plans: 01-02 (3 min), 01-01 (14 min)
+- Trend: Accelerating
 
 ## Accumulated Context
 
@@ -52,6 +50,8 @@ Recent decisions affecting current work:
 - 01-01: JWT sessions required for Edge compatibility with proxy.ts (Next.js 16)
 - 01-01: bcrypt@6.0.0 pure JS for Docker-friendly builds
 - 01-01: Minimal users table added to schema to enable auth.ts compilation
+- 01-02: proxy.ts follows Next.js 16 naming convention (renamed from middleware.ts)
+- 01-02: Negative lookahead matcher excludes /api/auth, static assets, and public pages
 
 ### Pending Todos
 
@@ -64,5 +64,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 01-01-PLAN.md (Auth.js v5 configuration)
+Stopped at: Completed 01-02-PLAN.md (Route protection)
 Resume file: None

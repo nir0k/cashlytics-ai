@@ -17,7 +17,7 @@
 
 ### Authorization
 
-- [ ] **AUTHZ-01**: Unauthentifizierte User werden von geschützten Routen zu /login redirected
+- [x] **AUTHZ-01**: Unauthentifizierte User werden von geschützten Routen zu /login redirected
 - [ ] **AUTHZ-02**: Server Actions verifizieren Session vor jeder Mutation
 - [ ] **AUTHZ-03**: Server Actions verifizieren Session vor jedem Lesezugriff
 
@@ -51,7 +51,7 @@
 ### Infrastructure
 
 - [x] **INFRA-01**: Auth.js v5 mit Drizzle Adapter konfiguriert
-- [ ] **INFRA-02**: proxy.ts (Next.js 16) für Route Protection
+- [x] **INFRA-02**: proxy.ts (Next.js 16) für Route Protection
 - [x] **INFRA-03**: /api/auth/[...nextauth] Route Handler
 - [ ] **INFRA-04**: SessionProvider im Root Layout
 - [x] **INFRA-05**: TypeScript Types für erweiterte Session (user.id)
@@ -100,7 +100,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-05     | Phase 1 | Completed |
 | AUTH-06     | Phase 4 | Pending   |
 | AUTH-07     | Phase 4 | Pending   |
-| AUTHZ-01    | Phase 1 | Pending   |
+| AUTHZ-01    | Phase 1 | Complete  |
 | AUTHZ-02    | Phase 3 | Pending   |
 | AUTHZ-03    | Phase 3 | Pending   |
 | DATA-01     | Phase 3 | Pending   |
@@ -122,7 +122,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MIG-03      | Phase 2 | Pending   |
 | MIG-04      | Phase 2 | Pending   |
 | INFRA-01    | Phase 1 | Completed |
-| INFRA-02    | Phase 1 | Pending   |
+| INFRA-02    | Phase 1 | Complete  |
 | INFRA-03    | Phase 1 | Completed |
 | INFRA-04    | Phase 4 | Pending   |
 | INFRA-05    | Phase 1 | Completed |

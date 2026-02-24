@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { expenses, incomes, dailyExpenses, categories, accounts } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth/require-auth";
 import type {
   ApiResponse,
   MonthlyOverview,
@@ -44,6 +45,10 @@ export async function getMonthlyOverview(
   year: number,
   accountId?: string
 ): Promise<ApiResponse<MonthlyOverview>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const startDate = new Date(Date.UTC(year, month - 1, 1));
     const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
@@ -59,6 +64,7 @@ export async function getMonthlyOverview(
       .leftJoin(accounts, eq(expenses.accountId, accounts.id))
       .where(
         and(
+          eq(expenses.userId, userId),
           lte(expenses.startDate, endDate),
           sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()})`,
           accountId ? eq(expenses.accountId, accountId) : undefined
@@ -80,6 +86,7 @@ export async function getMonthlyOverview(
       .leftJoin(accounts, eq(incomes.accountId, accounts.id))
       .where(
         and(
+          eq(incomes.userId, userId),
           lte(incomes.startDate, endDate),
           accountId ? eq(incomes.accountId, accountId) : undefined
         )
@@ -97,6 +104,7 @@ export async function getMonthlyOverview(
       .from(dailyExpenses)
       .where(
         and(
+          eq(dailyExpenses.userId, userId),
           gte(dailyExpenses.date, startDate),
           lte(dailyExpenses.date, endDate),
           accountId ? eq(dailyExpenses.accountId, accountId) : undefined
@@ -153,6 +161,9 @@ export async function getMonthlyOverview(
 }
 
 export async function getForecast(months: number): Promise<ApiResponse<Forecast>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+
   try {
     const now = new Date();
 
@@ -206,6 +217,10 @@ export async function getCategoryBreakdown(
   endDate: Date,
   accountId?: string
 ): Promise<ApiResponse<CategoryBreakdown[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const categoryMap = new Map<
       string,
@@ -221,6 +236,7 @@ export async function getCategoryBreakdown(
       .leftJoin(categories, eq(dailyExpenses.categoryId, categories.id))
       .where(
         and(
+          eq(dailyExpenses.userId, userId),
           gte(dailyExpenses.date, startDate),
           lte(dailyExpenses.date, endDate),
           accountId ? eq(dailyExpenses.accountId, accountId) : undefined
@@ -248,6 +264,7 @@ export async function getCategoryBreakdown(
       .leftJoin(categories, eq(expenses.categoryId, categories.id))
       .where(
         and(
+          eq(expenses.userId, userId),
           lte(expenses.startDate, endDate),
           sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()})`,
           accountId ? eq(expenses.accountId, accountId) : undefined
@@ -279,7 +296,7 @@ export async function getCategoryBreakdown(
         category: c.category ?? {
           id: "uncategorized",
           name: "Ohne Kategorie",
-          userId: null,
+          userId: "system",
           icon: null,
           color: null,
           createdAt: new Date(),
@@ -299,6 +316,10 @@ export async function getCategoryBreakdown(
 export async function getNormalizedMonthlyExpenses(): Promise<
   ApiResponse<Array<{ expense: ExpenseWithDetails; monthlyAmount: number }>>
 > {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const expensesResult = await db
       .select({
@@ -308,7 +329,8 @@ export async function getNormalizedMonthlyExpenses(): Promise<
       })
       .from(expenses)
       .leftJoin(categories, eq(expenses.categoryId, categories.id))
-      .leftJoin(accounts, eq(expenses.accountId, accounts.id));
+      .leftJoin(accounts, eq(expenses.accountId, accounts.id))
+      .where(eq(expenses.userId, userId));
 
     const normalizedExpenses = expensesResult.map((r) => {
       const expenseWithDetails: ExpenseWithDetails = {
@@ -396,6 +418,10 @@ interface SavingsProgress {
 export async function getMonthlyTrend(
   months: number = 6
 ): Promise<ApiResponse<MonthlyTrendEntry[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const now = new Date();
     const monthSlots = Array.from({ length: months }, (_, i) => {
@@ -417,7 +443,7 @@ export async function getMonthlyTrend(
           startDate: incomes.startDate,
         })
         .from(incomes)
-        .where(lte(incomes.startDate, rangeEnd)),
+        .where(and(lte(incomes.startDate, rangeEnd), eq(incomes.userId, userId))),
       db
         .select({
           amount: expenses.amount,
@@ -429,6 +455,7 @@ export async function getMonthlyTrend(
         .from(expenses)
         .where(
           and(
+            eq(expenses.userId, userId),
             lte(expenses.startDate, rangeEnd),
             sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${rangeStart.toISOString()})`
           )
@@ -436,7 +463,13 @@ export async function getMonthlyTrend(
       db
         .select({ amount: dailyExpenses.amount, date: dailyExpenses.date })
         .from(dailyExpenses)
-        .where(and(gte(dailyExpenses.date, rangeStart), lte(dailyExpenses.date, rangeEnd))),
+        .where(
+          and(
+            eq(dailyExpenses.userId, userId),
+            gte(dailyExpenses.date, rangeStart),
+            lte(dailyExpenses.date, rangeEnd)
+          )
+        ),
     ]);
 
     const data: MonthlyTrendEntry[] = monthSlots.map(({ year, month }) => {
@@ -495,6 +528,10 @@ export async function getExpensesByCategory(
   year?: number,
   month?: number
 ): Promise<ApiResponse<CategoryExpense[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const now = new Date();
     const targetYear = year ?? now.getFullYear();
@@ -511,7 +548,13 @@ export async function getExpensesByCategory(
       })
       .from(dailyExpenses)
       .leftJoin(categories, sql`${dailyExpenses.categoryId} = ${categories.id}`)
-      .where(and(gte(dailyExpenses.date, start), lte(dailyExpenses.date, end)))
+      .where(
+        and(
+          eq(dailyExpenses.userId, userId),
+          gte(dailyExpenses.date, start),
+          lte(dailyExpenses.date, end)
+        )
+      )
       .groupBy(dailyExpenses.categoryId, categories.name, categories.icon)
       .orderBy(sql`SUM(${dailyExpenses.amount}) DESC`);
 
@@ -539,6 +582,10 @@ export async function getExpensesByCategory(
 export async function getIncomeVsExpensesByMonth(
   year?: number
 ): Promise<ApiResponse<IncomeVsExpensesEntry[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const targetYear = year ?? new Date().getFullYear();
     const yearStart = monthStart(targetYear, 0);
@@ -552,7 +599,7 @@ export async function getIncomeVsExpensesByMonth(
           startDate: incomes.startDate,
         })
         .from(incomes)
-        .where(lte(incomes.startDate, yearEnd)),
+        .where(and(lte(incomes.startDate, yearEnd), eq(incomes.userId, userId))),
       db
         .select({
           amount: expenses.amount,
@@ -564,6 +611,7 @@ export async function getIncomeVsExpensesByMonth(
         .from(expenses)
         .where(
           and(
+            eq(expenses.userId, userId),
             lte(expenses.startDate, yearEnd),
             sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${yearStart.toISOString()})`
           )
@@ -571,7 +619,13 @@ export async function getIncomeVsExpensesByMonth(
       db
         .select({ amount: dailyExpenses.amount, date: dailyExpenses.date })
         .from(dailyExpenses)
-        .where(and(gte(dailyExpenses.date, yearStart), lte(dailyExpenses.date, yearEnd))),
+        .where(
+          and(
+            eq(dailyExpenses.userId, userId),
+            gte(dailyExpenses.date, yearStart),
+            lte(dailyExpenses.date, yearEnd)
+          )
+        ),
     ]);
 
     const data: IncomeVsExpensesEntry[] = Array.from({ length: 12 }, (_, monthIndex) => {
@@ -628,6 +682,10 @@ export async function getIncomeVsExpensesByMonth(
 }
 
 export async function getSavingsProgress(): Promise<ApiResponse<SavingsProgress>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const now = new Date();
     const start = monthStart(now.getFullYear(), now.getMonth());
@@ -641,7 +699,7 @@ export async function getSavingsProgress(): Promise<ApiResponse<SavingsProgress>
           startDate: incomes.startDate,
         })
         .from(incomes)
-        .where(lte(incomes.startDate, end)),
+        .where(and(lte(incomes.startDate, end), eq(incomes.userId, userId))),
       db
         .select({
           amount: expenses.amount,
@@ -653,6 +711,7 @@ export async function getSavingsProgress(): Promise<ApiResponse<SavingsProgress>
         .from(expenses)
         .where(
           and(
+            eq(expenses.userId, userId),
             lte(expenses.startDate, end),
             sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${start.toISOString()})`
           )
@@ -660,7 +719,13 @@ export async function getSavingsProgress(): Promise<ApiResponse<SavingsProgress>
       db
         .select({ total: sql<string>`COALESCE(SUM(${dailyExpenses.amount}), 0)` })
         .from(dailyExpenses)
-        .where(and(gte(dailyExpenses.date, start), lte(dailyExpenses.date, end))),
+        .where(
+          and(
+            eq(dailyExpenses.userId, userId),
+            gte(dailyExpenses.date, start),
+            lte(dailyExpenses.date, end)
+          )
+        ),
     ]);
 
     let totalIncome = 0;
@@ -708,6 +773,10 @@ export async function getSavingsProgress(): Promise<ApiResponse<SavingsProgress>
 export async function getSubscriptions(): Promise<
   ApiResponse<Array<{ expense: ExpenseWithDetails; monthlyAmount: number }>>
 > {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const expensesResult = await db
       .select({
@@ -718,7 +787,7 @@ export async function getSubscriptions(): Promise<
       .from(expenses)
       .leftJoin(categories, eq(expenses.categoryId, categories.id))
       .leftJoin(accounts, eq(expenses.accountId, accounts.id))
-      .where(eq(expenses.isSubscription, true));
+      .where(and(eq(expenses.isSubscription, true), eq(expenses.userId, userId)));
 
     const subscriptions = expensesResult.map((r) => {
       const expenseWithDetails: ExpenseWithDetails = {
@@ -867,6 +936,10 @@ export async function getMonthlyPaymentsCalendar(
   year: number,
   month: number
 ): Promise<ApiResponse<CalendarDay[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: "Unauthorized" };
+  const { userId } = auth;
+
   try {
     const monthStart = new Date(Date.UTC(year, month - 1, 1));
     const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59));
@@ -890,7 +963,10 @@ export async function getMonthlyPaymentsCalendar(
         .from(expenses)
         .leftJoin(categories, eq(expenses.categoryId, categories.id))
         .where(
-          sql`${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${monthStart.toISOString()}`
+          and(
+            eq(expenses.userId, userId),
+            sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${monthStart.toISOString()})`
+          )
         ),
       db
         .select({
@@ -899,13 +975,19 @@ export async function getMonthlyPaymentsCalendar(
         })
         .from(dailyExpenses)
         .leftJoin(categories, eq(dailyExpenses.categoryId, categories.id))
-        .where(and(gte(dailyExpenses.date, monthStart), lte(dailyExpenses.date, monthEnd))),
+        .where(
+          and(
+            eq(dailyExpenses.userId, userId),
+            gte(dailyExpenses.date, monthStart),
+            lte(dailyExpenses.date, monthEnd)
+          )
+        ),
       db
         .select({
           income: incomes,
         })
         .from(incomes)
-        .where(lte(incomes.startDate, monthEnd)),
+        .where(and(eq(incomes.userId, userId), lte(incomes.startDate, monthEnd))),
     ]);
 
     for (let i = 0; i < daysInCalendar; i++) {

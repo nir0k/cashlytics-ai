@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 1 of 5 (Core Auth Infrastructure)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-24 — Completed 01-02 (Route protection)
+Plan: 3 of 3 in current phase (Complete)
+Status: Phase complete
+Last activity: 2026-02-24 — Completed 01-03 (Docker auth configuration)
 
-Progress: [███░░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 9 min
-- Total execution time: 0.3 hours
+- Total plans completed: 3
+- Average duration: 7 min
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
 | Phase                       | Plans | Total | Avg/Plan |
 | --------------------------- | ----- | ----- | -------- |
-| 1. Core Auth Infrastructure | 2     | 3     | 9 min    |
+| 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
 | 2. Database Migration       | 0     | 4     | -        |
 | 3. Server Actions Refactor  | 0     | 5     | -        |
 | 4. Auth UI Components       | 0     | 4     | -        |
@@ -36,7 +36,7 @@ Progress: [███░░░░░░░] 40%
 
 **Recent Trend:**
 
-- Last 5 plans: 01-02 (3 min), 01-01 (14 min)
+- Last 5 plans: 01-03 (5 min), 01-02 (3 min), 01-01 (14 min)
 - Trend: Accelerating
 
 ## Accumulated Context
@@ -52,6 +52,8 @@ Recent decisions affecting current work:
 - 01-01: Minimal users table added to schema to enable auth.ts compilation
 - 01-02: proxy.ts follows Next.js 16 naming convention (renamed from middleware.ts)
 - 01-02: Negative lookahead matcher excludes /api/auth, static assets, and public pages
+- 01-03: Full app service added to docker-compose.yml (not just AUTH_SECRET) since app service was missing
+- [Phase 01-03]: Full app service added to docker-compose.yml (not just AUTH_SECRET) since app service was missing
 
 ### Pending Todos
 
@@ -64,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 01-02-PLAN.md (Route protection)
+Stopped at: Completed 01-03-PLAN.md (Docker auth configuration) - Phase 1 complete
 Resume file: None

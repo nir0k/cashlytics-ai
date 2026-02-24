@@ -9,7 +9,7 @@
 
 - [ ] **AUTH-01**: User kann sich mit Email und Passwort registrieren
 - [ ] **AUTH-02**: User kann sich mit Email und Passwort einloggen
-- [ ] **AUTH-03**: User bleibt über Browser-Refresh eingeloggt (Session Persistenz)
+- [x] **AUTH-03**: User bleibt über Browser-Refresh eingeloggt (Session Persistenz)
 - [ ] **AUTH-04**: User kann sich ausloggen
 - [x] **AUTH-05**: Passwörter werden mit bcrypt gehasht gespeichert
 - [ ] **AUTH-06**: Login-Seite ist unter /login erreichbar
@@ -55,8 +55,8 @@
 - [x] **INFRA-03**: /api/auth/[...nextauth] Route Handler
 - [ ] **INFRA-04**: SessionProvider im Root Layout
 - [x] **INFRA-05**: TypeScript Types für erweiterte Session (user.id)
-- [ ] **INFRA-06**: Dockerfile angepasst (keine Änderungen nötig, nur Verification)
-- [ ] **INFRA-07**: docker-compose.yml angepasst (keine Änderungen nötig, nur Verification)
+- [x] **INFRA-06**: Dockerfile angepasst (keine Änderungen nötig, nur Verification)
+- [x] **INFRA-07**: docker-compose.yml angepasst (keine Änderungen nötig, nur Verification)
 
 ## v2 Requirements
 
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ----------- | ------- | --------- |
 | AUTH-01     | Phase 4 | Pending   |
 | AUTH-02     | Phase 4 | Pending   |
-| AUTH-03     | Phase 1 | Pending   |
+| AUTH-03     | Phase 1 | Complete  |
 | AUTH-04     | Phase 4 | Pending   |
 | AUTH-05     | Phase 1 | Completed |
 | AUTH-06     | Phase 4 | Pending   |
@@ -126,8 +126,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-03    | Phase 1 | Completed |
 | INFRA-04    | Phase 4 | Pending   |
 | INFRA-05    | Phase 1 | Completed |
-| INFRA-06    | Phase 1 | Pending   |
-| INFRA-07    | Phase 1 | Pending   |
+| INFRA-06    | Phase 1 | Complete  |
+| INFRA-07    | Phase 1 | Complete  |
 
 **Coverage:**
 

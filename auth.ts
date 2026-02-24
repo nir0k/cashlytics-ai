@@ -2,7 +2,7 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, authAccounts, authSessions, authVerificationTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyPassword } from "@/lib/auth/password";
 import { signInSchema } from "@/lib/validations/auth";
@@ -19,7 +19,12 @@ declare module "next-auth" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db, {
+    usersTable: users,
+    accountsTable: authAccounts,
+    sessionsTable: authSessions,
+    verificationTokensTable: authVerificationTokens,
+  }),
   session: { strategy: "jwt" }, // REQUIRED for Edge compatibility with proxy.ts
   pages: {
     signIn: "/login",

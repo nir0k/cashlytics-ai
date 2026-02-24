@@ -7,6 +7,7 @@ import {
   integer,
   pgEnum,
   boolean,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -72,11 +73,15 @@ export const authSessions = pgTable("auth_sessions", {
 });
 
 // Auth.js verification tokens (for password reset / magic links)
-export const authVerificationTokens = pgTable("auth_verification_tokens", {
-  identifier: text("identifier").notNull(),
-  token: text("token").notNull().primaryKey(),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
-});
+export const authVerificationTokens = pgTable(
+  "auth_verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })]
+);
 
 // User relations - enables querying user's data with Drizzle relational queries
 export const usersRelations = relations(users, ({ many }) => ({
@@ -181,7 +186,11 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const accountsRelations = relations(accounts, ({ many }) => ({
+export const accountsRelations = relations(accounts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
   expenses: many(expenses),
   incomes: many(incomes),
   dailyExpenses: many(dailyExpenses),
@@ -189,12 +198,20 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
   incomingTransfers: many(transfers, { relationName: "targetAccount" }),
 }));
 
-export const categoriesRelations = relations(categories, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  user: one(users, {
+    fields: [categories.userId],
+    references: [users.id],
+  }),
   expenses: many(expenses),
   dailyExpenses: many(dailyExpenses),
 }));
 
 export const expensesRelations = relations(expenses, ({ one, many }) => ({
+  user: one(users, {
+    fields: [expenses.userId],
+    references: [users.id],
+  }),
   account: one(accounts, {
     fields: [expenses.accountId],
     references: [accounts.id],
@@ -207,6 +224,10 @@ export const expensesRelations = relations(expenses, ({ one, many }) => ({
 }));
 
 export const incomesRelations = relations(incomes, ({ one }) => ({
+  user: one(users, {
+    fields: [incomes.userId],
+    references: [users.id],
+  }),
   account: one(accounts, {
     fields: [incomes.accountId],
     references: [accounts.id],
@@ -214,6 +235,10 @@ export const incomesRelations = relations(incomes, ({ one }) => ({
 }));
 
 export const dailyExpensesRelations = relations(dailyExpenses, ({ one, many }) => ({
+  user: one(users, {
+    fields: [dailyExpenses.userId],
+    references: [users.id],
+  }),
   account: one(accounts, {
     fields: [dailyExpenses.accountId],
     references: [accounts.id],
@@ -226,6 +251,10 @@ export const dailyExpensesRelations = relations(dailyExpenses, ({ one, many }) =
 }));
 
 export const transfersRelations = relations(transfers, ({ one }) => ({
+  user: one(users, {
+    fields: [transfers.userId],
+    references: [users.id],
+  }),
   sourceAccount: one(accounts, {
     fields: [transfers.sourceAccountId],
     references: [accounts.id],
@@ -239,6 +268,10 @@ export const transfersRelations = relations(transfers, ({ one }) => ({
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
+  user: one(users, {
+    fields: [documents.userId],
+    references: [users.id],
+  }),
   expense: one(expenses, {
     fields: [documents.expenseId],
     references: [expenses.id],
@@ -267,7 +300,11 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const conversationsRelations = relations(conversations, ({ many }) => ({
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [conversations.userId],
+    references: [users.id],
+  }),
   messages: many(messages),
 }));
 

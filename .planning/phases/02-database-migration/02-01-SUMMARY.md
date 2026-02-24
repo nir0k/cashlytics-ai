@@ -72,7 +72,7 @@ Each task was committed atomically:
 2. **Task 2: Update DrizzleAdapter with custom table configuration** - `908ae01` (feat)
 3. **Task 3: Generate and run Auth.js tables migration** - `bb1d00a` (feat)
 
-**Plan metadata:** `da652bf` (docs: complete plan)
+**Plan metadata:** `95634f2` (docs: complete plan)
 
 ## Files Created/Modified
 

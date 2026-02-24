@@ -154,7 +154,7 @@ export function IncomeForm({ accounts, onSuccess, editIncome, open: controlledOp
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Betrag (€)</Label>
               <Input {...form.register('amount')} placeholder="0.00" type="number" step="0.01" />
@@ -177,7 +177,7 @@ export function IncomeForm({ accounts, onSuccess, editIncome, open: controlledOp
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Konto</Label>
               <Select value={form.watch('accountId')} onValueChange={(v) => form.setValue('accountId', v)}>

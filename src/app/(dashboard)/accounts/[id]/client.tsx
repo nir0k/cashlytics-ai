@@ -179,18 +179,18 @@ export function AccountDetailClient({
 
       <Card className="backdrop-blur-xl bg-white/5 border border-white/[0.08]">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/[0.08]">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/[0.08] flex-shrink-0">
                 <Icon className={`h-6 w-6 ${config.color}`} />
               </div>
-              <div>
-                <CardTitle className="text-2xl">{account.name}</CardTitle>
+              <div className="min-w-0">
+                <CardTitle className="text-2xl truncate">{account.name}</CardTitle>
                 <p className="text-sm text-muted-foreground">{config.label}</p>
               </div>
             </div>
-            <div className="text-right">
-              <div className={`text-3xl font-bold ${parseFloat(account.balance) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            <div className="text-right flex-shrink-0">
+              <div className={`text-2xl sm:text-3xl font-bold ${parseFloat(account.balance) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                 {formatCurrency(account.balance)}
               </div>
               <p className="text-xs text-muted-foreground">{t('balance')}</p>
@@ -315,48 +315,47 @@ export function AccountDetailClient({
                     return (
                       <div
                         key={`${transaction.type}-${transaction.id}`}
-                        className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/[0.08] hover:bg-white/10 hover:border-white/15 transition-all duration-300"
+                        className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/[0.08] hover:bg-white/10 hover:border-white/15 transition-all duration-300"
                       >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-lg ${
-                              isTransfer
-                                ? 'bg-blue-500/10 text-blue-500'
-                                : isPositive
-                                  ? 'bg-emerald-500/10 text-emerald-500'
-                                  : 'bg-red-500/10 text-red-500'
-                            }`}
-                          >
-                            {isTransfer ? (
-                              <ArrowRightLeft className="h-4 w-4" />
-                            ) : isPositive ? (
-                              <ArrowUpRight className="h-4 w-4" />
-                            ) : (
-                              <ArrowDownRight className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium">{transaction.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {isTransfer
-                                ? transaction.description
-                                : transaction.category?.name || (isPositive ? t('income') : t('expenses'))}
-                              {' • '}
-                              {formatDate(transaction.date)}
-                            </p>
-                          </div>
-                        </div>
                         <div
-                          className={`font-semibold ${
+                          className={`p-2 rounded-lg flex-shrink-0 ${
                             isTransfer
-                              ? 'text-blue-500'
+                              ? 'bg-blue-500/10 text-blue-500'
                               : isPositive
-                                ? 'text-emerald-500'
-                                : 'text-red-500'
+                                ? 'bg-emerald-500/10 text-emerald-500'
+                                : 'bg-red-500/10 text-red-500'
                           }`}
                         >
-                          {isPositive ? '+' : '-'}
-                          {formatCurrency(transaction.amount)}
+                          {isTransfer ? (
+                            <ArrowRightLeft className="h-4 w-4" />
+                          ) : isPositive ? (
+                            <ArrowUpRight className="h-4 w-4" />
+                          ) : (
+                            <ArrowDownRight className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {/* Zeile 1: Name links, Betrag rechts */}
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium">{transaction.name}</p>
+                            <p className={`font-semibold whitespace-nowrap flex-shrink-0 ${
+                              isTransfer
+                                ? 'text-blue-500'
+                                : isPositive
+                                  ? 'text-emerald-500'
+                                  : 'text-red-500'
+                            }`}>
+                              {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
+                            </p>
+                          </div>
+                          {/* Zeile 2: Kategorie / Beschreibung + Datum */}
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {isTransfer
+                              ? transaction.description
+                              : transaction.category?.name || (isPositive ? t('income') : t('expenses'))}
+                            {' • '}
+                            {formatDate(transaction.date)}
+                          </p>
                         </div>
                       </div>
                     );

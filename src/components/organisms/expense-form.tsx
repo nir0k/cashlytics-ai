@@ -359,7 +359,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('amount')}</Label>
                   <Input {...periodicForm.register('amount')} placeholder="0.00" type="number" step="0.01" />
@@ -396,7 +396,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
                 <span className="text-xs text-muted-foreground">{t('subscriptionHint')}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('account')}</Label>
                   <Select value={periodicForm.watch('accountId')} onValueChange={(v) => periodicForm.setValue('accountId', v)}>
@@ -441,7 +441,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
               {showNewCategory && (
                 <div className="p-3 rounded-xl border border-border/50 dark:border-white/[0.08] bg-accent/20 dark:bg-white/[0.03] space-y-3">
                   <p className="text-xs font-medium text-muted-foreground">{t('newCategory')}</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder={t('name')} />
                     <EmojiPicker value={newCatIcon} onChange={setNewCatIcon} />
                   </div>
@@ -454,7 +454,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('startDate')}</Label>
                   <Input type="date" {...periodicForm.register('startDate', { valueAsDate: true })} />
@@ -552,7 +552,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
                 <Input {...dailyForm.register('description')} placeholder={t('descriptionPlaceholder')} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('amount')}</Label>
                   <Input {...dailyForm.register('amount')} placeholder="0.00" type="number" step="0.01" />
@@ -563,7 +563,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('account')}</Label>
                   <Select value={dailyForm.watch('accountId')} onValueChange={(v) => dailyForm.setValue('accountId', v)}>
@@ -608,7 +608,7 @@ export function ExpenseForm({ accounts, categories: initialCategories, onSuccess
               {showNewCategory && (
                 <div className="p-3 rounded-xl border border-border/50 dark:border-white/[0.08] bg-accent/20 dark:bg-white/[0.03] space-y-3">
                   <p className="text-xs font-medium text-muted-foreground">{t('newCategory')}</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder={t('name')} />
                     <EmojiPicker value={newCatIcon} onChange={setNewCatIcon} />
                   </div>

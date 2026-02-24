@@ -32,7 +32,7 @@
 - [x] **DATA-07**: categories Tabelle hat userId Foreign Key
 - [x] **DATA-08**: documents Tabelle hat userId Foreign Key
 - [x] **DATA-09**: conversations Tabelle hat userId Foreign Key
-- [ ] **DATA-10**: FK-Validierung: User kann nur eigene Accounts/Categories in Queries nutzen
+- [x] **DATA-10**: FK-Validierung: User kann nur eigene Accounts/Categories in Queries nutzen
 
 ### Registration Mode
 
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-07     | Phase 2 | Complete  |
 | DATA-08     | Phase 2 | Complete  |
 | DATA-09     | Phase 2 | Complete  |
-| DATA-10     | Phase 3 | Pending   |
+| DATA-10     | Phase 3 | Complete |
 | MODE-01     | Phase 5 | Pending   |
 | MODE-02     | Phase 5 | Pending   |
 | MODE-03     | Phase 5 | Pending   |

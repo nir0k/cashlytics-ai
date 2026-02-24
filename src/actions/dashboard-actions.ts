@@ -6,6 +6,7 @@ import { and, gte, lte, sql, desc, eq } from 'drizzle-orm';
 import type { ApiResponse, Account, DailyExpenseWithDetails } from '@/types/database';
 import { safeParseFloat } from '@/lib/safe-parse';
 import { logger } from '@/lib/logger';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 function normalizeToMonthly(amount: number, recurrenceType: string, recurrenceInterval: number | null): number {
   switch (recurrenceType) {
@@ -39,11 +40,15 @@ interface CategoryBreakdown {
 }
 
 export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: 'Unauthorized' };
+  const { userId } = auth;
+
   try {
-    // Gesamtvermögen (Summe aller Konten)
+    // Gesamtvermögen (Summe aller Konten des Users)
     const accountsResult = await db.select({
       total: sql<string>`COALESCE(SUM(balance), 0)`,
-    }).from(accounts);
+    }).from(accounts).where(eq(accounts.userId, userId));
     const totalAssets = safeParseFloat(accountsResult[0]?.total || '0');
 
     // Aktueller Monat
@@ -57,7 +62,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       amount: incomes.amount,
       recurrenceType: incomes.recurrenceType,
     }).from(incomes)
-      .where(lte(incomes.startDate, now));
+      .where(and(lte(incomes.startDate, now), eq(incomes.userId, userId)));
 
     const monthlyIncome = activeIncomes.reduce((sum, inc) => {
       const amount = safeParseFloat(inc.amount);
@@ -76,6 +81,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       total: sql<string>`COALESCE(SUM(amount), 0)`,
     }).from(incomes)
       .where(and(
+        eq(incomes.userId, userId),
         gte(incomes.startDate, currentMonthStart),
         sql`${incomes.recurrenceType} = 'once'`
       ));
@@ -85,7 +91,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
     const currentMonthDailyExpenses = await db.select({
       total: sql<string>`COALESCE(SUM(amount), 0)`,
     }).from(dailyExpenses)
-      .where(gte(dailyExpenses.date, currentMonthStart));
+      .where(and(eq(dailyExpenses.userId, userId), gte(dailyExpenses.date, currentMonthStart)));
     const dailyExpensesTotal = safeParseFloat(currentMonthDailyExpenses[0]?.total || '0');
 
     // Ausgaben: periodische Ausgaben (normalisiert auf monatlich)
@@ -96,6 +102,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       endDate: expenses.endDate,
     }).from(expenses)
       .where(and(
+        eq(expenses.userId, userId),
         lte(expenses.startDate, now),
         sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${currentMonthStart.toISOString()})`
       ));
@@ -115,6 +122,7 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       total: sql<string>`COALESCE(SUM(amount), 0)`,
     }).from(dailyExpenses)
       .where(and(
+        eq(dailyExpenses.userId, userId),
         gte(dailyExpenses.date, lastMonthStart),
         lte(dailyExpenses.date, lastMonthEnd)
       ));
@@ -149,6 +157,10 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
 export async function getCategoryBreakdown(
   startDate: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 ): Promise<ApiResponse<CategoryBreakdown[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: 'Unauthorized' };
+  const { userId } = auth;
+
   try {
     const categoryMap = new Map<string, { categoryName: string; categoryIcon: string | null; categoryColor: string | null; total: number }>();
 
@@ -162,7 +174,7 @@ export async function getCategoryBreakdown(
       })
       .from(dailyExpenses)
       .leftJoin(categories, sql`${dailyExpenses.categoryId} = ${categories.id}`)
-      .where(gte(dailyExpenses.date, startDate));
+      .where(and(eq(dailyExpenses.userId, userId), gte(dailyExpenses.date, startDate)));
 
     for (const row of dailyExpensesResult) {
       const categoryId = row.categoryId || 'uncategorized';
@@ -192,7 +204,10 @@ export async function getCategoryBreakdown(
       })
       .from(expenses)
       .leftJoin(categories, sql`${expenses.categoryId} = ${categories.id}`)
-      .where(sql`${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()}`);
+      .where(and(
+        eq(expenses.userId, userId),
+        sql`${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${startDate.toISOString()}`
+      ));
 
     for (const row of periodicExpensesResult) {
       if (row.recurrenceType === 'once') continue;
@@ -237,12 +252,17 @@ export async function getCategoryBreakdown(
 }
 
 export async function getRecentTransactions(limit: number = 5): Promise<ApiResponse<DailyExpenseWithDetails[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: 'Unauthorized' };
+  const { userId } = auth;
+
   try {
     const transactions = await db.query.dailyExpenses.findMany({
       with: {
         account: true,
         category: true,
       },
+      where: eq(dailyExpenses.userId, userId),
       orderBy: [desc(dailyExpenses.date)],
       limit,
     });
@@ -255,8 +275,12 @@ export async function getRecentTransactions(limit: number = 5): Promise<ApiRespo
 }
 
 export async function getAccounts(): Promise<ApiResponse<Account[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: 'Unauthorized' };
+  const { userId } = auth;
+
   try {
-    const allAccounts = await db.select().from(accounts).orderBy(accounts.name);
+    const allAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(accounts.name);
     return { success: true, data: allAccounts };
   } catch (error) {
     logger.error('Failed to fetch accounts', 'getAccounts', error);
@@ -333,6 +357,10 @@ function getNextPaymentDate(startDate: Date, recurrenceType: string, recurrenceI
 }
 
 export async function getUpcomingPayments(days: number = 14): Promise<ApiResponse<UpcomingPayment[]>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: 'Unauthorized' };
+  const { userId } = auth;
+
   try {
     const now = new Date();
     const endDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
@@ -346,7 +374,10 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
       })
       .from(expenses)
       .leftJoin(categories, eq(expenses.categoryId, categories.id))
-      .where(sql`${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${now.toISOString()}`);
+      .where(and(
+        eq(expenses.userId, userId),
+        sql`${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${now.toISOString()}`
+      ));
 
     for (const item of activeExpenses) {
       if (item.expense.recurrenceType === 'once') continue;
@@ -382,6 +413,7 @@ export async function getUpcomingPayments(days: number = 14): Promise<ApiRespons
       .from(dailyExpenses)
       .leftJoin(categories, eq(dailyExpenses.categoryId, categories.id))
       .where(and(
+        eq(dailyExpenses.userId, userId),
         gte(dailyExpenses.date, now),
         lte(dailyExpenses.date, endDate)
       ));

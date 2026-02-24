@@ -347,32 +347,50 @@ export function ExpensesClient({
     const nextPaymentLabel = !isOnce ? formatNextPayment(expense, tCommon) : null;
 
     return (
-      <div className="hover:bg-accent/30 flex items-center justify-between rounded-xl p-4 transition-colors duration-200 dark:hover:bg-white/5">
-        <div className="flex items-center gap-4">
-          <div
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg"
-            style={{
-              background: expense.category?.color
-                ? `linear-gradient(135deg, ${expense.category.color}33, ${expense.category.color}11)`
-                : undefined,
-            }}
-          >
-            {expense.category?.icon ?? "📄"}
-          </div>
-          <div>
+      <div className="hover:bg-accent/30 flex items-start gap-3 rounded-xl p-4 transition-colors duration-200 dark:hover:bg-white/5">
+        <div
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg"
+          style={{
+            background: expense.category?.color
+              ? `linear-gradient(135deg, ${expense.category.color}33, ${expense.category.color}11)`
+              : undefined,
+          }}
+        >
+          {expense.category?.icon ?? "📄"}
+        </div>
+        <div className="flex-1 min-w-0">
+          {/* Zeile 1: Name + Buttons */}
+          <div className="flex items-start justify-between gap-1">
             <p className="font-medium">{expense.name}</p>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-muted-foreground text-sm">
-                {expense.category?.name ?? tCommon("withoutCategory")} •{" "}
-                {tRecurrence(expense.recurrenceType)}
-              </span>
-              {!isMonthly && !isOnce && (
-                <span className="text-xs font-medium text-violet-500 dark:text-violet-400">
-                  {formatCurrency(monthly)}/Mo {t("reserve") || "Rücklage"}
-                </span>
-              )}
+            <div className="flex items-center gap-0.5 flex-shrink-0 -mt-1 -mr-2">
+              <Button variant="ghost" size="icon" onClick={onEdit}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="mt-1 flex items-center gap-3">
+          </div>
+          {/* Zeile 2: Kategorie + Intervall (+ Rücklage-Badge) */}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="text-muted-foreground text-sm">
+              {expense.category?.name ?? tCommon("withoutCategory")} •{" "}
+              {tRecurrence(expense.recurrenceType)}
+            </span>
+            {!isMonthly && !isOnce && (
+              <span className="text-xs font-medium text-violet-500 dark:text-violet-400 whitespace-nowrap">
+                {formatCurrency(monthly)}/Mo {t("reserve") || "Rücklage"}
+              </span>
+            )}
+          </div>
+          {/* Zeile 3: Datum-Info links + Betrag rechts */}
+          <div className="flex items-end justify-between mt-1.5 gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               {debitLabel && (
                 <div className="flex items-center gap-1">
                   <CalendarDays className="text-primary h-3 w-3 flex-shrink-0" />
@@ -384,34 +402,17 @@ export function ExpensesClient({
                   {t("nextPayment")} {nextPaymentLabel}
                 </span>
               )}
+              {expense.endDate ? (
+                <span className="text-muted-foreground text-xs">
+                  {t("until")} {formatDate(expense.endDate)}
+                </span>
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  {t("since")} {formatDate(expense.startDate)}
+                </span>
+              )}
             </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="font-semibold">{formatCurrency(amount)}</p>
-            {expense.endDate ? (
-              <p className="text-muted-foreground text-xs">
-                {t("until")} {formatDate(expense.endDate)}
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-xs">
-                {t("since")} {formatDate(expense.startDate)}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={onEdit}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <p className="font-semibold whitespace-nowrap flex-shrink-0">{formatCurrency(amount)}</p>
           </div>
         </div>
       </div>
@@ -420,14 +421,14 @@ export function ExpensesClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="from-foreground to-foreground/60 bg-gradient-to-br bg-clip-text text-[2rem] leading-none font-bold tracking-[-0.03em] text-transparent">
             {t("title")}
           </h2>
           <p className="text-muted-foreground/60 mt-1.5 text-sm">{t("description")}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isMounted && accounts.length > 1 && (
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
               <SelectTrigger className="w-[180px]">
@@ -521,21 +522,21 @@ export function ExpensesClient({
       )}
 
       <Tabs defaultValue="fixed" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="fixed">
+        <TabsList className="!flex !h-auto !w-full flex-col gap-1 sm:flex-row sm:gap-0">
+          <TabsTrigger value="fixed" className="w-full sm:w-auto justify-start sm:justify-center">
             <Wallet className="mr-1.5 h-3.5 w-3.5" />
             {t("fixedCosts")} ({monthlyFixed.length})
           </TabsTrigger>
-          <TabsTrigger value="periodic">
+          <TabsTrigger value="periodic" className="w-full sm:w-auto justify-start sm:justify-center">
             <PiggyBank className="mr-1.5 h-3.5 w-3.5" />
             {t("reserves")} ({periodicReserves.length})
           </TabsTrigger>
           {oneTimeExpenses.length > 0 && (
-            <TabsTrigger value="once">
+            <TabsTrigger value="once" className="w-full sm:w-auto justify-start sm:justify-center">
               {tRecurrence("once")} ({oneTimeExpenses.length})
             </TabsTrigger>
           )}
-          <TabsTrigger value="daily">
+          <TabsTrigger value="daily" className="w-full sm:w-auto justify-start sm:justify-center">
             <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
             {t("daily")} ({filteredDailyExpenses.length})
           </TabsTrigger>
@@ -666,52 +667,51 @@ export function ExpensesClient({
                   {filteredDailyExpenses.map((expense) => (
                     <div
                       key={expense.id}
-                      className="hover:bg-accent/30 flex items-center justify-between rounded-xl p-4 transition-colors duration-200 dark:hover:bg-white/5"
+                      className="hover:bg-accent/30 flex items-start gap-3 rounded-xl p-4 transition-colors duration-200 dark:hover:bg-white/5"
                     >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                          style={{
-                            background: expense.category?.color
-                              ? `linear-gradient(135deg, ${expense.category.color}33, ${expense.category.color}11)`
-                              : undefined,
-                          }}
-                        >
-                          {expense.category?.icon ?? "📄"}
-                        </div>
-                        <div>
-                          <p className="font-medium">{expense.description}</p>
-                          <p className="text-muted-foreground text-sm">
-                            {expense.category?.name ?? tCommon("withoutCategory")} •{" "}
-                            {formatDate(expense.date)}
-                          </p>
-                        </div>
+                      <div
+                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg"
+                        style={{
+                          background: expense.category?.color
+                            ? `linear-gradient(135deg, ${expense.category.color}33, ${expense.category.color}11)`
+                            : undefined,
+                        }}
+                      >
+                        {expense.category?.icon ?? "📄"}
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-semibold">{formatCurrency(expense.amount)}</p>
-                          <p className="text-muted-foreground text-sm">
+                      <div className="flex-1 min-w-0">
+                        {/* Zeile 1: Beschreibung + Buttons */}
+                        <div className="flex items-start justify-between gap-1">
+                          <p className="font-medium">{expense.description}</p>
+                          <div className="flex items-center gap-0.5 flex-shrink-0 -mt-1 -mr-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditDailyExpense(expense)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteDailyExpense(expense.id, expense.description)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {/* Zeile 2: Kategorie + Datum */}
+                        <p className="text-muted-foreground text-sm mt-0.5">
+                          {expense.category?.name ?? tCommon("withoutCategory")} •{" "}
+                          {formatDate(expense.date)}
+                        </p>
+                        {/* Zeile 3: Konto links + Betrag rechts */}
+                        <div className="flex items-end justify-between mt-1.5 gap-2">
+                          <p className="text-muted-foreground text-xs">
                             {expense.account?.name ?? t("unknownAccount")}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditDailyExpense(expense)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() =>
-                              handleDeleteDailyExpense(expense.id, expense.description)
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <p className="font-semibold whitespace-nowrap flex-shrink-0">{formatCurrency(expense.amount)}</p>
                         </div>
                       </div>
                     </div>

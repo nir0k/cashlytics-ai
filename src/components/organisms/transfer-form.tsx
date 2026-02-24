@@ -106,7 +106,7 @@ export function TransferForm({ accounts, onSuccess, open: controlledOpen, onOpen
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
-          <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-2 sm:items-end">
             <div className="space-y-2">
               <Label>Von Konto</Label>
               <Select value={form.watch('sourceAccountId')} onValueChange={(v) => form.setValue('sourceAccountId', v)}>
@@ -140,7 +140,7 @@ export function TransferForm({ accounts, onSuccess, open: controlledOpen, onOpen
             <p className="text-sm text-destructive">{form.formState.errors.targetAccountId.message}</p>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Betrag (€)</Label>
               <Input {...form.register('amount')} placeholder="0.00" type="number" step="0.01" />
@@ -171,7 +171,7 @@ export function TransferForm({ accounts, onSuccess, open: controlledOpen, onOpen
             <Input {...form.register('description')} placeholder="z.B. Sparplan" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Startdatum</Label>
               <Input type="date" {...form.register('startDate', { valueAsDate: true })} />

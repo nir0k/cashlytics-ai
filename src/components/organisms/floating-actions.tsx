@@ -272,8 +272,8 @@ export function FloatingActions() {
           </Button>
         )}
 
-        {/* Plus FAB */}
-        <Button
+        {/* Plus FAB — hidden on /assistant page */}
+        {!isAssistantPage && <Button
           className={cn(
             'h-14 w-14 rounded-full shadow-lg transition-all duration-200',
             'shadow-amber-500/20 hover:shadow-amber-500/30 hover:scale-105',
@@ -286,7 +286,7 @@ export function FloatingActions() {
           aria-label={menuOpen ? 'Schließen' : 'Aktionen'}
         >
           {menuOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-        </Button>
+        </Button>}
       </div>
 
       {/* ── Dialogs ── */}

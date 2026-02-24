@@ -6,6 +6,7 @@ import { eq, and, gte, lte } from 'drizzle-orm';
 import type { ApiResponse, AccountDetail, IncomeWithAccount, ExpenseWithDetails, DailyExpenseWithDetails } from '@/types/database';
 import { safeParseFloat } from '@/lib/safe-parse';
 import { logger } from '@/lib/logger';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 function getMonthDateRange(month: number, year: number): { startDate: Date; endDate: Date } {
   const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
@@ -18,11 +19,15 @@ export async function getAccountTransactions(
   month?: number,
   year?: number
 ): Promise<ApiResponse<AccountDetail>> {
+  const auth = await requireAuth();
+  if (auth.error) return { success: false, error: 'Unauthorized' };
+  const { userId } = auth;
+
   try {
     const [account] = await db
       .select()
       .from(accounts)
-      .where(eq(accounts.id, accountId))
+      .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
       .limit(1);
 
     if (!account) {
@@ -34,9 +39,9 @@ export async function getAccountTransactions(
       dateFilter = getMonthDateRange(month, year);
     }
 
-    const incomeConditions = [eq(incomes.accountId, accountId)];
-    const expenseConditions = [eq(expenses.accountId, accountId)];
-    const dailyExpenseConditions = [eq(dailyExpenses.accountId, accountId)];
+    const incomeConditions = [eq(incomes.accountId, accountId), eq(incomes.userId, userId)];
+    const expenseConditions = [eq(expenses.accountId, accountId), eq(expenses.userId, userId)];
+    const dailyExpenseConditions = [eq(dailyExpenses.accountId, accountId), eq(dailyExpenses.userId, userId)];
 
     if (dateFilter) {
       incomeConditions.push(gte(incomes.startDate, dateFilter.startDate));

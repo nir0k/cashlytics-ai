@@ -174,12 +174,12 @@ export function AnalyticsClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">{t('title')}</h2>
           <p className="text-sm text-muted-foreground/60 mt-1.5">{t('description')}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           {accounts.length > 1 && (
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId} disabled={loading}>
@@ -291,9 +291,9 @@ export function AnalyticsClient({
           </CardHeader>
           <CardContent>
             {!hasCategories ? <EmptyState icon={PieChart} label={noDataLabel} /> : (
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <ResponsiveContainer width={180} height={180}>
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <div className="flex-shrink-0 w-full sm:w-[180px]">
+                  <ResponsiveContainer width="100%" height={180}>
                     <PieChartComp>
                       <Pie data={categoryBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="amount" nameKey="name">
                         {categoryBreakdown.map((entry, index) => (
@@ -304,7 +304,7 @@ export function AnalyticsClient({
                     </PieChartComp>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex-1 space-y-1 min-w-0 py-2">
+                <div className="flex-1 space-y-1 min-w-0 w-full py-2">
                   {categoryBreakdown.slice(0, 7).map((item, index) => (
                     <div key={index} className="flex items-center justify-between gap-2 py-1 rounded-lg hover:bg-accent/20 dark:hover:bg-white/[0.03] px-2 transition-colors">
                       <div className="flex items-center gap-2 min-w-0">

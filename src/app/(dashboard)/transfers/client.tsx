@@ -82,43 +82,46 @@ export function TransfersClient({
     const debitLabel = isRecurring ? getDebitLabel(transfer) : null;
 
     return (
-      <div className="flex items-center justify-between p-4 rounded-xl hover:bg-accent/30 dark:hover:bg-white/5 transition-colors duration-200">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5">
-            <ArrowRightLeft className="w-5 h-5 text-emerald-500" />
-          </div>
-          <div>
+      <div className="flex items-start gap-3 p-4 rounded-xl hover:bg-accent/30 dark:hover:bg-white/5 transition-colors duration-200">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5">
+          <ArrowRightLeft className="w-5 h-5 text-emerald-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          {/* Zeile 1: Beschreibung links, Betrag rechts */}
+          <div className="flex items-start justify-between gap-2">
             <p className="font-medium">{transfer.description || t('title')}</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="font-semibold whitespace-nowrap flex-shrink-0">{formatCurrency(amount)}</p>
+          </div>
+          {/* Zeile 2: Konten & Intervall links, Löschen rechts */}
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground min-w-0 truncate">
               {transfer.sourceAccount?.name ?? t('unknown')} → {transfer.targetAccount?.name ?? t('unknown')} • {tRecurrence(transfer.recurrenceType)}
             </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-destructive hover:text-destructive flex-shrink-0"
+              onClick={onDelete}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+          {/* Zeile 3: Fälligkeits- & Datumsinfo */}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
             {debitLabel && (
-              <div className="flex items-center gap-1 mt-1">
+              <div className="flex items-center gap-1">
                 <CalendarDays className="w-3 h-3 text-primary flex-shrink-0" />
                 <span className="text-xs font-medium text-primary">
                   {t('execution')} {debitLabel}
                 </span>
               </div>
             )}
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="font-semibold">{formatCurrency(amount)}</p>
             {transfer.endDate ? (
-              <p className="text-xs text-muted-foreground">{t('until')} {formatDate(transfer.endDate)}</p>
+              <span className="text-xs text-muted-foreground">{t('until')} {formatDate(transfer.endDate)}</span>
             ) : (
-              <p className="text-xs text-muted-foreground">{t('since')} {formatDate(transfer.startDate)}</p>
+              <span className="text-xs text-muted-foreground">{t('since')} {formatDate(transfer.startDate)}</span>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive"
-            onClick={onDelete}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     );
@@ -126,7 +129,7 @@ export function TransfersClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-[2rem] font-bold tracking-[-0.03em] leading-none bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">{t('title')}</h2>
           <p className="text-sm text-muted-foreground/60 mt-1.5">{t('description')}</p>

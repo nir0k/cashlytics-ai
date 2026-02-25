@@ -34,16 +34,35 @@ Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database-
 
 ### Active
 
-_(next milestone requirements go here)_
+<!-- v1.1 Email & Password Reset -->
+
+- [ ] User kann SMTP-Einstellungen via `.env` konfigurieren (HOST, PORT, USER, PASS, FROM)
+- [ ] User kann Password-Reset per Email anfordern (Forgot-Password-Flow)
+- [ ] User kann Passwort via Token-Link aus Email zurücksetzen
+- [ ] Reset-Tokens haben Ablaufzeit und können nur einmal verwendet werden
+- [ ] User erhält Welcome-Mail nach erfolgreicher Registrierung
+- [ ] Mails werden als HTML im Vault-Design (dark, amber) verschickt
 
 ### Out of Scope
 
 - OAuth Provider (Google, GitHub) — kann später ergänzt werden
 - Role-based Access Control (Admin/User) — alle User sind gleich
-- Email Verification — Password-Reset via Email später
-- Password Reset Flow — später
+- Email Verification bei Registrierung — nicht in v1.1 geplant
 - Team/Organization Features — Single-Tenant pro Instanz
 - 2FA / TOTP — v2 backlog
+
+## Current Milestone: v1.1 Email & Password Reset
+
+**Goal:** SMTP-Infrastruktur und vollständiger Password-Reset-Flow via tokenbasierter Email
+
+**Target features:**
+
+- Nodemailer SMTP-Integration (konfigurierbar via `.env`)
+- Forgot-Password-Seite + Server Action (Token generieren, Mail versenden)
+- Reset-Password-Seite + Server Action (Token validieren, Passwort aktualisieren)
+- Reset-Token-Tabelle in DB (token, userId, expiresAt, usedAt)
+- Welcome-Mail bei Registrierung
+- HTML-Email-Templates im Vault-Design
 
 ## Context
 
@@ -85,4 +104,4 @@ _(next milestone requirements go here)_
 
 ---
 
-_Last updated: 2026-02-25 after v1.0 milestone_
+_Last updated: 2026-02-25 after v1.1 milestone start_

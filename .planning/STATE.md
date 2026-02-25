@@ -9,9 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Milestone: v1.0 Multi-User Auth — COMPLETE
-Status: Milestone shipped 2026-02-25
-Last activity: 2026-02-25 — v1.0 milestone archived, git tagged
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-25 — Milestone v1.1 started
 
 Progress: [████████████████████] 100% (5/5 phases complete)
 

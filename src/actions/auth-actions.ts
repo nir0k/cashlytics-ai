@@ -8,6 +8,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword } from "@/lib/auth/password";
 import { registerSchema } from "@/lib/validations/auth";
+import { isRegistrationOpen } from "@/lib/auth/registration-mode";
 
 export type AuthActionState = {
   error?: string;
@@ -44,6 +45,15 @@ export async function registerAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  // --- SINGLE_USER_MODE GATE ---
+  const registrationOpen = await isRegistrationOpen();
+  if (!registrationOpen) {
+    return {
+      error: "Registration is disabled. This instance is configured for a single user.",
+    };
+  }
+  // --- END MODE GATE ---
+
   const result = registerSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),

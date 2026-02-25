@@ -15,7 +15,7 @@
 ### Password Reset Flow
 
 - [x] **RESET-01**: User can request password reset via forgot-password page with email field
-- [ ] **RESET-02**: "Forgot password?" link is visible on login page
+- [x] **RESET-02**: "Forgot password?" link is visible on login page
 - [x] **RESET-03**: Reset token is cryptographically secure (256-bit, `crypto.randomBytes`)
 - [x] **RESET-04**: Reset token expires after 1 hour
 - [x] **RESET-05**: Reset token is single-use (marked as used after successful reset)
@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SMTP-03      | Phase 7  | Complete |
 | SMTP-04      | Phase 7  | Complete |
 | RESET-01     | Phase 10 | Complete |
-| RESET-02     | Phase 11 | Pending  |
+| RESET-02     | Phase 11 | Complete |
 | RESET-03     | Phase 9  | Complete |
 | RESET-04     | Phase 9  | Complete |
 | RESET-05     | Phase 9  | Complete |

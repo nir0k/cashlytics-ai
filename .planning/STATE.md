@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database- und Middleware-Ebene.
-**Current focus:** Phase 10 - Reset Flow Actions
+**Current focus:** Phase 11 - Reset Flow Pages
 
 ## Current Position
 
-Phase: 10 of 12 (Reset Flow Actions)
-Plan: 2 of 2 in current phase
-Status: Complete (Phase 10 finished)
-Last activity: 2026-02-25 — Completed 10-02 Reset Password Action
+Phase: 11 of 12 (Reset Flow Pages)
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-02-25 — Completed 11-01 Forgot Password Page
 
-Progress: [█████████░░░░░░░░░] 81% (26/32 plans across v1.0+v1.1)
+Progress: [█████████░░░░░░░░░] 84% (27/32 plans across v1.0+v1.1)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [█████████░░░░░░░░░] 81% (26/32 pl
   | Phase 09-token-security P02 | 2 min | 1 tasks | 1 files |
   | Phase 10-01 P01 | 3min | 1 tasks | 1 files |
   | Phase 10-02 P02 | 2 min | 1 tasks | 1 files |
+  | Phase 11-01 P01 | 6 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,7 @@ v1.1 key decisions:
 - **Phase 9.02**: Single-query validation with and() for timing-attack prevention, usedAt timestamp for soft-delete
 - **Phase 10.01**: Email enumeration prevention - identical response for existing/non-existing emails, silent error logging
 - **Phase 10.02**: Unified error message for invalid/expired tokens prevents token enumeration attacks
+- **Phase 11.01**: Redirect to /login on forgot-password success instead of in-page success message
 
 ### Pending Todos
 
@@ -81,5 +83,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 10-02-PLAN.md - Reset Password Action (Phase 10 complete)
+Stopped at: Completed 11-01-PLAN.md - Forgot Password Page
 Resume file: None

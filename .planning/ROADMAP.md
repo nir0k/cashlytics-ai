@@ -88,8 +88,8 @@ Plans:
 
 Plans:
 
-- [ ] 08-01: Create Vault-branded reset password email template
-- [ ] 08-02: Create Vault-branded welcome email template
+- [ ] 08-01-PLAN.md — Base template + reset password email with inline styles and plaintext
+- [ ] 08-02-PLAN.md — Welcome email + index exports with render functions
 
 ### Phase 9: Token Security
 

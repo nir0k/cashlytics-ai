@@ -125,8 +125,8 @@ Plans:
 
 Plans:
 
-- [ ] 10-01: Create forgotPasswordAction server action
-- [ ] 10-02: Create resetPasswordAction server action
+- [ ] 10-01-PLAN.md — forgotPasswordAction with email enumeration prevention (Wave 1)
+- [ ] 10-02-PLAN.md — resetPasswordAction with token validation and password update (Wave 2, depends on 10-01)
 
 ### Phase 11: Reset Flow Pages
 

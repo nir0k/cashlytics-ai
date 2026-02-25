@@ -24,7 +24,7 @@
 - [ ] **RESET-08**: User can reset password via `/reset-password?token=...` page
 - [ ] **RESET-09**: Invalid or expired tokens show clear error message
 - [ ] **RESET-10**: All other reset tokens are invalidated when user successfully changes password
-- [ ] **RESET-11**: Dedicated `password_reset_tokens` table exists (not reusing Auth.js tables)
+- [x] **RESET-11**: Dedicated `password_reset_tokens` table exists (not reusing Auth.js tables)
 
 ### Welcome Email
 
@@ -73,31 +73,31 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement  | Phase    | Status  |
-| ------------ | -------- | ------- |
-| SMTP-01      | Phase 7  | Pending |
-| SMTP-02      | Phase 7  | Pending |
-| SMTP-03      | Phase 7  | Pending |
-| SMTP-04      | Phase 7  | Pending |
-| RESET-01     | Phase 10 | Pending |
-| RESET-02     | Phase 11 | Pending |
-| RESET-03     | Phase 9  | Pending |
-| RESET-04     | Phase 9  | Pending |
-| RESET-05     | Phase 9  | Pending |
-| RESET-06     | Phase 9  | Pending |
-| RESET-07     | Phase 10 | Pending |
-| RESET-08     | Phase 10 | Pending |
-| RESET-09     | Phase 10 | Pending |
-| RESET-10     | Phase 9  | Pending |
-| RESET-11     | Phase 6  | Pending |
-| WELCOME-01   | Phase 12 | Pending |
-| WELCOME-02   | Phase 12 | Pending |
-| WELCOME-03   | Phase 12 | Pending |
-| TEMPLATES-01 | Phase 8  | Pending |
-| TEMPLATES-02 | Phase 8  | Pending |
-| TEMPLATES-03 | Phase 8  | Pending |
-| TEMPLATES-04 | Phase 8  | Pending |
-| TEMPLATES-05 | Phase 8  | Pending |
+| Requirement  | Phase    | Status   |
+| ------------ | -------- | -------- |
+| SMTP-01      | Phase 7  | Pending  |
+| SMTP-02      | Phase 7  | Pending  |
+| SMTP-03      | Phase 7  | Pending  |
+| SMTP-04      | Phase 7  | Pending  |
+| RESET-01     | Phase 10 | Pending  |
+| RESET-02     | Phase 11 | Pending  |
+| RESET-03     | Phase 9  | Pending  |
+| RESET-04     | Phase 9  | Pending  |
+| RESET-05     | Phase 9  | Pending  |
+| RESET-06     | Phase 9  | Pending  |
+| RESET-07     | Phase 10 | Pending  |
+| RESET-08     | Phase 10 | Pending  |
+| RESET-09     | Phase 10 | Pending  |
+| RESET-10     | Phase 9  | Pending  |
+| RESET-11     | Phase 6  | Complete |
+| WELCOME-01   | Phase 12 | Pending  |
+| WELCOME-02   | Phase 12 | Pending  |
+| WELCOME-03   | Phase 12 | Pending  |
+| TEMPLATES-01 | Phase 8  | Pending  |
+| TEMPLATES-02 | Phase 8  | Pending  |
+| TEMPLATES-03 | Phase 8  | Pending  |
+| TEMPLATES-04 | Phase 8  | Pending  |
+| TEMPLATES-05 | Phase 8  | Pending  |
 
 **Coverage:**
 

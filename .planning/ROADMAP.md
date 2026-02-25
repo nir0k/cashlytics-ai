@@ -107,8 +107,8 @@ Plans:
 
 Plans:
 
-- [ ] 09-01: Create token generation and hashing utilities
-- [ ] 09-02: Create token lifecycle DB operations (create, validate, consume)
+- [ ] 09-01-PLAN.md — Token generation and SHA-256 hashing utilities (Wave 1)
+- [ ] 09-02-PLAN.md — Token lifecycle DB operations (Wave 2, depends on 09-01)
 
 ### Phase 10: Reset Flow Actions
 

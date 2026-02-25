@@ -111,7 +111,7 @@ Plans:
 **Goal**: Registration behavior is controlled by environment configuration
 **Depends on**: Phase 4
 **Requirements**: MODE-01, MODE-02, MODE-03, MODE-04
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 **Success Criteria** (what must be TRUE):
 
@@ -122,9 +122,8 @@ Plans:
 
 Plans:
 
-- [ ] 05-01: Implement SINGLE_USER_MODE check in registration flow
-- [ ] 05-02: Add SINGLE_USER_EMAIL validation and error handling
-- [ ] 05-03: Test both modes and update documentation
+- [ ] 05-01-PLAN.md — isRegistrationOpen() utility + SINGLE_USER_MODE guard in registerAction — Wave 1
+- [ ] 05-02-PLAN.md — /register page server-side redirect + .env.example documentation + human verification — Wave 2 (depends on 05-01)
 
 ## Progress
 
@@ -137,7 +136,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Database Migration       | 4/4            | Complete    | 2026-02-24 |
 | 3. Server Actions Refactor  | 5/5            | Complete    | 2026-02-24 |
 | 4. Auth UI Components       | 4/4            | Complete    | 2026-02-24 |
-| 5. Registration Mode Logic  | 0/3            | Not started | -          |
+| 5. Registration Mode Logic  | 0/2            | Not started | -          |
 
 ---
 

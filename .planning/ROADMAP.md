@@ -136,7 +136,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Database Migration       | 4/4            | Complete    | 2026-02-24 |
 | 3. Server Actions Refactor  | 5/5            | Complete    | 2026-02-24 |
 | 4. Auth UI Components       | 4/4            | Complete    | 2026-02-24 |
-| 5. Registration Mode Logic  | 0/2            | Not started | -          |
+| 5. Registration Mode Logic  | 1/2            | In Progress |            |
 
 ---
 

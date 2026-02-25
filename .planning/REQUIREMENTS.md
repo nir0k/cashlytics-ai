@@ -36,10 +36,10 @@
 
 ### Registration Mode
 
-- [ ] **MODE-01**: SINGLE_USER_MODE in .env steuert Registrierungs-Verhalten
-- [ ] **MODE-02**: SINGLE_USER_EMAIL in .env definiert den Single-User
-- [ ] **MODE-03**: Bei SINGLE_USER_MODE=true ist Registrierung deaktiviert nach erstem User
-- [ ] **MODE-04**: Bei SINGLE_USER_MODE=false kann sich jeder registrieren
+- [x] **MODE-01**: SINGLE_USER_MODE in .env steuert Registrierungs-Verhalten
+- [x] **MODE-02**: SINGLE_USER_EMAIL in .env definiert den Single-User
+- [x] **MODE-03**: Bei SINGLE_USER_MODE=true ist Registrierung deaktiviert nach erstem User
+- [x] **MODE-04**: Bei SINGLE_USER_MODE=false kann sich jeder registrieren
 
 ### Migration
 
@@ -113,10 +113,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-08     | Phase 2 | Complete  |
 | DATA-09     | Phase 2 | Complete  |
 | DATA-10     | Phase 3 | Complete  |
-| MODE-01     | Phase 5 | Pending   |
-| MODE-02     | Phase 5 | Pending   |
-| MODE-03     | Phase 5 | Pending   |
-| MODE-04     | Phase 5 | Pending   |
+| MODE-01     | Phase 5 | Complete  |
+| MODE-02     | Phase 5 | Complete  |
+| MODE-03     | Phase 5 | Complete  |
+| MODE-04     | Phase 5 | Complete  |
 | MIG-01      | Phase 2 | Complete  |
 | MIG-02      | Phase 2 | Complete  |
 | MIG-03      | Phase 2 | Pending   |

@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 5 of 5 (Registration Mode Logic)
-Plan: 0 of 3 — ready to plan
-Status: Ready
-Last activity: 2026-02-25 — Phase 4 verified and complete; proxy debugging resolved
+Plan: 1 of 3 — in progress
+Status: In Progress
+Last activity: 2026-02-25 — 05-01 complete: SINGLE_USER_MODE registration guard implemented
 
 Progress: [████████████████] 80% (4/5 phases complete)
 
@@ -32,11 +32,11 @@ Progress: [████████████████] 80% (4/5 phases com
 | 2. Database Migration       | 4     | 4     | 12 min   |
 | 3. Server Actions Refactor  | 5     | 5     | 4 min    |
 | 4. Auth UI Components       | 4     | 4     | ~5 min   |
-| 5. Registration Mode Logic  | 0     | 3     | -        |
+| 5. Registration Mode Logic  | 1     | 3     | 1 min    |
 
 **Recent Trend:**
 
-- Last 5 plans: 04-04 (5 min), 04-03 (5 min), 04-02 (5 min), 04-01 (5 min), 03-05 (8 min)
+- Last 5 plans: 05-01 (1 min), 04-04 (5 min), 04-03 (5 min), 04-02 (5 min), 04-01 (5 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -87,6 +87,10 @@ Recent decisions affecting current work:
 - [04-debug]: getToken needs secureCookie:true when Auth.js uses \_\_Secure- cookie prefix; detect via x-forwarded-proto header or request.nextUrl.protocol
 - [04-debug]: next dev --webpack required — Turbopack PostCSS IPC worker crashes with Tailwind v4 @tailwindcss/postcss on this environment
 - [04-debug]: proxy matcher must exclude static file extensions (.svg, .png, .ico) — Next.js serves public/ files at root level without /public/ prefix
+- [05-01]: SINGLE_USER_MODE compared with === 'true' not truthy check — 'false' string is truthy
+- [05-01]: count(\*)::int cast mandatory in Drizzle — without it COUNT returns string and numeric comparison silently fails
+- [05-01]: registration-mode.ts has no 'use server' directive — utility imported by Server Actions, not itself a Server Action
+- [05-01]: Guard fires before Zod parse — fail fast without validation work when registration is entirely blocked
 
 ### Pending Todos
 
@@ -99,5 +103,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Phase 4 complete — proxy debugging resolved, all auth flows verified
+Stopped at: Completed 05-registration-mode-logic/05-01-PLAN.md
 Resume file: None

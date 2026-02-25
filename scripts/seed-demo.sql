@@ -37,10 +37,11 @@ TRUNCATE TABLE users CASCADE;
 -- ==============================================================
 -- DEMO USER
 -- Deterministic UUID for consistent testing across resets
--- Password: "demo" (bcrypt hash with 12 rounds)
+-- Email: admin
+-- Password: admin123456789 (bcrypt hash with 12 rounds)
 -- ==============================================================
 INSERT INTO users (id, email, name, password, email_verified, created_at) VALUES
-  ('u0000000-0000-0000-0000-000000000001', 'demo@cashlytics.local', 'Demo User', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.flLWrYLYfCDVuS', NOW() - INTERVAL '180 days', NOW() - INTERVAL '180 days')
+  ('u0000000-0000-0000-0000-000000000001', 'admin', 'Admin User', '$2b$12$7EjadckorvJ2muOK3d3UtukHot0fflJQ94WBKvyOCSiI8Bl5O/2Gm', NOW() - INTERVAL '180 days', NOW() - INTERVAL '180 days')
 ON CONFLICT (email) DO NOTHING;
 
 

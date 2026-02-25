@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.0...v0.5.0) (2026-02-25)
+
+### ✨ Features
+
+- update demo compose ([2f358f3](https://github.com/aaronjoeldev/cashlytics-ai/commit/2f358f38ef397bb2a23649d06d5aefda6530fb7c))
+
 ## [0.4.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.3...v0.4.0) (2026-02-25)
 
 ### ✨ Features

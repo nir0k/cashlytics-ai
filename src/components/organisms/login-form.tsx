@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect, useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { loginAction, type AuthActionState } from "@/actions/auth-actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,15 @@ function SubmitButton() {
 
 export function LoginForm() {
   const [state, action] = useActionState(loginAction, initialState);
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
+  const prefilledEmail = searchParams.get("email") || "";
+
+  useEffect(() => {
+    if (resetSuccess) {
+      toast.success("Password reset successful, please log in");
+    }
+  }, [resetSuccess]);
 
   return (
     <div className="w-full max-w-sm">
@@ -75,6 +86,7 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               placeholder="you@example.com"
+              defaultValue={prefilledEmail}
             />
             {state.fieldErrors?.email && (
               <p className="text-destructive text-xs">{state.fieldErrors.email}</p>

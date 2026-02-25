@@ -9,6 +9,11 @@ import { eq } from "drizzle-orm";
 import { hashPassword } from "@/lib/auth/password";
 import { registerSchema } from "@/lib/validations/auth";
 import { isRegistrationOpen } from "@/lib/auth/registration-mode";
+import { isEmailConfigured, sendEmail } from "@/lib/email/transporter";
+import { createResetToken } from "@/lib/auth/reset-token";
+import { renderResetPasswordEmail } from "@/emails";
+import { logger } from "@/lib/logger";
+import { z } from "zod";
 
 export type AuthActionState = {
   error?: string;
@@ -17,6 +22,12 @@ export type AuthActionState = {
     password?: string;
     confirmPassword?: string;
   };
+};
+
+export type ForgotPasswordState = {
+  success?: boolean;
+  message?: string;
+  error?: string;
 };
 
 export async function loginAction(
@@ -102,4 +113,58 @@ export async function registerAction(
 
 export async function logoutAction(): Promise<void> {
   await signOut({ redirectTo: "/login" });
+}
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+export async function forgotPasswordAction(
+  _prevState: ForgotPasswordState,
+  formData: FormData
+): Promise<ForgotPasswordState> {
+  // Validate email format
+  const result = forgotPasswordSchema.safeParse({
+    email: formData.get("email"),
+  });
+
+  if (!result.success) {
+    const fieldError = result.error.issues[0]?.message;
+    return { error: fieldError };
+  }
+
+  const { email } = result.data;
+
+  // Look up user by email
+  const [user] = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  // Only send email if user exists AND SMTP is configured
+  if (user && isEmailConfigured()) {
+    try {
+      // Generate reset token
+      const rawToken = await createResetToken(user.id);
+
+      // Build reset URL
+      const resetUrl = `${process.env.APP_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
+
+      // Render email
+      const { html, text, subject } = await renderResetPasswordEmail(resetUrl);
+
+      // Send email
+      await sendEmail({ to: user.email, subject, html, text });
+    } catch (error) {
+      // Log errors but don't reveal to user
+      logger.error("Failed to send password reset email", "auth", error);
+    }
+  }
+
+  // ALWAYS return identical message regardless of user existence
+  return {
+    success: true,
+    message: "If an account exists with this email, you will receive a reset link.",
+  };
 }

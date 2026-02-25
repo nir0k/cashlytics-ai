@@ -73,39 +73,39 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement  | Phase   | Status  |
-| ------------ | ------- | ------- |
-| SMTP-01      | Phase ? | Pending |
-| SMTP-02      | Phase ? | Pending |
-| SMTP-03      | Phase ? | Pending |
-| SMTP-04      | Phase ? | Pending |
-| RESET-01     | Phase ? | Pending |
-| RESET-02     | Phase ? | Pending |
-| RESET-03     | Phase ? | Pending |
-| RESET-04     | Phase ? | Pending |
-| RESET-05     | Phase ? | Pending |
-| RESET-06     | Phase ? | Pending |
-| RESET-07     | Phase ? | Pending |
-| RESET-08     | Phase ? | Pending |
-| RESET-09     | Phase ? | Pending |
-| RESET-10     | Phase ? | Pending |
-| RESET-11     | Phase ? | Pending |
-| WELCOME-01   | Phase ? | Pending |
-| WELCOME-02   | Phase ? | Pending |
-| WELCOME-03   | Phase ? | Pending |
-| TEMPLATES-01 | Phase ? | Pending |
-| TEMPLATES-02 | Phase ? | Pending |
-| TEMPLATES-03 | Phase ? | Pending |
-| TEMPLATES-04 | Phase ? | Pending |
-| TEMPLATES-05 | Phase ? | Pending |
+| Requirement  | Phase    | Status  |
+| ------------ | -------- | ------- |
+| SMTP-01      | Phase 7  | Pending |
+| SMTP-02      | Phase 7  | Pending |
+| SMTP-03      | Phase 7  | Pending |
+| SMTP-04      | Phase 7  | Pending |
+| RESET-01     | Phase 10 | Pending |
+| RESET-02     | Phase 11 | Pending |
+| RESET-03     | Phase 9  | Pending |
+| RESET-04     | Phase 9  | Pending |
+| RESET-05     | Phase 9  | Pending |
+| RESET-06     | Phase 9  | Pending |
+| RESET-07     | Phase 10 | Pending |
+| RESET-08     | Phase 10 | Pending |
+| RESET-09     | Phase 10 | Pending |
+| RESET-10     | Phase 9  | Pending |
+| RESET-11     | Phase 6  | Pending |
+| WELCOME-01   | Phase 12 | Pending |
+| WELCOME-02   | Phase 12 | Pending |
+| WELCOME-03   | Phase 12 | Pending |
+| TEMPLATES-01 | Phase 8  | Pending |
+| TEMPLATES-02 | Phase 8  | Pending |
+| TEMPLATES-03 | Phase 8  | Pending |
+| TEMPLATES-04 | Phase 8  | Pending |
+| TEMPLATES-05 | Phase 8  | Pending |
 
 **Coverage:**
 
 - v1.1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 ✓
 
 ---
 
 _Requirements defined: 2026-02-25_
-_Last updated: 2026-02-25 after initial definition_
+_Last updated: 2026-02-25 after roadmap creation_

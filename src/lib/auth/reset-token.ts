@@ -1,4 +1,7 @@
 import { randomBytes, createHash } from "node:crypto";
+import { eq, and, gt, isNull } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { passwordResetTokens } from "@/lib/db/schema";
 
 /**
  * Token expiry time in milliseconds (1 hour)
@@ -32,4 +35,87 @@ export function generateResetToken(): { raw: string; hash: string } {
  */
 export function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
+}
+
+/**
+ * Creates a new password reset token for a user.
+ * Stores only the SHA-256 hash in the database.
+ *
+ * @param userId - The UUID of the user requesting the reset
+ * @returns The raw token (for email link) - NOT the hash
+ */
+export async function createResetToken(userId: string): Promise<string> {
+  const { raw, hash } = generateResetToken();
+  const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MS);
+
+  await db.insert(passwordResetTokens).values({
+    tokenHash: hash,
+    userId,
+    expiresAt,
+  });
+
+  return raw;
+}
+
+/**
+ * Validates a password reset token.
+ * Uses a single query with combined conditions to prevent timing attacks.
+ *
+ * @param rawToken - The raw token from the reset link
+ * @returns Validation result with userId and tokenId if valid, or invalid status
+ */
+export async function validateResetToken(
+  rawToken: string
+): Promise<{ valid: true; userId: string; tokenId: string } | { valid: false }> {
+  const tokenHash = hashToken(rawToken);
+
+  const result = await db
+    .select({
+      userId: passwordResetTokens.userId,
+      tokenId: passwordResetTokens.id,
+    })
+    .from(passwordResetTokens)
+    .where(
+      and(
+        eq(passwordResetTokens.tokenHash, tokenHash),
+        gt(passwordResetTokens.expiresAt, new Date()),
+        isNull(passwordResetTokens.usedAt)
+      )
+    )
+    .limit(1);
+
+  if (result.length === 0) {
+    return { valid: false };
+  }
+
+  return {
+    valid: true,
+    userId: result[0].userId,
+    tokenId: result[0].tokenId,
+  };
+}
+
+/**
+ * Marks a token as used by setting the usedAt timestamp.
+ *
+ * @param tokenId - The UUID of the token to consume
+ */
+export async function consumeResetToken(tokenId: string): Promise<void> {
+  await db
+    .update(passwordResetTokens)
+    .set({ usedAt: new Date() })
+    .where(eq(passwordResetTokens.id, tokenId));
+}
+
+/**
+ * Invalidates all unused reset tokens for a user.
+ * Called after successful password reset to prevent reuse of pending links.
+ *
+ * @param userId - The UUID of the user whose tokens should be invalidated
+ */
+export async function invalidateUserTokens(userId: string): Promise<void> {
+  await db
+    .update(passwordResetTokens)
+    .set({ usedAt: new Date() })
+    .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
 }

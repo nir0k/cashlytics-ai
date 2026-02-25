@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.5.0...v0.5.1) (2026-02-25)
+
+### 🐛 Bug Fixes
+
+- solve demo seeder error ([0a645a5](https://github.com/aaronjoeldev/cashlytics-ai/commit/0a645a5ccf707b1d86fa80213b706a523fecf824))
+
 ## [0.5.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.0...v0.5.0) (2026-02-25)
 
 ### ✨ Features

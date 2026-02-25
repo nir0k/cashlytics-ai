@@ -161,7 +161,7 @@ Plans:
 
 Plans:
 
-- [ ] 12-01: Integrate welcome email into registerAction
+- [ ] 12-01-PLAN.md — Integrate welcome email into registerAction (Wave 1)
 
 ## Progress
 

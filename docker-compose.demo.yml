@@ -51,6 +51,7 @@ services:
       DATABASE_URL: postgresql://cashlytics:${POSTGRES_PASSWORD:-cashlytics_demo}@postgres:5432/cashlytics
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3333}
       AUTH_SECRET: ${AUTH_SECRET:-demo_secret_change_in_production}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       NODE_ENV: production
     depends_on:

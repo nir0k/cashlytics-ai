@@ -3,9 +3,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  const secureCookie =
+    request.headers.get("x-forwarded-proto") === "https" || request.nextUrl.protocol === "https:";
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
+    secureCookie,
   });
   const isLoggedIn = !!token;
   const { pathname } = request.nextUrl;

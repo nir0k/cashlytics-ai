@@ -21,6 +21,8 @@ services:
       - NEXT_PUBLIC_DEFAULT_LOCALE=${NEXT_PUBLIC_DEFAULT_LOCALE:-de}
       # Auth.js secret for JWT encryption (generate with: npx auth secret)
       - AUTH_SECRET=${AUTH_SECRET}
+      # Required when accessing via IP address or custom domain (not localhost)
+      - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
       # Registration mode: true = single user, false = open registration
       - SINGLE_USER_MODE=${SINGLE_USER_MODE:-true}
       # Email of the single user (used for data migration)

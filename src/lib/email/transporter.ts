@@ -84,10 +84,12 @@ export function getTransporter(): nodemailer.Transporter | null {
     return null;
   }
 
+  const isImplicitTls = config.port === 465;
   transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
-    secure: config.port === 465,
+    secure: isImplicitTls,
+    requireTLS: !isImplicitTls,
     auth: {
       user: config.user,
       pass: config.pass,

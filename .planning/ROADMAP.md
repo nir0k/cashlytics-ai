@@ -33,7 +33,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [ ] **Phase 8: Email Templates** - Vault-branded HTML templates with inline styles
 - [x] **Phase 9: Token Security** - Cryptographic token generation and lifecycle (completed 2026-02-25)
 - [x] **Phase 10: Reset Flow Actions** - Server actions for forgot/reset password (completed 2026-02-25)
-- [ ] **Phase 11: Reset Flow Pages** - UI pages for password reset
+- [x] **Phase 11: Reset Flow Pages** - UI pages for password reset (completed 2026-02-25)
 - [ ] **Phase 12: Welcome Email** - Welcome email triggered on registration
 
 ## Phase Details
@@ -180,7 +180,7 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10 → 11 → 12
 | 8. Email Templates          | v1.1      | 0/2            | Not started | -          |
 | 9. Token Security           | v1.1      | Complete       | 2026-02-25  | -          |
 | 10. Reset Flow Actions      | 2/2       | Complete       | 2026-02-25  | -          |
-| 11. Reset Flow Pages        | 1/3       | In Progress    |             | -          |
+| 11. Reset Flow Pages        | 3/3       | Complete       | 2026-02-25  | -          |
 | 12. Welcome Email           | v1.1      | 0/1            | Not started | -          |
 
 ---

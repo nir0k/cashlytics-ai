@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 11 of 12 (Reset Flow Pages)
-Plan: 1 of 3 in current phase
-Status: In Progress
-Last activity: 2026-02-25 — Completed 11-01 Forgot Password Page
+Plan: 3 of 3 in current phase
+Status: Complete (Phase 11 finished)
+Last activity: 2026-02-25 — Completed 11-03 Login Page Reset Link
 
-Progress: [█████████░░░░░░░░░] 84% (27/32 plans across v1.0+v1.1)
+Progress: [█████████░░░░░░░░░] 91% (29/32 plans across v1.0+v1.1)
 
 ## Performance Metrics
 
@@ -48,6 +48,8 @@ Progress: [█████████░░░░░░░░░] 84% (27/32 pl
   | Phase 10-01 P01 | 3min | 1 tasks | 1 files |
   | Phase 10-02 P02 | 2 min | 1 tasks | 1 files |
   | Phase 11-01 P01 | 6 min | 2 tasks | 2 files |
+  | Phase 11-02 P02 | 10 min | 2 tasks | 2 files |
+  | Phase 11-03 P03 | 9 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -67,6 +69,8 @@ v1.1 key decisions:
 - **Phase 10.01**: Email enumeration prevention - identical response for existing/non-existing emails, silent error logging
 - **Phase 10.02**: Unified error message for invalid/expired tokens prevents token enumeration attacks
 - **Phase 11.01**: Redirect to /login on forgot-password success instead of in-page success message
+- **Phase 11.02**: Inline error display for reset password with unified message, success redirects to /login with toast
+- **Phase 11.03**: Modified LoginForm directly for useSearchParams (already 'use client'), Suspense boundary in page.tsx
 
 ### Pending Todos
 
@@ -83,5 +87,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 11-01-PLAN.md - Forgot Password Page
+Stopped at: Completed 11-02-PLAN.md - Reset Password Page
 Resume file: None

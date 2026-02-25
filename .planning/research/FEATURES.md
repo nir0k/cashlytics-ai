@@ -1,14 +1,25 @@
-# Feature Research: Multi-Tenant Financial App Authentication
+# Feature Research: Email Sending and Password Reset Flow
 
-**Domain:** Multi-User Authentication for Self-Hosted Financial Application
-**Researched:** 2026-02-24
-**Confidence:** HIGH (Auth.js docs + competitor analysis verified)
+**Domain:** SMTP Email Infrastructure + Password Reset + Welcome Email for Next.js Self-Hosted Financial App
+**Researched:** 2026-02-25
+**Confidence:** HIGH (based on codebase analysis, established security patterns, and standard Next.js App Router patterns)
 
 ---
 
-## Executive Summary
+## Context: What Already Exists
 
-Self-hosted financial apps like Firefly III and Actual Budget establish a clear baseline for authentication features: email/password credentials, session management, and strict data isolation are non-negotiable. For Cashlytics, the key differentiator is **registration mode control** — enabling single-user self-hosted deployments while supporting multi-user SaaS scenarios. OAuth providers, 2FA, and password reset are differentiators, not table stakes, and should be deferred.
+This is a subsequent milestone on top of a working auth system. Key existing infrastructure:
+
+- Auth.js v5 credentials provider (email + password login/register)
+- `bcrypt` password hashing (pure JS, Docker-friendly)
+- `users` table with `id`, `email`, `password`, `emailVerified`, `createdAt`
+- `authVerificationTokens` table (Auth.js standard — identifier + token + expires, composite PK)
+- In-memory `rateLimit()` utility in `src/lib/rate-limiter.ts`
+- Server Actions pattern: `useActionState` + `AuthActionState` type with `error` + `fieldErrors`
+- Auth layout: two-panel design with Vault glass card (dark `#08080a`, amber `#f59e0b`)
+- No email library installed yet (Nodemailer not in package.json)
+
+The `authVerificationTokens` table is Auth.js adapter-owned and not suitable for password reset — it lacks a `userId` FK and a `usedAt` column. A dedicated `passwordResetTokens` table is required.
 
 ---
 
@@ -16,242 +27,330 @@ Self-hosted financial apps like Firefly III and Actual Budget establish a clear 
 
 Features users assume exist. Missing these = product feels incomplete or insecure.
 
-| Feature                           | Why Expected                                         | Complexity | Notes                                                                           |
-| --------------------------------- | ---------------------------------------------------- | ---------- | ------------------------------------------------------------------------------- |
-| **Email/Password Authentication** | Every self-hosted app has this; it's the baseline    | LOW        | Auth.js Credentials provider; Zod validation for email format + password length |
-| **Secure Password Hashing**       | Financial data requires strong security              | LOW        | bcrypt (Docker-friendly) or argon2 (stronger, native compilation)               |
-| **Session Persistence**           | Users expect to stay logged in between visits        | LOW        | JWT cookies (default) or database sessions; HttpOnly + Secure flags             |
-| **Protected Routes**              | Unauthenticated users can't access financial data    | LOW        | Next.js 16 proxy.ts with `authorized` callback; redirects to /login             |
-| **Logout Functionality**          | Basic expectation; clears session                    | LOW        | `signOut()` from Auth.js; destroys cookie                                       |
-| **Row-Level Data Isolation**      | Each user sees only their own accounts/expenses      | MEDIUM     | userId FK on all tables; every query filtered by session.user.id                |
-| **Registration Mode Control**     | Self-hosted apps need single-user mode               | MEDIUM     | `.env` flag: `SINGLE_USER_MODE=true` + `SINGLE_USER_EMAIL=user@example.com`     |
-| **CSRF Protection**               | Built into Auth.js; expected for any form-based auth | LOW        | Automatic with Auth.js; no extra work                                           |
-| **Secure Cookie Storage**         | Session tokens must be HttpOnly, Secure, SameSite    | LOW        | Auth.js default configuration                                                   |
-
-### Table Stakes Implementation Notes
-
-**Registration Mode Control** is the critical table-stakes feature for this project. Self-hosted financial apps typically operate in one of two modes:
-
-1. **Single-User Mode** (default for self-hosted):
-   - Only one user can exist, defined by `.env`
-   - Registration disabled after initial setup
-   - Migration assigns existing data to this user
-   - Simpler UX: no login required if only one user exists (optional enhancement)
-
-2. **Multi-User Mode** (for SaaS or family deployments):
-   - Open registration or invite-only
-   - Each user gets isolated data
-   - Standard authentication flow
+| Feature                                   | Why Expected                                                                               | Complexity | Notes                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ | ---------- | ----------------------------------------------------------------------------- |
+| **Forgot-Password page**                  | Every auth system has a "Forgot password?" link from the login page                        | LOW        | Page at `/forgot-password`; single email field; submits to server action      |
+| **"Forgot password?" link on login page** | Users expect this affordance; its absence signals a broken product                         | LOW        | Add link below login form pointing to `/forgot-password`                      |
+| **Password reset email delivery**         | Users expect to receive a reset link via email                                             | MEDIUM     | Nodemailer via SMTP; plain HTML email with reset link                         |
+| **Reset-password page (token-based)**     | Link in email must lead to a usable form                                                   | LOW        | Page at `/reset-password?token=...`; new password + confirm                   |
+| **Token expiry**                          | Security expectation: reset links expire (standard: 1 hour)                                | LOW        | `expiresAt` column; server action checks before accepting                     |
+| **One-time token use**                    | Security expectation: used tokens cannot be reused                                         | LOW        | `usedAt` column set on consumption; check before processing                   |
+| **Secure random token generation**        | Tokens must be cryptographically random, not guessable                                     | LOW        | `crypto.randomBytes(32).toString('hex')` — Node.js built-in, no extra library |
+| **Token stored as hash in DB**            | Tokens in DB should not be reversible if DB is leaked                                      | MEDIUM     | Store `sha256(token)` in DB; compare hash of submitted token                  |
+| **Graceful "email not found" behavior**   | Always respond "if this email exists, a reset email was sent" — prevents email enumeration | LOW        | Never reveal whether email exists in DB                                       |
+| **Welcome email on registration**         | Users expect a confirmation after signup                                                   | LOW        | Triggered in `registerAction` after user creation; async send                 |
+| **HTML email with brand identity**        | Transactional email that looks like the app (not plain text)                               | MEDIUM     | Inline-styled HTML; Vault dark background + amber accent                      |
 
 ---
 
 ## Differentiators (Competitive Advantage)
 
-Features that set the product apart. Not required, but valuable for specific use cases.
+Features that set the product apart. Valued but not expected.
 
-| Feature                              | Value Proposition                                                   | Complexity | Notes                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------- |
-| **Two-Factor Authentication (2FA)**  | Major security enhancement for financial data; Firefly III has this | HIGH       | TOTP via authenticator apps; requires QR code generation, secret storage            |
-| **Password Reset Flow**              | Users can recover access without admin intervention                 | MEDIUM     | Requires email service (Resend, SendGrid); verification tokens table already exists |
-| **Email Verification**               | Confirm user owns the email address                                 | MEDIUM     | Verification tokens table exists; needs email service integration                   |
-| **Session Management UI**            | Users can see active sessions, revoke them ("Sign out everywhere")  | MEDIUM     | Requires database sessions (not JWT); display device/location info                  |
-| **Magic Link / Passwordless Auth**   | Better UX; no password to forget                                    | MEDIUM     | Auth.js Email provider; requires email service                                      |
-| **OAuth Providers (Google, GitHub)** | Faster login; no password management                                | MEDIUM     | Auth.js has built-in providers; adds external dependency                            |
-| **Passkeys / WebAuthn**              | Future-proof; phishing-resistant                                    | HIGH       | Auth.js supports WebAuthn (experimental); requires HTTPS                            |
-| **Device Trust / Extended Sessions** | "Remember me" for trusted devices                                   | LOW        | Extend session expiry for specific devices                                          |
-| **Login Rate Limiting**              | Prevent brute force attacks                                         | LOW        | Per-IP or per-email rate limiting on auth endpoints                                 |
-| **Audit Log**                        | Track all authentication events for security review                 | MEDIUM     | Log login attempts, password changes, session creations                             |
-
-### Differentiator Prioritization for Financial Apps
-
-**Tier 1 (Should Add After MVP):**
-
-1. Password Reset Flow — users will lock themselves out
-2. 2FA — financial data warrants extra security
-
-**Tier 2 (Nice to Have):** 3. Session Management UI — visibility into account security 4. Login Rate Limiting — basic protection against attacks
-
-**Tier 3 (Future):** 5. OAuth Providers — convenience, not security 6. Magic Links — UX improvement 7. Passkeys — cutting edge, low adoption currently
+| Feature                                                      | Value Proposition                                                          | Complexity | Notes                                                                                        |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| **SMTP configured via `.env` only**                          | Self-hosters control their own mail server; no third-party dependency      | LOW        | 5 env vars: HOST, PORT, USER, PASS, FROM; Nodemailer config                                  |
+| **Email sending disabled gracefully if SMTP not configured** | Self-hosted app can run without email; no broken state                     | LOW        | Check for SMTP env vars; log warning, return graceful error to user                          |
+| **Vault-branded dark HTML emails**                           | Email matches the app aesthetic; premium feel for a finance app            | MEDIUM     | Inline CSS only (email client compatibility); dark bg `#08080a`, amber `#f59e0b` header line |
+| **Rate limiting on forgot-password endpoint**                | Prevents email flooding / enumeration attacks                              | LOW        | Use existing `rateLimit()` utility; 3-5 requests per 15 minutes per IP                       |
+| **Token invalidation on password change**                    | If a password is reset, all existing reset tokens for that user are voided | LOW        | `DELETE FROM password_reset_tokens WHERE userId = ?` after successful reset                  |
+| **Plaintext fallback in email**                              | Accessibility and spam score improvement                                   | LOW        | Nodemailer `text` field alongside `html` field                                               |
 
 ---
 
 ## Anti-Features (Deliberately NOT Build)
 
-Features that seem good but create problems for this use case.
+| Feature                                          | Why Requested                   | Why Problematic                                                                                           | Alternative                                                                     |
+| ------------------------------------------------ | ------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Email verification required for login**        | "Confirm users own their email" | Blocks self-hosted users if SMTP not configured; out of scope per PROJECT.md                              | Optional enhancement in v2; current flow allows immediate login                 |
+| **Magic link login**                             | "No password to remember"       | Conflicts with existing credentials flow; adds UX complexity for self-hosted; requires session management | Password reset covers the "lost access" case; defer magic links to v2+          |
+| **Third-party email service (SendGrid, Resend)** | "Better deliverability"         | Adds external dependency; self-hosters want control; overkill for personal finance app with 1-10 users    | SMTP via Nodemailer — works with Gmail, Mailgun, Postfix, etc.                  |
+| **Email template engine (Handlebars, MJML)**     | "Reusable templates"            | Adds dependency and build complexity for what will be 2 email types                                       | Inline TypeScript functions returning HTML strings — sufficient for 2 templates |
+| **Async email queue (Redis/Bull)**               | "Reliable delivery"             | Massive over-engineering for a self-hosted app with 1-10 users                                            | Fire-and-forget `sendMail()` in server action; log errors                       |
+| **Account lockout after failed reset attempts**  | "Extra security"                | Token expiry + one-time use already covers this; lockout adds complexity and support burden               | Token expiry (1 hour) + rate limiting on request endpoint                       |
+| **Reset token sent as URL hash fragment**        | "More secure"                   | Email clients often strip or don't render hash fragments; token needs to be query param                   | `?token=` query parameter is standard and universally supported                 |
+| **Custom email editor UI in app**                | "Customize emails from UI"      | Major scope expansion; personal finance app doesn't need this                                             | Templates are code; update via deployment                                       |
 
-| Anti-Feature                              | Why Requested                            | Why Problematic                                                                         | What to Do Instead                                                                 |
-| ----------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **Role-Based Access Control (RBAC)**      | "Admin can see all users' data"          | Adds complexity; project scope says "all users are equal"; not needed for single-tenant | Keep flat user model; defer RBAC indefinitely                                      |
-| **Team / Organization Features**          | "Share accounts with spouse"             | Major architecture change; requires shared data model, permissions                      | Defer; current architecture is per-user isolation                                  |
-| **Social-Only Login (No Password)**       | "Just use Google login"                  | Self-hosted apps shouldn't depend on external OAuth providers; offline access breaks    | Always support email/password; OAuth is optional add-on                            |
-| **Never-Expiring Sessions**               | "Don't make me log in again"             | Security risk for financial data; session hijacking exposure                            | Reasonable session expiry (7-30 days); "remember me" extends but doesn't eliminate |
-| **Password Requirements Too Strict**      | "Must have 2 uppercase, 3 symbols, etc." | Frustrating UX; self-hosted users are admins of their own instance                      | Reasonable defaults (8+ chars); let admins customize via .env if desired           |
-| **Email Verification Required for Login** | "Verify email before accessing app"      | Blocks self-hosted users without email service configured                               | Make email verification optional; allow immediate access, verify later             |
-| **Complex Password Recovery Questions**   | "Mother's maiden name?"                  | Security theater; easily discoverable; rarely used correctly                            | 2FA or recovery codes are better alternatives                                      |
-| **Concurrent Session Limits**             | "Only one device at a time"              | Frustrating for legitimate use; hard to implement correctly                             | Session management UI lets users self-manage                                       |
+---
 
-### Anti-Feature Rationale
+## UX Flow: Password Reset
 
-The project explicitly states in PROJECT.md:
+The complete user journey from "I forgot my password" to "I'm logged in again."
 
-- OAuth Provider — "kann später ergänzt werden"
-- Role-based Access Control — "alle User sind gleich"
-- Email Verification — "Password-Reset via Email später"
-- Password Reset Flow — "später"
-- Team/Organization Features — "Single-Tenant pro Instanz"
+```
+LOGIN PAGE
+  └──[Forgot password?]──> FORGOT-PASSWORD PAGE
+                               Form: email field + submit button
+                               │
+                               └──[Submit]──> forgotPasswordAction (Server Action)
+                                               1. Rate limit check (IP-based)
+                                               2. Validate email format (Zod)
+                                               3. Look up user by email
+                                               4. Always show success message (email enumeration prevention)
+                                               5. If user found:
+                                                  a. Generate: crypto.randomBytes(32).toString('hex')
+                                                  b. Hash: sha256(token)
+                                                  c. Insert into password_reset_tokens:
+                                                     { userId, tokenHash, expiresAt: now + 1hr, usedAt: null }
+                                                  d. Send email with link: APP_URL/reset-password?token=<rawToken>
+                                               │
+                               └──[Success state shown] "If this email exists, a reset link was sent."
+                                   └──[User opens email] RESET EMAIL
+                                       Contains: Link to /reset-password?token=<rawToken>
+                                       Expires: 1 hour
+                                       │
+                                       └──[Click link]──> RESET-PASSWORD PAGE
+                                                           1. Page reads token from URL query param
+                                                           2. Server Component: validate token exists + not expired + not used
+                                                              - If invalid: show "link expired or invalid" state
+                                                              - If valid: show new-password form
+                                                           3. Form: new password + confirm
+                                                           │
+                                                           └──[Submit]──> resetPasswordAction (Server Action)
+                                                                           1. Re-validate token (race condition safety)
+                                                                           2. Validate new password (Zod, same rules as register)
+                                                                           3. Hash new password (bcrypt, SALT_ROUNDS=12)
+                                                                           4. Update users.password
+                                                                           5. Mark token used: SET usedAt = NOW()
+                                                                           6. (Optional) Delete all other reset tokens for user
+                                                                           7. Redirect to /login with success message
+```
 
-This research confirms these deferrals are correct. Focus on table stakes first.
+## UX Flow: Welcome Email
+
+```
+REGISTER PAGE
+  └──[Submit]──> registerAction (Server Action) [existing]
+                   1. SINGLE_USER_MODE gate
+                   2. Validate input (Zod)
+                   3. Check email uniqueness
+                   4. Hash password
+                   5. INSERT user  ←── NEW: after this succeeds
+                   6. [NEW] sendWelcomeEmail(email) — fire and forget, non-blocking
+                      - If SMTP not configured: log warning, continue
+                      - If send fails: log error, continue (don't fail registration)
+                   7. Auto-login
+                   8. Redirect to /
+```
 
 ---
 
 ## Feature Dependencies
 
 ```
-Email/Password Auth
-    └──requires──> Secure Password Hashing
-    └──requires──> Session Persistence
-    └──requires──> Protected Routes
-    └──requires──> Row-Level Data Isolation
-
-Registration Mode Control
-    └──requires──> Email/Password Auth
-    └──requires──> Database with userId FKs
+SMTP Email Infrastructure
+    └──enables──> Password Reset Email
+    └──enables──> Welcome Email
+    └──requires──> SMTP env vars (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
+    └──requires──> Nodemailer (npm install nodemailer)
 
 Password Reset Flow
-    └──requires──> Email Service (Resend/SendGrid)
-    └──requires──> Email/Password Auth
-    └──uses──> verificationTokens table (exists in Auth.js schema)
+    └──requires──> SMTP Email Infrastructure
+    └──requires──> passwordResetTokens DB table (NEW — separate from authVerificationTokens)
+    └──requires──> Forgot-Password page + Server Action
+    └──requires──> Reset-Password page + Server Action
+    └──uses──> existing rateLimit() utility
+    └──uses──> existing hashPassword() / bcrypt for new password hashing
+    └──uses──> Node.js crypto (built-in) for token generation
 
-2FA (TOTP)
-    └──requires──> Email/Password Auth
-    └──requires──> QR Code generation library
-    └──requires──> Secret storage in users table
+Welcome Email
+    └──requires──> SMTP Email Infrastructure
+    └──requires──> modification to existing registerAction
+    └──does NOT require──> new DB table (stateless email send)
 
-Session Management UI
-    └──requires──> Database Sessions (not JWT)
-    └──conflicts──> JWT Session Strategy
-
-OAuth Providers
-    └──requires──> Email/Password Auth (for fallback)
-    └──requires──> External OAuth app registration
-
-Magic Link Auth
-    └──requires──> Email Service
-    └──requires──> verificationTokens table
-    └──conflicts──> Credentials Provider (user expectation of password)
+HTML Email Templates
+    └──requires──> Nodemailer (html field)
+    └──uses──> Vault design tokens (hardcoded inline CSS — no Tailwind in emails)
+    └──informs──> both Password Reset Email and Welcome Email
 ```
 
 ### Dependency Notes
 
-- **Session Management UI requires Database Sessions:** JWT sessions cannot be revoked server-side. If you want "sign out everywhere" functionality, you must use database sessions (`session: { strategy: 'database' }`).
+- **`authVerificationTokens` table is NOT reused for password reset.** It is Auth.js adapter-owned with a composite PK on `(identifier, token)` and no `userId` FK or `usedAt` field. A separate `passwordResetTokens` table is required per PROJECT.md: `{ token, userId, expiresAt, usedAt }`.
 
-- **Password Reset requires Email Service:** Self-hosted users may not have email configured. Make this optional and graceful — show a "contact administrator" message if email is not configured.
+- **Nodemailer is Node.js only.** It cannot run in Edge Runtime. The server actions and email-sending utility must use `'use server'` and run in Node.js runtime. This is already the case for all existing server actions.
 
-- **2FA can be added incrementally:** Start with TOTP (Google Authenticator, etc.). WebAuthn/Passkeys are more complex and can come later.
+- **`crypto.randomBytes` is Node.js built-in.** No additional library needed for token generation. Do not use `Math.random()` — not cryptographically secure.
+
+- **Storing token hash in DB is recommended but adds complexity.** For a self-hosted personal finance app with a trusted DB, storing the raw token is pragmatic and acceptable. The PROJECT.md requirements do not specify hashing. However, hashing is the correct security posture if the DB is ever shared or backed up. Recommend hashing with `crypto.createHash('sha256').update(token).digest('hex')`.
+
+- **Welcome email must not block registration.** If SMTP is not configured, registration should succeed silently. Wrap email send in try/catch; log the error; do not surface to user.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.1 — This Milestone)
 
-Minimum viable multi-user authentication — what's needed to validate the core value.
-
-- [x] **Email/Password Authentication** — Credentials provider with bcrypt hashing
-- [x] **Secure Session Management** — JWT cookies with HttpOnly, Secure, SameSite
-- [x] **Protected Routes** — proxy.ts redirects unauthenticated users to /login
-- [x] **Row-Level Data Isolation** — Every query filtered by session.user.id
-- [x] **Logout Functionality** — signOut() clears session
-- [x] **Registration Mode Control** — SINGLE_USER_MODE and SINGLE_USER_EMAIL from .env
-- [x] **Login/Register Pages** — Simple forms with email/password
-- [x] **Data Migration** — Assign existing data to single user on upgrade
+- [ ] **SMTP configuration via `.env`** — 5 env vars; Nodemailer transport; `src/lib/email/mailer.ts`
+- [ ] **Graceful SMTP-disabled state** — If env vars absent, log warning; `sendMail` returns `{ ok: false }` silently
+- [ ] **`passwordResetTokens` DB table** — `id`, `userId`, `tokenHash`, `expiresAt`, `usedAt`, `createdAt`; Drizzle migration
+- [ ] **`forgotPasswordAction` server action** — rate limited; always-success response; token generation + email send
+- [ ] **`/forgot-password` page** — email field; success state; "Forgot password?" link added to login form
+- [ ] **Password reset email HTML template** — Vault dark design; amber CTA button; token link
+- [ ] **`resetPasswordAction` server action** — token validation; password update; token consumption
+- [ ] **`/reset-password?token=` page** — server-validates token on load; shows form or error state
+- [ ] **Welcome email HTML template** — Vault dark design; sent async in `registerAction`
 
 ### Add After Validation (v1.x)
 
-Features to add once core auth is working and validated.
-
-- [ ] **Password Reset Flow** — Email-based recovery; trigger: users getting locked out
-- [ ] **Login Rate Limiting** — Per-IP throttling; trigger: security concerns
-- [ ] **2FA (TOTP)** — Authenticator app support; trigger: users requesting more security
-- [ ] **Session Management UI** — See active sessions; trigger: users wanting visibility
+- [ ] **Token hash storage** — Upgrade from raw token to sha256 hash in DB if security requirements increase
+- [ ] **Email preview/test route** — Dev-only route to preview email templates in browser (`/api/email-preview`)
+- [ ] **2FA (TOTP)** — After password reset is stable; separate milestone
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established.
-
-- [ ] **OAuth Providers** — Google/GitHub login; trigger: user feedback requesting convenience
-- [ ] **Magic Link Auth** — Passwordless; trigger: UX improvement initiative
-- [ ] **Passkeys/WebAuthn** — Phishing-resistant; trigger: browser adoption increases
-- [ ] **Email Verification** — Confirm email ownership; trigger: SaaS deployment
-- [ ] **Audit Logging** — Security events; trigger: compliance requirements
+- [ ] **Magic link login** — Requires Auth.js Email provider; separate from credentials flow
+- [ ] **Email verification on registration** — Requires `emailVerified` field usage (already in schema)
+- [ ] **Audit log of auth events** — Password changes, reset requests logged
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature                   | User Value | Implementation Cost | Priority |
-| ------------------------- | ---------- | ------------------- | -------- |
-| Email/Password Auth       | HIGH       | LOW                 | P1       |
-| Secure Password Hashing   | HIGH       | LOW                 | P1       |
-| Session Persistence       | HIGH       | LOW                 | P1       |
-| Protected Routes          | HIGH       | LOW                 | P1       |
-| Row-Level Data Isolation  | HIGH       | MEDIUM              | P1       |
-| Registration Mode Control | HIGH       | MEDIUM              | P1       |
-| Logout Functionality      | HIGH       | LOW                 | P1       |
-| Login/Register Pages      | HIGH       | LOW                 | P1       |
-| Password Reset Flow       | MEDIUM     | MEDIUM              | P2       |
-| Login Rate Limiting       | MEDIUM     | LOW                 | P2       |
-| 2FA (TOTP)                | MEDIUM     | HIGH                | P2       |
-| Session Management UI     | LOW        | MEDIUM              | P3       |
-| OAuth Providers           | LOW        | MEDIUM              | P3       |
-| Magic Link Auth           | LOW        | MEDIUM              | P3       |
-| Passkeys/WebAuthn         | LOW        | HIGH                | P3       |
-| Audit Logging             | LOW        | MEDIUM              | P3       |
+| Feature                          | User Value | Implementation Cost | Priority                  |
+| -------------------------------- | ---------- | ------------------- | ------------------------- |
+| SMTP infrastructure (mailer.ts)  | HIGH       | LOW                 | P1                        |
+| Forgot-password page + action    | HIGH       | LOW                 | P1                        |
+| Reset-password page + action     | HIGH       | MEDIUM              | P1                        |
+| passwordResetTokens DB table     | HIGH       | LOW                 | P1                        |
+| Password reset email template    | HIGH       | LOW                 | P1                        |
+| "Forgot password?" link on login | HIGH       | LOW                 | P1                        |
+| Welcome email                    | MEDIUM     | LOW                 | P1                        |
+| Graceful SMTP-disabled state     | HIGH       | LOW                 | P1                        |
+| Rate limiting on forgot-password | MEDIUM     | LOW                 | P1 (use existing utility) |
+| Token hash in DB (sha256)        | MEDIUM     | LOW                 | P2                        |
+| Email preview dev route          | LOW        | LOW                 | P3                        |
+| Plaintext email fallback         | LOW        | LOW                 | P2                        |
 
 **Priority key:**
 
-- P1: Must have for launch (table stakes)
-- P2: Should have, add when possible (differentiators with good ROI)
+- P1: Must have for v1.1 launch
+- P2: Should have, add when easy
 - P3: Nice to have, future consideration
 
 ---
 
-## Competitor Feature Analysis
+## Security Considerations (Token Design)
 
-| Feature            | Firefly III  | Actual Budget   | Cashlytics Approach |
-| ------------------ | ------------ | --------------- | ------------------- |
-| Email/Password     | ✓            | ✓               | ✓ P1                |
-| OAuth Providers    | ✓ (optional) | ✗               | Defer P3            |
-| 2FA (TOTP)         | ✓            | ✗               | P2 after MVP        |
-| Password Reset     | ✓            | ✓               | P2 after MVP        |
-| Email Verification | Optional     | ✗               | Defer               |
-| Session Management | Basic        | Basic           | P3                  |
-| Multi-User         | ✓            | Limited         | ✓ Core feature      |
-| Single-User Mode   | ✓            | ✓ (local-first) | ✓ Core feature      |
+These are non-negotiable for a correct password reset implementation.
 
-### Key Insights from Competitors
+### Token Generation
 
-1. **Firefly III** has the most comprehensive auth feature set (2FA, OAuth, password reset). It's been in development since 2014 and added these incrementally.
+Use `crypto.randomBytes(32).toString('hex')` — produces a 64-character hex string with 256 bits of entropy. This is cryptographically secure and available in Node.js without any library.
 
-2. **Actual Budget** is "local-first" with optional sync server. Auth is simpler because the primary use case is single-user local access.
+Do NOT use:
 
-3. **Cashlytics** sits between these: self-hosted like Firefly III, but with a simpler initial scope. Focus on P1 features first, then iterate.
+- `Math.random()` — not cryptographically secure
+- `uuid` — only 122 bits of randomness; acceptable but `crypto.randomBytes` is better
+- Sequential IDs — trivially guessable
+
+### Token Storage
+
+**Minimum acceptable (v1.1):** Store raw token in DB. Acceptable for self-hosted single-user deployment where DB access implies full system compromise anyway.
+
+**Recommended (upgrade path):** Store `sha256(token)` in DB; send raw token in email. If DB is leaked (backup, shared host), raw tokens remain protected.
+
+### Token Expiry
+
+1 hour is the industry standard. Set `expiresAt = new Date(Date.now() + 60 * 60 * 1000)`.
+
+Check on BOTH page load (server component) AND form submission (server action) — race condition safety.
+
+### One-Time Use
+
+Set `usedAt = new Date()` when token is consumed. Always check `usedAt IS NULL` when validating.
+
+After successful password reset, optionally delete all other reset tokens for the user (`DELETE WHERE userId = ? AND id != ?`) to prevent concurrent reset links from remaining valid.
+
+### Email Enumeration Prevention
+
+The `forgotPasswordAction` ALWAYS returns the same success message regardless of whether the email exists in the database. Never return "email not found" — it leaks user existence.
+
+### Rate Limiting
+
+Apply to the `forgotPasswordAction` endpoint specifically. 3-5 requests per 15 minutes per IP is standard. Use the existing `rateLimit()` utility already in the codebase.
+
+---
+
+## HTML Email Template Patterns
+
+Email HTML is a notoriously hostile environment. Key constraints:
+
+1. **No external CSS** — Gmail, Outlook, Apple Mail strip `<style>` blocks. All styles must be `style="..."` inline attributes.
+
+2. **No Tailwind, no CSS variables** — These are runtime-resolved. Email clients get rendered HTML only.
+
+3. **Table-based layout** — Wide email client support; `<table>` is safer than `<div>` + flexbox for Outlook.
+
+4. **Dark mode email** — Problematic. Many clients ignore `prefers-color-scheme` or override dark background colors. For Vault design: set `background-color` explicitly on every element, not just the body. Accept that some clients will show light mode.
+
+5. **Max width: 600px** — Standard email width constraint.
+
+6. **Inline fallback font stack** — Web fonts not available in email. Use `font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`.
+
+### Vault Email Template Structure
+
+```html
+<!-- Outer wrapper: forces dark bg in most clients -->
+<body style="background-color: #08080a; margin: 0; padding: 0;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <!-- Card -->
+        <table
+          width="600"
+          cellpadding="0"
+          cellspacing="0"
+          style="background-color: #111113; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);"
+        >
+          <!-- Amber accent line at top -->
+          <tr>
+            <td
+              style="height: 3px; background: linear-gradient(90deg, transparent, #f59e0b, transparent);"
+            ></td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 40px 32px;">
+              <!-- Logo text or image -->
+              <!-- Heading: Syne-fallback → system font -->
+              <!-- Body copy -->
+              <!-- CTA Button: amber bg #f59e0b, black text, rounded -->
+              <!-- Footer: muted text, app URL -->
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+```
+
+Two templates needed:
+
+1. **`password-reset.ts`** — Subject: "Reset your Cashlytics password"; CTA: "Reset Password" → reset link; expires notice
+2. **`welcome.ts`** — Subject: "Welcome to Cashlytics"; CTA: "Go to Dashboard" → app URL; brief feature mention
+
+Both templates are TypeScript functions: `(params) => { subject: string; html: string; text: string }`.
 
 ---
 
 ## Sources
 
-| Source                                                                                        | What Verified                               | Confidence |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------- |
-| [Auth.js Credentials Provider](https://authjs.dev/getting-started/authentication/credentials) | Email/password auth pattern, Zod validation | HIGH       |
-| [Auth.js Session Strategies](https://authjs.dev/concepts/session-strategies)                  | JWT vs database sessions, trade-offs        | HIGH       |
-| [Auth.js Database Models](https://authjs.dev/concepts/database-models)                        | Required tables, verification tokens        | HIGH       |
-| [Firefly III GitHub](https://github.com/firefly-iii/firefly-iii)                              | 2FA as feature, self-hosted auth patterns   | HIGH       |
-| [Actual Budget GitHub](https://github.com/actualbudget/actual)                                | Local-first auth, minimal auth scope        | HIGH       |
-| [Auth.js Drizzle Adapter](https://authjs.dev/getting-started/adapters/drizzle)                | Schema requirements, adapter setup          | HIGH       |
-| PROJECT.md (project constraints)                                                              | Out of scope features, single-user mode     | HIGH       |
+| Source                                               | What Informed                                                                 | Confidence |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------- | ---------- |
+| `src/actions/auth-actions.ts` (codebase)             | Existing server action pattern, AuthActionState type, bcrypt usage            | HIGH       |
+| `src/lib/rate-limiter.ts` (codebase)                 | Existing rate limiting utility for reuse                                      | HIGH       |
+| `src/lib/db/schema.ts` (codebase)                    | `authVerificationTokens` table structure, users table columns                 | HIGH       |
+| `src/components/organisms/login-form.tsx` (codebase) | UI pattern for auth forms, glass card pattern                                 | HIGH       |
+| `src/app/(auth)/layout.tsx` (codebase)               | Auth layout two-panel design, Vault design tokens                             | HIGH       |
+| `package.json` (codebase)                            | Nodemailer not installed; `crypto` is Node.js built-in                        | HIGH       |
+| `.planning/PROJECT.md`                               | Explicit v1.1 requirements, out-of-scope features                             | HIGH       |
+| Industry standard security patterns                  | Token entropy (32 bytes), 1-hour expiry, one-time use, enumeration prevention | HIGH       |
+| Email HTML rendering constraints                     | Inline CSS requirement, table layout, 600px width, dark mode limitations      | HIGH       |
 
 ---
 
-_Feature research for: Auth.js v5 + Multi-User Authentication_
-_Researched: 2026-02-24_
+_Feature research for: Email Sending + Password Reset Flow (v1.1)_
+_Researched: 2026-02-25_

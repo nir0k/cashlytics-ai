@@ -1,199 +1,197 @@
 # Project Research Summary
 
-**Project:** Cashlytics Multi-User Authentication
-**Domain:** Self-Hosted Financial Application Authentication
-**Researched:** 2026-02-24
+**Project:** Cashlytics v1.1 — Email & Password Reset
+**Domain:** SMTP Email Infrastructure + Password Reset Flow for Next.js Self-Hosted Financial App
+**Researched:** 2026-02-25
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Cashlytics is a self-hosted personal finance application being upgraded from single-user to multi-user architecture using Auth.js v5. Self-hosted financial apps like Firefly III and Actual Budget establish clear authentication baselines: email/password credentials, session management, and strict data isolation are non-negotiable. The recommended approach uses Auth.js v5 with the Drizzle adapter, JWT sessions for Edge compatibility, and bcrypt for password hashing.
+This milestone adds email capabilities (SMTP sending, password reset, welcome email) to an existing Next.js 16 + Auth.js v5 + Drizzle codebase. The recommended approach uses **Nodemailer** for SMTP transport (pure JS, Docker-friendly) and **@react-email/components** for HTML templates (React-based, inline styles for email client compatibility).
 
-The critical differentiator for this project is **Registration Mode Control** — enabling single-user self-hosted deployments (where only one admin user exists, defined by environment variables) while supporting future multi-user SaaS scenarios. This requires careful migration of existing data to the single configured user.
+The critical architectural decision is creating a **dedicated `password_reset_tokens` table** — the existing Auth.js `authVerificationTokens` table must NOT be reused, as it's adapter-managed and lacks the `usedAt` column for single-use enforcement. Password reset is a **custom flow** built outside Auth.js, invoked from Server Actions.
 
-**Key risks:** Orphaned data during migration (existing data becomes invisible after userId filtering), middleware-only security (server actions bypass route protection), and forgetting userId on database inserts. All are preventable with proper migration scripts and query-level authorization in every server action.
+Key risks center on security (tokens must be SHA-256 hashed before DB storage), deployment (SMTP env vars must be forwarded in docker-compose.yml), and email rendering (all styles must be inline — Tailwind/CSS variables won't work in email clients). The flow must always return identical responses to prevent email enumeration attacks.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Auth.js v5 (next-auth@beta) is the specified authentication framework, though an important ecosystem shift occurred in September 2025: Auth.js joined Better Auth. The team continues maintaining Auth.js for existing users, so this remains the correct choice given project constraints. JWT sessions are recommended over database sessions for Edge compatibility with Next.js 16's proxy layer.
+New packages for this milestone (existing stack remains unchanged):
 
 **Core technologies:**
 
-- **next-auth@5.0.0-beta.30** — Auth framework; v5 has App Router-first design, unified `auth()` API, Edge-compatible
-- **@auth/drizzle-adapter@1.11.1** — Drizzle ORM adapter; works with existing postgres.js driver
-- **bcrypt@6.0.0** — Password hashing; pure JS, Docker-friendly. Alternative: @node-rs/argon2 for stronger security
-- **zod@4.3.6** — Already installed; use for credential validation
-
-**Important:** Next.js 16 renamed `middleware.ts` to `proxy.ts`. Auth.js v5 uses `AUTH_` prefix for env vars (not `NEXTAUTH_`).
+- **Nodemailer ^8.0.1** — SMTP email sending. Zero dependencies, pure JS, Docker-compatible. Industry standard for Node.js SMTP.
+- **@react-email/components ^1.0.8** — React-based email templates with automatic inline style rendering. Supports React 19 (current codebase uses 19.2.3).
+- **Node.js `crypto`** — Built-in module for secure token generation. No package needed: `crypto.randomBytes(32).toString('hex')` produces 256-bit tokens.
+- **react-email ^5.2.8** (optional, dev only) — Local email preview with hot-reload. Not required for production.
 
 ### Expected Features
 
-Self-hosted financial apps have a clear feature hierarchy. MVP must include table stakes; differentiators can be added incrementally after core auth is validated.
-
 **Must have (table stakes):**
 
-- Email/Password Authentication — every self-hosted app has this; it's the baseline
-- Secure Password Hashing (bcrypt/argon2) — financial data requires strong security
-- Session Persistence — users expect to stay logged in between visits
-- Protected Routes — unauthenticated users can't access financial data
-- Row-Level Data Isolation — each user sees only their own accounts/expenses
-- Registration Mode Control — SINGLE_USER_MODE + SINGLE_USER_EMAIL from .env
-- Logout Functionality — basic expectation
+- Forgot-password page at `/forgot-password` with email field
+- "Forgot password?" link on login page
+- Password reset email with 1-hour expiry, single-use token
+- Reset-password page at `/reset-password?token=...`
+- Email enumeration prevention (always same response)
+- Welcome email triggered on registration (non-blocking)
+- Graceful SMTP-disabled state (app runs without email configured)
 
-**Should have (add after MVP):**
+**Should have (competitive):**
 
-- Password Reset Flow — users will lock themselves out
-- 2FA (TOTP) — financial data warrants extra security
-- Login Rate Limiting — prevent brute force attacks
+- Vault-branded dark HTML emails matching app aesthetic
+- Rate limiting on forgot-password endpoint (3-5 requests/15min per IP)
+- Token invalidation on password change (all other tokens voided)
+- Plaintext fallback in emails (spam score improvement)
 
 **Defer (v2+):**
 
-- OAuth Providers — convenience, not security; adds external dependency
-- Magic Link Auth — requires email service
-- Passkeys/WebAuthn — cutting edge, low adoption currently
-- RBAC / Team features — explicitly out of scope per PROJECT.md
+- Email verification required for login (blocks self-hosted without SMTP)
+- Magic link login (conflicts with credentials flow)
+- Email preview dev route
+- Session invalidation on password reset (document limitation for v1.1)
 
 ### Architecture Approach
 
-The architecture follows a 5-layer model: Proxy Layer (route protection) → Presentation Layer (pages) → Authentication Layer (auth.ts + API routes) → Data Access Layer (server actions with userId filtering) → Database Layer (Drizzle + PostgreSQL). The critical pattern is **Query-Level Row Isolation**: every server action must call `auth()` and filter all queries by `session.user.id`. Middleware-only protection is insufficient because server actions bypass middleware.
+The email infrastructure adds a **lateral service layer** alongside existing auth, not modifying Auth.js internals. Server Actions bridge token utilities and email service.
 
 **Major components:**
 
-1. **auth.ts (root)** — Central Auth.js config, exports `auth()`, `handlers`, `signIn`, `signOut`
-2. **proxy.ts (root)** — Next.js 16 middleware replacement; uses `authorized` callback for route protection
-3. **Server Actions (15+ files)** — All must add session check + userId filter on every query
-4. **DrizzleAdapter** — Persists Auth.js data; requires 4 new tables (users, accounts, sessions, verificationTokens)
-5. **Schema Changes** — 8 existing tables need `userId` FK: accounts, expenses, incomes, daily_expenses, transfers, categories, documents, conversations
+1. **`src/lib/email/index.ts`** — Nodemailer singleton transporter, `sendMail()` wrapper with SMTP-disabled guard
+2. **`src/lib/email/templates/`** — React Email components for welcome and reset emails
+3. **`src/lib/auth/reset-token.ts`** — Token generation, DB operations (create/validate/consume)
+4. **`src/actions/email-actions.ts`** — `forgotPasswordAction`, `resetPasswordAction` Server Actions
+5. **`src/app/(auth)/forgot-password/` and `reset-password/`** — New pages in existing auth route group
+6. **`password_reset_tokens` DB table** — Dedicated table with `tokenHash`, `userId`, `expiresAt`, `usedAt`
 
 ### Critical Pitfalls
 
-1. **Orphaned Data During Migration** — When adding userId columns, existing rows become orphaned (NULL userId). After migration, queries filtered by userId return empty. **Prevention:** Add column, backfill all rows with single-user ID from env, then make NOT NULL in second migration.
-
-2. **Middleware-Only Security** — Server actions are NOT protected by middleware. User A can access User B's data by calling server actions directly. **Prevention:** Every server action must call `auth()` and filter queries by `session.user.id`.
-
-3. **Missing userId on Inserts** — Adding userId filter to reads but forgetting on writes creates orphaned records. **Prevention:** Every insert must include `userId: session.user.id`.
-
-4. **Database Session Strategy + Edge Incompatibility** — Using `strategy: "database"` with Drizzle causes proxy to fail (PostgreSQL isn't Edge-compatible). **Prevention:** Use `session: { strategy: "jwt" }` in auth config.
-
-5. **Unvalidated Foreign Keys** — User creates expense linked to another user's account. **Prevention:** Verify accountId belongs to current user before insert.
+1. **Transporter created per-request** — Must use module-level singleton. Creating transporter inside Server Action exhausts SMTP connections.
+2. **Raw token stored in database** — Store SHA-256 hash only. Raw tokens in DB enable full account takeover on any DB breach.
+3. **Reusing `authVerificationTokens` table** — Never reuse Auth.js adapter-managed tables. Create dedicated `password_reset_tokens` table.
+4. **SMTP env vars missing from docker-compose.yml** — All SMTP\_\* vars must be explicitly forwarded in `environment:` block.
+5. **Email enumeration via response differences** — Always return identical success message regardless of email existence.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+### Phase 1: DB Schema + Migration
 
-### Phase 1: Core Auth Infrastructure
+**Rationale:** Foundation must exist before any token logic or pages.
+**Delivers:** `password_reset_tokens` table with proper schema
+**Uses:** Drizzle ORM, PostgreSQL
+**Avoids:** Pitfall #12 (Auth table conflict) — dedicated table from the start
+**Files:** `src/lib/db/schema.ts` (modified), `drizzle/0006_*.sql` (new)
 
-**Rationale:** Foundation for all other work. Without auth primitives, no other phase can proceed.
-**Delivers:** Working login/logout, protected routes, session management
-**Addresses:** Email/Password Auth, Session Persistence, Protected Routes, Logout
-**Avoids:** Middleware-only security pitfall (pattern established from start)
-**Stack:** next-auth@beta, @auth/drizzle-adapter, bcrypt
+### Phase 2: SMTP Infrastructure
 
-### Phase 2: Database Migration
+**Rationale:** Email sending capability required before any email-triggering flows.
+**Delivers:** Nodemailer singleton transporter, sendMail wrapper, graceful SMTP-disabled handling
+**Uses:** nodemailer ^8.0.1, docker-compose.yml env forwarding
+**Avoids:** Pitfalls #1 (transporter per-request), #7 (Docker env missing), #13 (APP_URL validation)
+**Files:** `src/lib/email/index.ts`, `src/lib/email/transport.ts`, `.env.example`, `docker-compose.yml`
 
-**Rationale:** Must happen before data access layer changes. Adds userId to all tables.
-**Delivers:** Multi-user schema, migrated existing data assigned to single user
-**Addresses:** Row-Level Data Isolation infrastructure
-**Avoids:** Orphaned data pitfall (backfill in same migration)
-**Uses:** Drizzle migrations, data migration script
+### Phase 3: Email Templates
 
-### Phase 3: Server Actions Refactor
+**Rationale:** Templates must exist before server actions can send emails.
+**Delivers:** Vault-branded dark HTML templates with inline styles, plaintext fallbacks
+**Uses:** @react-email/components
+**Avoids:** Pitfalls #8 (CSS/Tailwind in email), #15 (spam folder)
+**Files:** `src/lib/email/templates/welcome.tsx`, `src/lib/email/templates/reset.tsx`
 
-**Rationale:** With schema ready, update all 15+ server actions to filter by userId.
-**Delivers:** Query-level row isolation on all data access
-**Addresses:** Row-Level Data Isolation (enforcement)
-**Avoids:** Missing session in actions, missing userId on inserts
-**Implements:** Auth helper utilities (requireAuth, unauthorizedResponse)
+### Phase 4: Token Utilities
 
-### Phase 4: Auth UI Components
+**Rationale:** Token lifecycle logic required before server actions can implement flows.
+**Delivers:** Token generation, validation, consumption with single-use enforcement
+**Uses:** Node.js crypto, Drizzle queries
+**Avoids:** Pitfalls #2 (raw token), #3 (timing attack), #4 (low entropy), #5 (reuse)
+**Files:** `src/lib/auth/reset-token.ts`
 
-**Rationale:** With backend ready, add login/register pages and session provider.
-**Delivers:** User-facing authentication flow
-**Addresses:** Login/Register Pages, SessionProvider integration
-**Uses:** React components, server actions for form handling
+### Phase 5: Server Actions + Validation
 
-### Phase 5: Registration Mode Logic
+**Rationale:** Actions depend on email service, token utilities, and validation schemas.
+**Delivers:** `forgotPasswordAction`, `resetPasswordAction`, Zod schemas, rate limiting
+**Uses:** All prior phases, existing `rateLimit()` utility
+**Avoids:** Pitfalls #9 (enumeration), #14 (rate limits)
+**Files:** `src/actions/email-actions.ts`, `src/lib/validations/auth.ts` (extended)
 
-**Rationale:** Final piece — control who can register based on SINGLE_USER_MODE flag.
-**Delivers:** Single-user vs multi-user mode switching
-**Addresses:** Registration Mode Control
-**Configuration:** SINGLE_USER_MODE, SINGLE_USER_EMAIL env vars
+### Phase 6: Pages + UI Components
+
+**Rationale:** Presentation layer depends on server actions being complete.
+**Delivers:** Forgot-password page, reset-password page, form components
+**Uses:** Existing auth layout, useActionState pattern
+**Avoids:** Pitfall #6 (proxy.ts not updated)
+**Files:** `src/app/(auth)/forgot-password/page.tsx`, `src/app/(auth)/reset-password/page.tsx`, form components
+
+### Phase 7: Integration + Welcome Email
+
+**Rationale:** Final integration touches existing `registerAction` without breaking it.
+**Delivers:** Welcome email triggered on registration (fire-and-forget)
+**Avoids:** Pitfall #10 (blocking registration)
+**Files:** `src/actions/auth-actions.ts` (modified)
 
 ### Phase Ordering Rationale
 
-- **Phase 1 first:** Auth primitives must exist before any protected functionality
-- **Phase 2 before Phase 3:** Schema changes must precede query modifications
-- **Phase 3 before Phase 4:** Data access must be secure before exposing UI
-- **Phase 4 before Phase 5:** Basic auth flow must work before mode-specific logic
-- **Phase 5 last:** Configuration layer depends on all underlying auth working
+- **DB first**: Token table is a hard dependency for all token logic
+- **SMTP second**: Email service is dependency for templates and actions
+- **Templates before actions**: Actions need to call `sendMail` with rendered HTML
+- **Token utils before actions**: Actions query the token table
+- **Actions before pages**: Forms call server actions
+- **Integration last**: Minimizes risk to existing registration flow
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
 
-- **None identified** — All phases have well-documented patterns from official Auth.js docs
+- **None identified** — All phases have well-documented patterns and high-confidence research
 
 Phases with standard patterns (skip research-phase):
 
-- **Phase 1:** Well-documented Auth.js v5 setup, official Drizzle adapter docs
-- **Phase 2:** Standard Drizzle migration patterns, backfill SQL is straightforward
-- **Phase 3:** Repetitive pattern (auth check + userId filter), apply to 15+ files
-- **Phase 4:** Standard Next.js App Router forms + Auth.js signIn/signOut
-- **Phase 5:** Simple env var checks, conditional registration logic
+- **All phases** — Nodemailer, Drizzle migrations, React Email, Server Actions, and Auth.js v5 integration are all well-documented with established patterns.
 
 ## Confidence Assessment
 
-| Area         | Confidence | Notes                                                                                |
-| ------------ | ---------- | ------------------------------------------------------------------------------------ |
-| Stack        | HIGH       | Official Auth.js docs verified, exact versions confirmed in npm registry             |
-| Features     | HIGH       | Competitor analysis (Firefly III, Actual Budget) + PROJECT.md constraints align      |
-| Architecture | HIGH       | Official Auth.js v5 patterns + existing codebase analysis (18 action files)          |
-| Pitfalls     | HIGH       | Common Auth.js migration issues well-documented, codebase-specific analysis complete |
+| Area         | Confidence | Notes                                                                                                |
+| ------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
+| Stack        | HIGH       | Versions verified via npm registry 2026-02-25. All packages pure-JS, Docker-compatible.              |
+| Features     | HIGH       | Based on codebase analysis, existing patterns, and standard security practices.                      |
+| Architecture | HIGH       | Direct codebase analysis + Auth.js v5 official patterns + Nodemailer documentation.                  |
+| Pitfalls     | HIGH       | Core security and Nodemailer patterns well-established. MEDIUM on Auth.js v5 beta-specific behavior. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-No significant gaps identified. Research was comprehensive:
+- **Session invalidation on password reset**: JWT sessions (current approach) remain valid after password change. Research recommends documenting this limitation for v1.1 and adding session versioning in v2+. Implementation should either add `sessionVersion` field or explicitly document the limitation in user-facing docs.
 
-- Official Auth.js documentation covered all setup patterns
-- Existing codebase fully analyzed (18 action files, schema.ts, seed-demo.sql)
-- Competitor feature analysis confirms scope decisions
-- Ecosystem context (Better Auth merger) noted for future consideration
+- **SPF/DKIM/DMARC configuration**: DNS-level email authentication is outside application code. Deployment documentation must include deliverability requirements. Test with mail-tester.com before production.
 
-Minor items to validate during implementation:
-
-- **seed-demo.sql update:** Will need userId added to all INSERT statements (use sync-demo-seeder skill)
-- **TypeScript Session type:** May need to extend Session interface to include `user.id` (standard Auth.js pattern)
+- **Auth.js v5 beta stability**: Current version is `5.0.0-beta.30`. API may change. Monitor Auth.js releases during implementation.
 
 ## Sources
 
 ### Primary (HIGH confidence)
 
-- Auth.js v5 Installation: https://authjs.dev/getting-started/installation — Package names, v5 setup pattern
-- Auth.js Drizzle Adapter: https://authjs.dev/getting-started/adapters/drizzle — Schema requirements, adapter config
-- Auth.js Credentials Provider: https://authjs.dev/getting-started/authentication/credentials — Email/password auth pattern
-- Auth.js Session Strategies: https://authjs.dev/concepts/session-strategies — JWT vs database trade-offs
-- Auth.js Protecting Resources: https://authjs.dev/getting-started/session-management/protecting — Route protection patterns
-- Auth.js v5 Migration: https://authjs.dev/getting-started/migrating-to-v5 — v4→v5 changes, proxy.ts naming
+- `npm view nodemailer version` — v8.0.1 current, zero dependencies
+- `npm view @react-email/components version` — v1.0.8 current
+- Codebase inspection: `src/lib/db/schema.ts`, `src/actions/auth-actions.ts`, `src/proxy.ts`, `docker-compose.yml`
+- Nodemailer documentation: https://nodemailer.com/about/
+- OWASP Forgot Password Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html
+- Node.js crypto.randomBytes: https://nodejs.org/api/crypto.html
 
-### Secondary (HIGH confidence)
+### Secondary (MEDIUM confidence)
 
-- Better Auth Blog: https://better-auth.com/blog/authjs-joins-better-auth — Ecosystem context, maintenance status
-- Firefly III GitHub: https://github.com/firefly-iii/firefly-iii — Self-hosted auth patterns, 2FA feature reference
-- Actual Budget GitHub: https://github.com/actualbudget/actual — Local-first auth, minimal scope reference
-- npm registry — Exact version numbers verified
+- Auth.js v5 Drizzle Adapter: https://authjs.dev/getting-started/adapters/drizzle
+- React Email documentation: https://react.email/docs
+- Email client CSS compatibility (Campaign Monitor): https://www.campaignmonitor.com/css/
 
-### Codebase Analysis (HIGH confidence)
+### Tertiary (contextual)
 
-- `/home/coder/cashlytics/src/lib/db/schema.ts` — Current schema structure
-- `/home/coder/cashlytics/src/actions/*.ts` — 18 action files requiring auth updates
-- `/home/coder/cashlytics/scripts/seed-demo.sql` — Demo data requiring userId migration
-- `/home/coder/cashlytics/PROJECT.md` — Project constraints and scope decisions
+- Gmail SMTP limits: https://support.google.com/a/answer/176600
+- Mailpit (dev mail catcher): https://github.com/axllent/mailpit
+- Mail Tester (deliverability): https://www.mail-tester.com/
 
 ---
 
-_Research completed: 2026-02-24_
+_Research completed: 2026-02-25_
 _Ready for roadmap: yes_

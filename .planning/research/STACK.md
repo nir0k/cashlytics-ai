@@ -1,289 +1,369 @@
-# Stack Research: Auth.js v5 + Multi-User Auth
+# Stack Research: Email/SMTP Integration
 
-**Domain:** Authentication for existing Next.js 16 + Drizzle + PostgreSQL app
-**Researched:** 2026-02-24
-**Confidence:** HIGH (official docs verified)
-
----
-
-## Executive Summary
-
-Auth.js v5 (next-auth@beta) is the specified authentication solution, but a major ecosystem shift occurred in September 2025: **Auth.js joined Better Auth**. The Better Auth team continues maintaining Auth.js for existing users but recommends new projects start with Better Auth. Given the project constraint specifies Auth.js v5, this research covers that path while documenting the ecosystem context.
+**Domain:** Email capabilities for Next.js app (SMTP, templates, password reset)
+**Researched:** 2026-02-25
+**Confidence:** HIGH (versions verified via npm registry 2026-02-25)
 
 ---
 
-## Recommended Stack
+## Context: What Already Exists
 
-### Core Authentication
+This is a **subsequent milestone** on an existing v1.0 codebase. Do NOT re-research the existing stack.
 
-| Package                 | Version         | Purpose             | Why                                                                                                       |
-| ----------------------- | --------------- | ------------------- | --------------------------------------------------------------------------------------------------------- |
-| `next-auth`             | `5.0.0-beta.30` | Auth framework      | Project constraint; v5 has App Router-first design, simplified `auth()` API, Edge compatibility           |
-| `@auth/drizzle-adapter` | `1.11.1`        | Drizzle ORM adapter | Official adapter for Drizzle, works with existing `postgres.js` driver                                    |
-| `bcrypt`                | `6.0.0`         | Password hashing    | Battle-tested, widely used, pure JS works in Docker. Alternative: `@node-rs/argon2` for stronger security |
+**Already in place (do not change):**
 
-### Supporting Libraries (Already in Project)
+| Thing             | Detail                                                           |
+| ----------------- | ---------------------------------------------------------------- |
+| Auth.js v5        | `next-auth@5.0.0-beta.30`, JWT sessions, Drizzle adapter         |
+| Password hashing  | `bcrypt@6.0.0` (pure JS), `@types/bcrypt@6.0.0`                  |
+| DB schema         | `authVerificationTokens` table already exists (Auth.js standard) |
+| Server Actions    | Run in Node.js runtime (not Edge) — Nodemailer is safe here      |
+| Docker deployment | No native build tools in image — pure-JS packages preferred      |
+| date-fns          | Already installed (`^4.1.0`) — use for token expiry              |
 
-| Package       | Version  | Purpose               | Notes                                                       |
-| ------------- | -------- | --------------------- | ----------------------------------------------------------- |
-| `zod`         | `4.3.6`  | Credential validation | Already installed; use for email/password schema validation |
-| `drizzle-orm` | `0.45.1` | ORM                   | Existing; add Auth.js tables to same schema file            |
-| `postgres`    | `3.4.8`  | PostgreSQL client     | Existing; compatible with Drizzle adapter                   |
+---
+
+## Recommended Stack (New Additions Only)
+
+### Core Technologies
+
+| Technology                | Version  | Purpose                   | Why Recommended                                                                                                                                                               |
+| ------------------------- | -------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nodemailer`              | `^8.0.1` | SMTP email sending        | Zero dependencies (verified), pure JS, Docker-friendly. Industry standard for Node.js SMTP. Self-hosted friendly (no SaaS lock-in).                                           |
+| `@react-email/components` | `^1.0.8` | Email template components | React-based email templates matching Next.js stack. Includes `@react-email/render@2.0.4` and `@react-email/tailwind@2.0.5`. Supports React 19 (peer dep: `^18.0 \|\| ^19.0`). |
+| Node.js `crypto`          | built-in | Secure token generation   | No package needed. `crypto.randomBytes(32).toString('hex')` for reset tokens. Same approach Auth.js uses internally.                                                          |
+
+### Supporting Libraries
+
+| Library       | Version  | Purpose                   | When to Use                                                                                           |
+| ------------- | -------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `react-email` | `^5.2.8` | Email preview/dev tooling | Optional — for local email template development with hot-reload preview. Not required for production. |
+
+> **Important:** `nodemailer@8.x` includes TypeScript types — `@types/nodemailer` is NOT needed.
 
 ---
 
 ## Installation
 
 ```bash
-# Core authentication
-npm install next-auth@beta @auth/drizzle-adapter bcrypt
+# Required
+npm install nodemailer @react-email/components
 
-# TypeScript types for bcrypt
-npm install -D @types/bcrypt
-```
-
-**Alternative (argon2 for stronger security):**
-
-```bash
-npm install @node-rs/argon2  # Native Rust bindings, faster + stronger
-# No @types needed - includes TypeScript definitions
+# Optional — for local email development with preview
+npm install -D react-email
 ```
 
 ---
 
-## Auth.js v5 Architecture for This Project
+## Token Storage: Two Approaches
+
+### Option A: Dedicated Table (Recommended)
+
+Add a new `passwordResetTokens` table via Drizzle migration:
+
+```typescript
+// src/lib/db/schema.ts
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(), // crypto.randomBytes(32).toString('hex')
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  usedAt: timestamp("used_at", { mode: "date" }), // null = not yet used
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+```
+
+**Why dedicated table:**
+
+- `usedAt` column for one-time-use tracking — Auth.js table lacks this
+- `userId` FK for direct user relationship — simpler queries
+- Independent of Auth.js adapter internals — won't conflict if Auth.js adds password reset later
+- Cleaner separation of concerns
+
+### Option B: Reuse `authVerificationTokens` (Simpler)
+
+The existing table can work for password reset:
+
+```typescript
+// Existing schema (lines 76-84)
+export const authVerificationTokens = pgTable(
+  "auth_verification_tokens",
+  {
+    identifier: text("identifier").notNull(), // user email for reset
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })]
+);
+```
+
+**Trade-offs:**
+
+- ✅ No migration needed — table already exists
+- ✅ Auth.js adapter already manages cleanup
+- ❌ No `usedAt` — can't enforce one-time use at DB level
+- ❌ No `userId` FK — must join on `identifier = email`
+- ❌ Auth.js may add conflicting usage in future
+
+**Recommendation:** Use Option A (dedicated table) for cleaner architecture and future-proofing. The migration is simple.
+
+---
+
+## Integration Points with Existing Auth.js v5 Setup
+
+### Password Reset Flow (Custom — Not Auth.js Built-in)
+
+Auth.js v5 does NOT have built-in password reset for Credentials provider. Build custom:
+
+```
+1. User submits email on /forgot-password
+2. Server Action: look up user by email, generate token, store in passwordResetTokens, send email
+3. User clicks link: /reset-password?token=<hex>
+4. Server Action: validate token (exists, not expired, not used), hash new password, update users.password, mark token usedAt
+5. Redirect to /login
+```
+
+Auth.js is not involved in steps 1-4. The reset flow uses `db` directly + `bcrypt` (already installed).
+
+### Welcome Email Hook
+
+Add to `registerAction()` after successful registration (line 85 in `auth-actions.ts`):
+
+```typescript
+// After successful user insertion
+await sendWelcomeEmail(email); // Fire-and-forget, don't block registration
+```
+
+**Do NOT** use Auth.js `events.createUser` callback — it fires for ALL user creation including OAuth (not applicable here) and can fail silently.
+
+### Runtime Safety
+
+Nodemailer only works in Node.js runtime. It will fail at Edge runtime. This is safe because:
+
+- All Server Actions run in Node.js runtime by default in Next.js
+- `src/proxy.ts` (the Edge middleware) does NOT need to send email — it only reads JWT sessions
+
+**Do not** call Nodemailer from Route Handlers with `export const runtime = 'edge'`.
+
+---
+
+## Environment Variables
+
+Add to `.env`:
+
+```bash
+# SMTP Configuration
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your-username
+SMTP_PASS=your-password
+SMTP_FROM="Cashlytics <noreply@yourdomain.com>"
+# Optional: secure=true for port 465, false for 587 with STARTTLS
+SMTP_SECURE=false
+```
+
+---
+
+## Email Architecture
 
 ### File Structure
 
 ```
-src/
-├── auth.ts                    # Auth.js v5 config (NEW)
-├── app/api/auth/[...nextauth]/
-│   └── route.ts               # Route handler (NEW)
-├── proxy.ts                   # Next.js 16 middleware (NEW)
-└── lib/db/
-    └── schema.ts              # Add users, sessions, accounts, verificationTokens tables
+src/lib/email/
+├── index.ts              # Main send function
+├── transport.ts          # Nodemailer transport factory
+├── config.ts             # SMTP env vars with validation
+src/emails/
+├── password-reset.tsx    # React Email template
+└── welcome.tsx           # React Email template
 ```
 
-### Required Auth.js Tables (Add to schema.ts)
+### Transport Factory
 
 ```typescript
-// Auth.js v5 required tables for Drizzle adapter (PostgreSQL)
-import { pgTable, uuid, text, timestamp, integer } from "drizzle-orm/pg-core";
+// src/lib/email/transport.ts
+import nodemailer from "nodemailer";
 
-export const users = pgTable("users", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name"),
-  email: text("email").notNull().unique(),
-  emailVerified: timestamp("email_verified"),
-  password: text("password"), // For credentials provider
-  image: text("image"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const accounts = pgTable("accounts", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id, { onDelete: "cascade" })
-    .notNull(),
-  type: text("type").notNull(), // 'oauth' | 'email' | 'credentials'
-  provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  refresh_token: text("refresh_token"),
-  access_token: text("access_token"),
-  expires_at: integer("expires_at"),
-  token_type: text("token_type"),
-  scope: text("scope"),
-  id_token: text("id_token"),
-  session_state: text("session_state"),
-});
-
-export const sessions = pgTable("sessions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  sessionToken: text("session_token").notNull().unique(),
-  userId: uuid("user_id")
-    .references(() => users.id, { onDelete: "cascade" })
-    .notNull(),
-  expires: timestamp("expires").notNull(),
-});
-
-export const verificationTokens = pgTable("verification_tokens", {
-  identifier: text("identifier").notNull(),
-  token: text("token").notNull().unique(),
-  expires: timestamp("expires").notNull(),
-});
+export function createTransport() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 ```
 
-### auth.ts Configuration (Credentials Provider)
+Create transport per invocation (not singleton) — Server Actions are stateless.
+
+### Send Utility
 
 ```typescript
-// src/auth.ts
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
-import { z } from "zod";
+// src/lib/email/index.ts
+import { render } from "@react-email/components";
+import { createTransport } from "./transport";
 
-const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+export async function sendEmail({
+  to,
+  subject,
+  template,
+}: {
+  to: string;
+  subject: string;
+  template: React.ReactElement;
+}) {
+  // Guard: skip if SMTP not configured (dev without email)
+  if (!process.env.SMTP_HOST) {
+    console.warn("[email] SMTP not configured, skipping send");
+    return;
+  }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db),
-  session: { strategy: "jwt" }, // JWT for credentials; database sessions also work
-  providers: [
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      authorize: async (credentials) => {
-        const { email, password } = await signInSchema.parseAsync(credentials);
+  const html = await render(template);
+  const text = await render(template, { plainText: true });
+  const transport = createTransport();
 
-        const user = await db.query.users.findFirst({
-          where: eq(users.email, email),
-        });
-
-        if (!user?.password) return null;
-
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return null;
-
-        return { id: user.id, email: user.email, name: user.name };
-      },
-    }),
-  ],
-  pages: {
-    signIn: "/login", // Custom login page
-  },
-});
+  await transport.sendMail({
+    from: process.env.SMTP_FROM,
+    to,
+    subject,
+    html,
+    text, // Plain text fallback for email clients
+  });
+}
 ```
 
-### Route Handler (Next.js 16 App Router)
+### Template Example
 
-```typescript
-// src/app/api/auth/[...nextauth]/route.ts
-import { handlers } from "@/auth";
-export const { GET, POST } = handlers;
+```tsx
+// src/emails/password-reset.tsx
+import { Html, Head, Body, Container, Text, Button, Link } from "@react-email/components";
+
+interface PasswordResetEmailProps {
+  resetUrl: string;
+  userName?: string;
+}
+
+export function PasswordResetEmail({ resetUrl, userName }: PasswordResetEmailProps) {
+  return (
+    <Html>
+      <Head />
+      <Body style={{ backgroundColor: "#1a1a1a", color: "#f5f5f5" }}>
+        <Container style={{ padding: "40px 20px", textAlign: "center" }}>
+          <Text style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>Cashlytics</Text>
+          <Text>Hello {userName || "there"},</Text>
+          <Text>Click the button below to reset your password:</Text>
+          <Button
+            href={resetUrl}
+            style={{
+              backgroundColor: "#f59e0b",
+              color: "#1a1a1a",
+              padding: "12px 24px",
+              borderRadius: "6px",
+              textDecoration: "none",
+            }}
+          >
+            Reset Password
+          </Button>
+          <Text style={{ fontSize: "12px", color: "#888" }}>This link expires in 1 hour.</Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
 ```
-
-### Proxy (Next.js 16 Middleware)
-
-```typescript
-// src/proxy.ts (middleware.ts in Next.js < 16)
-export { auth as proxy } from "@/auth";
-
-// Optional: Protect routes
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
-};
-```
-
----
-
-## Integration with Existing Schema
-
-### Add userId to Existing Tables
-
-Each table needs a `userId` foreign key:
-
-```typescript
-// Add to existing tables in schema.ts
-export const accounts = pgTable("accounts", {
-  // ... existing fields
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
-});
-
-// Same for: expenses, incomes, transfers, categories, conversations, documents, daily_expenses
-```
-
-### Migration Strategy
-
-1. Create Auth.js tables (`users`, `accounts`, `sessions`, `verificationTokens`)
-2. Add `userId` column to all existing tables (nullable first)
-3. Create default user from `.env` configuration
-4. Assign existing data to default user
-5. Make `userId` non-nullable
-
----
-
-## What NOT to Use
-
-| Avoid                              | Why                                                         | Use Instead                    |
-| ---------------------------------- | ----------------------------------------------------------- | ------------------------------ |
-| `next-auth@4.x`                    | Legacy, requires Pages Router patterns, no unified `auth()` | `next-auth@beta` (v5)          |
-| `@next-auth/drizzle-adapter`       | Deprecated package name                                     | `@auth/drizzle-adapter`        |
-| `getServerSession()`               | v4 pattern, replaced in v5                                  | `auth()` from config file      |
-| `next-auth/middleware`             | v4 pattern, renamed in Next.js 16                           | `auth as proxy` export         |
-| Storing plaintext passwords        | Security vulnerability                                      | bcrypt or argon2               |
-| JWT strategy with database adapter | Credentials provider works best with JWT strategy           | `session: { strategy: 'jwt' }` |
 
 ---
 
 ## Alternatives Considered
 
-| Recommended  | Alternative       | When to Use Alternative                                                                               |
-| ------------ | ----------------- | ----------------------------------------------------------------------------------------------------- |
-| Auth.js v5   | **Better Auth**   | New projects without Auth.js constraint; Better Auth has more features, better DX, active development |
-| Auth.js v5   | Clerk/Auth0       | If you want hosted auth, don't want to manage passwords/sessions                                      |
-| bcrypt       | @node-rs/argon2   | Stronger security (Argon2 winner of PHC), faster; requires native compilation                         |
-| JWT sessions | Database sessions | If you need session revocation, audit trails, or multi-device management                              |
+| Recommended               | Alternative        | When to Use Alternative                                                                                           |
+| ------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `nodemailer`              | `resend` SDK       | If using Resend as provider; has nice API SDK but locks you to their SaaS. Project requires generic SMTP.         |
+| `nodemailer`              | `@sendgrid/mail`   | SendGrid-specific; vendor lock-in. Not appropriate for self-hosted.                                               |
+| `@react-email/components` | Plain HTML strings | Only for 1-2 simple emails. React Email gives better DX, type safety, email-client CSS compat.                    |
+| `@react-email/components` | `mjml`             | MJML is another DSL, requires compile step, less TypeScript integration. React Email is the modern choice.        |
+| `crypto.randomBytes`      | `nanoid` / `uuid`  | Fine if already installed, but they're not. `crypto.randomBytes(32).toString('hex')` = 256-bit token, no package. |
 
 ---
 
-## Critical Ecosystem Context: Better Auth
+## What NOT to Use
 
-**Important:** In September 2025, Auth.js joined [Better Auth](https://better-auth.com). Implications:
-
-1. **Auth.js continues to be maintained** - Security patches and urgent issues will be addressed
-2. **New projects should consider Better Auth** - Recommended by the Auth.js team themselves
-3. **Migration path exists** - [Better Auth migration guide](https://www.better-auth.com/docs/guides/next-auth-migration-guide) available
-4. **Given project constraint** - Use Auth.js v5 as specified; can migrate to Better Auth later if desired
-
----
-
-## Version Compatibility Matrix
-
-| Package               | Version       | Compatible With   | Notes                                           |
-| --------------------- | ------------- | ----------------- | ----------------------------------------------- |
-| next-auth             | 5.0.0-beta.30 | Next.js 14+       | App Router-first, requires Node 18+             |
-| @auth/drizzle-adapter | 1.11.1        | drizzle-orm 0.29+ | Works with postgres, pg, and other drivers      |
-| drizzle-orm           | 0.45.1        | postgres 3.x      | Already in project                              |
-| bcrypt                | 6.0.0         | Node 18+          | Pure JS, Docker-friendly                        |
-| @node-rs/argon2       | 2.0.2         | Node 18+          | Native bindings, may need build tools in Docker |
+| Avoid                             | Why                                                           | Use Instead             |
+| --------------------------------- | ------------------------------------------------------------- | ----------------------- |
+| `@types/nodemailer`               | nodemailer@8.x includes TypeScript types                      | Just use `nodemailer`   |
+| `sendmail` (native)               | Requires system sendmail, not Docker-friendly                 | nodemailer with SMTP    |
+| `email-templates` (npm)           | Legacy, heavy deps, older patterns                            | @react-email/components |
+| Ethereal Email in prod            | Test-only service, emails are public                          | Real SMTP provider      |
+| Nodemailer at Edge runtime        | Uses Node.js `net` module — unavailable at Edge               | Only in Server Actions  |
+| `@node-rs/argon2`                 | Existing passwords use bcrypt; mixing hashes = migration pain | Keep `bcrypt@6.0.0`     |
+| Auth.js `sendVerificationRequest` | That's for email verification, not password reset             | Custom Server Action    |
 
 ---
 
-## Docker Considerations
+## Stack Patterns by Variant
 
-The project uses Docker deployment. Key notes:
+**If SMTP not configured (empty env vars):**
 
-1. **bcrypt** (recommended): Pure JavaScript, no native dependencies, works out of the box
-2. **@node-rs/argon2**: Requires native compilation; ensure Dockerfile has build tools:
-   ```dockerfile
-   RUN apk add --no-cache python3 make g++
-   ```
-3. **AUTH_SECRET**: Generate with `npx auth secret` and add to `.env`
-4. **AUTH_TRUST_HOST**: Set to `true` when behind reverse proxy
+- Guard in send utility logs warning and returns early
+- Prevents crashes on Docker deployments without email
+- Document in `.env.example` that SMTP required for email features
+
+**If using Gmail SMTP:**
+
+- `smtp.gmail.com`, port `587`, `SMTP_SECURE=false`
+- Requires app password (not account password) if 2FA enabled
+- Rate limit: 500 emails/day (fine for self-hosted)
+
+**If using Mailhog/Mailpit for dev:**
+
+- `SMTP_HOST=localhost`, `SMTP_PORT=1025`, no auth
+- `SMTP_SECURE=false`
+- Good for dev/CI without real email
+
+---
+
+## Version Compatibility
+
+| Package                 | Version | Compatible With | Notes                                        |
+| ----------------------- | ------- | --------------- | -------------------------------------------- |
+| nodemailer              | 8.0.1   | Node.js 18+     | Zero dependencies, pure JS                   |
+| @react-email/components | 1.0.8   | React 18/19     | Peer dep: `^18.0 \|\| ^19.0 \|\| ^19.0.0-rc` |
+| react-email             | 5.2.8   | Node.js 20+     | Dev tool only, optional                      |
+| @react-email/render     | 2.0.4   | React 18/19     | Included in components package               |
+
+---
+
+## Docker Compatibility
+
+| Package                 | Native Dependencies | Docker Notes                                        |
+| ----------------------- | ------------------- | --------------------------------------------------- |
+| nodemailer              | None (verified)     | Pure JavaScript. Zero-dep. Fully Docker-compatible. |
+| @react-email/components | None                | React-based, server-side rendering. No native code. |
+| react-email (dev)       | esbuild (bundled)   | Dev tool only, not in production image.             |
+
+**Verdict:** All recommended packages are Docker-friendly with no native compilation required.
 
 ---
 
 ## Sources
 
-| Source                                                                                                 | What Verified                                 | Confidence |
-| ------------------------------------------------------------------------------------------------------ | --------------------------------------------- | ---------- |
-| [authjs.dev/installation](https://authjs.dev/getting-started/installation)                             | Package names, v5 setup pattern               | HIGH       |
-| [authjs.dev/adapters/drizzle](https://authjs.dev/getting-started/adapters/drizzle)                     | Drizzle adapter config, schema                | HIGH       |
-| [authjs.dev/authentication/credentials](https://authjs.dev/getting-started/authentication/credentials) | Credentials provider setup, password handling | HIGH       |
-| [authjs.dev/migrating-to-v5](https://authjs.dev/getting-started/migrating-to-v5)                       | v4→v5 changes, proxy.ts naming                | HIGH       |
-| [better-auth.com/blog](https://better-auth.com/blog/authjs-joins-better-auth)                          | Ecosystem context, maintenance status         | HIGH       |
-| npm registry                                                                                           | Exact version numbers                         | HIGH       |
+| Source                                             | What Verified                                                | Confidence |
+| -------------------------------------------------- | ------------------------------------------------------------ | ---------- |
+| `npm view nodemailer version`                      | v8.0.1 is current, zero dependencies                         | HIGH       |
+| `npm view @react-email/components version`         | v1.0.8 is current                                            | HIGH       |
+| `npm view react-email version`                     | v5.2.8 is current                                            | HIGH       |
+| `npm view nodemailer --json \| jq '.dependencies'` | No dependencies (null)                                       | HIGH       |
+| Codebase inspection (`schema.ts`)                  | `authVerificationTokens` exists, structure verified          | HIGH       |
+| Codebase inspection (`auth.ts`)                    | DrizzleAdapter configured with verificationTokensTable       | HIGH       |
+| Codebase inspection (`package.json`)               | bcrypt@6.0.0, date-fns@4.1.0, React 19.2.3 already installed | HIGH       |
 
 ---
 
-_Stack research for: Auth.js v5 + Drizzle + PostgreSQL_
-_Researched: 2026-02-24_
+_Stack research for: SMTP/Email integration milestone_
+_Researched: 2026-02-25_
+_Versions verified via npm registry_

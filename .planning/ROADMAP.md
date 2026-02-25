@@ -29,7 +29,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Milestone Goal:** SMTP-Infrastruktur und vollständiger Password-Reset-Flow via tokenbasierter Email
 
 - [x] **Phase 6: Database Schema** - Dedicated password reset tokens table (completed 2026-02-25)
-- [ ] **Phase 7: SMTP Infrastructure** - Nodemailer transporter with graceful degradation
+- [x] **Phase 7: SMTP Infrastructure** - Nodemailer transporter with graceful degradation (completed 2026-02-25)
 - [ ] **Phase 8: Email Templates** - Vault-branded HTML templates with inline styles
 - [ ] **Phase 9: Token Security** - Cryptographic token generation and lifecycle
 - [ ] **Phase 10: Reset Flow Actions** - Server actions for forgot/reset password
@@ -176,7 +176,7 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10 → 11 → 12
 | 4. Auth UI Components       | v1.0      | 4/4            | Complete    | 2026-02-24 |
 | 5. Registration Mode Logic  | v1.0      | 2/2            | Complete    | 2026-02-25 |
 | 6. Database Schema          | v1.1      | Complete       | 2026-02-25  | -          |
-| 7. SMTP Infrastructure      | v1.1      | 0/2            | Not started | -          |
+| 7. SMTP Infrastructure      | v1.1      | Complete       | 2026-02-25  | -          |
 | 8. Email Templates          | v1.1      | 0/2            | Not started | -          |
 | 9. Token Security           | v1.1      | 0/2            | Not started | -          |
 | 10. Reset Flow Actions      | v1.1      | 0/2            | Not started | -          |

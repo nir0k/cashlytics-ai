@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database- und Middleware-Ebene.
-**Current focus:** Phase 4: Auth UI Components
+**Current focus:** Phase 5: Registration Mode Logic
 
 ## Current Position
 
-Phase: 4 of 5 (Auth UI Components)
-Plan: 4 of 4 in current phase (awaiting human-verify checkpoint)
-Status: In progress
-Last activity: 2026-02-24 — Completed 04-04 logout button; awaiting checkpoint verification
+Phase: 5 of 5 (Registration Mode Logic)
+Plan: 0 of 3 — ready to plan
+Status: Ready
+Last activity: 2026-02-25 — Phase 4 verified and complete; proxy debugging resolved
 
-Progress: [████████████] 65% (3/5 phases, 1/4 plans in phase 4)
+Progress: [████████████████] 80% (4/5 phases complete)
 
 ## Performance Metrics
 
@@ -31,16 +31,13 @@ Progress: [████████████] 65% (3/5 phases, 1/4 plans in p
 | 1. Core Auth Infrastructure | 3     | 3     | 7 min    |
 | 2. Database Migration       | 4     | 4     | 12 min   |
 | 3. Server Actions Refactor  | 5     | 5     | 4 min    |
-| 4. Auth UI Components       | 0     | 4     | -        |
+| 4. Auth UI Components       | 4     | 4     | ~5 min   |
 | 5. Registration Mode Logic  | 0     | 3     | -        |
 
 **Recent Trend:**
 
-- Last 5 plans: 03-05 (8 min), 03-04 (4 min), 03-02 (3 min), 03-01 (2 min), 02-04 (5 min)
+- Last 5 plans: 04-04 (5 min), 04-03 (5 min), 04-02 (5 min), 04-01 (5 min), 03-05 (8 min)
 - Trend: Stable
-  | Phase 04 P01 | 2 | 3 tasks | 3 files |
-  | Phase 04 P03 | 1 | 1 tasks | 2 files |
-  | Phase 04 P04 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -85,24 +82,22 @@ Recent decisions affecting current work:
 - [Phase 04]: form action={logoutAction} pattern used in client component — avoids onClick handlers, correct server action calling convention
 - [04-03]: RegisterForm mirrors LoginForm — SubmitButton extracted as child component inside form so useFormStatus works correctly
 - [04-03]: confirmPassword inline error driven by registerSchema Zod validation; duplicate email error shown as fieldErrors.email
+- [04-debug]: proxy.ts must be in src/ (not project root) — Watchpack only watches getPossibleMiddlewareFilenames(appDir/..) = src/ when app uses src/ layout
+- [04-debug]: export function proxy() required — named function declaration, not export const or export default
+- [04-debug]: getToken needs secureCookie:true when Auth.js uses \_\_Secure- cookie prefix; detect via x-forwarded-proto header or request.nextUrl.protocol
+- [04-debug]: next dev --webpack required — Turbopack PostCSS IPC worker crashes with Tailwind v4 @tailwindcss/postcss on this environment
+- [04-debug]: proxy matcher must exclude static file extensions (.svg, .png, .ico) — Next.js serves public/ files at root level without /public/ prefix
 
 ### Pending Todos
 
-None yet.
-
-### Key Decisions (04-01)
-
-- redirect() placed after try/catch block — NEXT_REDIRECT errors cannot be caught inside try/catch
-- signIn() called with redirect:false to prevent Auth.js from internally throwing NEXT_REDIRECT
-- registerAction auto-logins after successful registration, falls back to /login redirect on AuthError
-- SessionProvider wraps outermost layer of Providers, making session available to all client components
+None.
 
 ### Blockers/Concerns
 
-None - Migration 0004 applied successfully.
+None.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 04-02-PLAN.md (auth layout + login page + LoginForm client component)
+Last session: 2026-02-25
+Stopped at: Phase 4 complete — proxy debugging resolved, all auth flows verified
 Resume file: None

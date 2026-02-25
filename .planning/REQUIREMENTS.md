@@ -16,10 +16,10 @@
 
 - [ ] **RESET-01**: User can request password reset via forgot-password page with email field
 - [ ] **RESET-02**: "Forgot password?" link is visible on login page
-- [ ] **RESET-03**: Reset token is cryptographically secure (256-bit, `crypto.randomBytes`)
+- [x] **RESET-03**: Reset token is cryptographically secure (256-bit, `crypto.randomBytes`)
 - [ ] **RESET-04**: Reset token expires after 1 hour
 - [ ] **RESET-05**: Reset token is single-use (marked as used after successful reset)
-- [ ] **RESET-06**: Reset token is stored as SHA-256 hash in database (never raw token)
+- [x] **RESET-06**: Reset token is stored as SHA-256 hash in database (never raw token)
 - [ ] **RESET-07**: Forgot-password action always returns identical success response (email enumeration prevention)
 - [ ] **RESET-08**: User can reset password via `/reset-password?token=...` page
 - [ ] **RESET-09**: Invalid or expired tokens show clear error message
@@ -81,10 +81,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SMTP-04      | Phase 7  | Complete |
 | RESET-01     | Phase 10 | Pending  |
 | RESET-02     | Phase 11 | Pending  |
-| RESET-03     | Phase 9  | Pending  |
+| RESET-03     | Phase 9  | Complete |
 | RESET-04     | Phase 9  | Pending  |
 | RESET-05     | Phase 9  | Pending  |
-| RESET-06     | Phase 9  | Pending  |
+| RESET-06     | Phase 9  | Complete |
 | RESET-07     | Phase 10 | Pending  |
 | RESET-08     | Phase 10 | Pending  |
 | RESET-09     | Phase 10 | Pending  |

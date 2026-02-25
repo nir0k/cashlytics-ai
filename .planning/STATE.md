@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database- und Middleware-Ebene.
-**Current focus:** Phase 8 - Email Templates
+**Current focus:** Phase 9 - Token Security
 
 ## Current Position
 
-Phase: 8 of 12 (Email Templates)
-Plan: 2 of 2 in current phase
-Status: Phase Complete (08-01, 08-02 done)
-Last activity: 2026-02-25 — Completed 08-02 Welcome Email & Render Functions
+Phase: 9 of 12 (Token Security)
+Plan: 1 of 2 in current phase
+Status: In Progress (09-01 done, 09-02 pending)
+Last activity: 2026-02-25 — Completed 09-01 Token Generation & Hashing
 
-Progress: [█████████░░░░░░░░░] 71% (22/31 plans across v1.0+v1.1)
+Progress: [█████████░░░░░░░░░] 74% (23/31 plans across v1.0+v1.1)
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [█████████░░░░░░░░░] 71% (22/31 pl
   | Phase 07-02 P02 | 1 min | 1 tasks | 1 files |
   | Phase 08-01 P01 | 5 min | 3 tasks | 3 files |
   | Phase 08-02 P02 | 3min | 2 tasks | 2 files |
+  | Phase 09-token-security P01 | 1 min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,7 @@ v1.1 key decisions:
 - **Phase 7.02**: No default values for SMTP vars in Docker - app handles missing vars gracefully
 - **Phase 8**: @react-email/components for HTML templates with inline styles
 - [Phase 08]: index.ts uses .tsx extension for JSX support in render functions — Render functions contain JSX, requiring .tsx extension instead of .ts
+- **Phase 9**: 256-bit tokens with SHA-256 hashing — raw tokens never stored in database
 
 ### Pending Todos
 
@@ -73,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 08-02-PLAN.md - Welcome Email & Render Functions
+Stopped at: Completed 09-01-PLAN.md - Token Generation & Hashing
 Resume file: None

@@ -1,3 +1,14 @@
+CREATE TABLE "users" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" text NOT NULL,
+	"email_verified" timestamp,
+	"name" text,
+	"password" text,
+	"image" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
 CREATE TABLE "auth_accounts" (
 	"user_id" uuid NOT NULL,
 	"type" text NOT NULL,
@@ -24,10 +35,6 @@ CREATE TABLE "auth_verification_tokens" (
 	"expires" timestamp NOT NULL,
 	CONSTRAINT "auth_verification_tokens_identifier_token_pk" PRIMARY KEY("identifier","token")
 );
---> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_verified" timestamp;
---> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "image" text;
 --> statement-breakpoint
 ALTER TABLE "accounts" ADD COLUMN "user_id" uuid;--> statement-breakpoint
 ALTER TABLE "categories" ADD COLUMN "user_id" uuid;--> statement-breakpoint

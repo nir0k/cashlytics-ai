@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 5 of 5 (Registration Mode Logic)
-Plan: 1 of 3 — in progress
+Plan: 2 of 3 — complete
 Status: In Progress
-Last activity: 2026-02-25 — 05-01 complete: SINGLE_USER_MODE registration guard implemented
+Last activity: 2026-02-25 — 05-02 complete: /register page route guard + .env.example documentation
 
 Progress: [████████████████] 80% (4/5 phases complete)
 
@@ -91,6 +91,8 @@ Recent decisions affecting current work:
 - [05-01]: count(\*)::int cast mandatory in Drizzle — without it COUNT returns string and numeric comparison silently fails
 - [05-01]: registration-mode.ts has no 'use server' directive — utility imported by Server Actions, not itself a Server Action
 - [05-01]: Guard fires before Zod parse — fail fast without validation work when registration is entirely blocked
+- [Phase 05-02]: redirect('/login') placed outside try/catch in register page — consistent with Phase 04-01 NEXT_REDIRECT pattern
+- [Phase 05-02]: RegisterPage made async to await isRegistrationOpen() — minimal change, no other modification
 
 ### Pending Todos
 
@@ -103,5 +105,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 05-registration-mode-logic/05-01-PLAN.md
+Stopped at: Completed 05-registration-mode-logic/05-02-PLAN.md
 Resume file: None

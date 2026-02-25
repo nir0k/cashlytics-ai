@@ -21,8 +21,8 @@
 - [x] **RESET-05**: Reset token is single-use (marked as used after successful reset)
 - [x] **RESET-06**: Reset token is stored as SHA-256 hash in database (never raw token)
 - [x] **RESET-07**: Forgot-password action always returns identical success response (email enumeration prevention)
-- [ ] **RESET-08**: User can reset password via `/reset-password?token=...` page
-- [ ] **RESET-09**: Invalid or expired tokens show clear error message
+- [x] **RESET-08**: User can reset password via `/reset-password?token=...` page
+- [x] **RESET-09**: Invalid or expired tokens show clear error message
 - [x] **RESET-10**: All other reset tokens are invalidated when user successfully changes password
 - [x] **RESET-11**: Dedicated `password_reset_tokens` table exists (not reusing Auth.js tables)
 
@@ -86,8 +86,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RESET-05     | Phase 9  | Complete |
 | RESET-06     | Phase 9  | Complete |
 | RESET-07     | Phase 10 | Complete |
-| RESET-08     | Phase 10 | Pending  |
-| RESET-09     | Phase 10 | Pending  |
+| RESET-08     | Phase 10 | Complete |
+| RESET-09     | Phase 10 | Complete |
 | RESET-10     | Phase 9  | Complete |
 | RESET-11     | Phase 6  | Complete |
 | WELCOME-01   | Phase 12 | Pending  |

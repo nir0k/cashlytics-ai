@@ -27,10 +27,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public pages (login, register)
-  if (pathname === "/login" || pathname === "/register") {
+  // Allow public pages (login, register, forgot-password, reset-password)
+  if (
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname.startsWith("/reset-password")
+  ) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return NextResponse.next();
   }

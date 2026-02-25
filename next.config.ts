@@ -5,6 +5,9 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  experimental: {
+    useWasmBinary: false,
+  },
 };
 
 export default withNextIntl(nextConfig);

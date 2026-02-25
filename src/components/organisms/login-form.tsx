@@ -107,19 +107,19 @@ export function LoginForm() {
             )}
           </div>
 
-          <div className="flex justify-end">
-            <Link
-              href="/forgot-password"
-              className="text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-amber-500 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
           <div className="pt-1">
             <SubmitButton />
           </div>
         </form>
+
+        <div className="flex justify-end pt-2">
+          <Link
+            href="/forgot-password"
+            className="text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-amber-500 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
       {/* Register link */}

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.2...v0.3.3) (2026-02-25)
+
+### 🐛 Bug Fixes
+
+- solve migration issue for users ([3f9232f](https://github.com/aaronjoeldev/cashlytics-ai/commit/3f9232f54239972e65a7fb48c9e40cfe7bfe2c52))
+
 ## [0.3.2](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.1...v0.3.2) (2026-02-25)
 
 ### 🐛 Bug Fixes

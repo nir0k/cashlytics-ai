@@ -35,7 +35,7 @@
 ### Email Templates
 
 - [x] **TEMPLATES-01**: Reset password email uses Vault-branded dark HTML template
-- [ ] **TEMPLATES-02**: Welcome email uses Vault-branded dark HTML template
+- [x] **TEMPLATES-02**: Welcome email uses Vault-branded dark HTML template
 - [x] **TEMPLATES-03**: All email styles are inline (Tailwind/CSS variables don't work in email clients)
 - [x] **TEMPLATES-04**: Emails include plaintext fallback for spam score improvement
 - [x] **TEMPLATES-05**: Reset email includes token expiry notice (1 hour)
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WELCOME-02   | Phase 12 | Pending  |
 | WELCOME-03   | Phase 12 | Pending  |
 | TEMPLATES-01 | Phase 8  | Complete |
-| TEMPLATES-02 | Phase 8  | Pending  |
+| TEMPLATES-02 | Phase 8  | Complete |
 | TEMPLATES-03 | Phase 8  | Complete |
 | TEMPLATES-04 | Phase 8  | Complete |
 | TEMPLATES-05 | Phase 8  | Complete |

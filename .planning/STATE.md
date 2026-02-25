@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 8 of 12 (Email Templates)
-Plan: 1 of 2 in current phase
-Status: In Progress (08-01 complete)
-Last activity: 2026-02-25 — Completed 08-01 Email Templates Infrastructure
+Plan: 2 of 2 in current phase
+Status: Phase Complete (08-01, 08-02 done)
+Last activity: 2026-02-25 — Completed 08-02 Welcome Email & Render Functions
 
-Progress: [█████████░░░░░░░░░] 68% (21/31 plans across v1.0+v1.1)
+Progress: [█████████░░░░░░░░░] 71% (22/31 plans across v1.0+v1.1)
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [█████████░░░░░░░░░] 68% (21/31 pl
   | Phase 07-01 P01 | - | 2 tasks | 2 files |
   | Phase 07-02 P02 | 1 min | 1 tasks | 1 files |
   | Phase 08-01 P01 | 5 min | 3 tasks | 3 files |
+  | Phase 08-02 P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -55,6 +56,7 @@ v1.1 key decisions:
 - **Phase 7**: Nodemailer with singleton transporter pattern
 - **Phase 7.02**: No default values for SMTP vars in Docker - app handles missing vars gracefully
 - **Phase 8**: @react-email/components for HTML templates with inline styles
+- [Phase 08]: index.ts uses .tsx extension for JSX support in render functions — Render functions contain JSX, requiring .tsx extension instead of .ts
 
 ### Pending Todos
 
@@ -71,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 08-01-PLAN.md - Email Templates Infrastructure
+Stopped at: Completed 08-02-PLAN.md - Welcome Email & Render Functions
 Resume file: None

@@ -83,6 +83,18 @@ export const authVerificationTokens = pgTable(
   (t) => [primaryKey({ columns: [t.identifier, t.token] })]
 );
 
+// Password reset tokens (custom flow, NOT Auth.js managed)
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tokenHash: text("token_hash").notNull().unique(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // User relations - enables querying user's data with Drizzle relational queries
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),

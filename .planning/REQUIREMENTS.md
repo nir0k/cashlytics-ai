@@ -7,8 +7,8 @@
 
 ### SMTP Configuration
 
-- [ ] **SMTP-01**: User can configure SMTP settings via `.env` (HOST, PORT, USER, PASS, FROM)
-- [ ] **SMTP-02**: App runs gracefully when SMTP is not configured (email features disabled, no crashes)
+- [x] **SMTP-01**: User can configure SMTP settings via `.env` (HOST, PORT, USER, PASS, FROM)
+- [x] **SMTP-02**: App runs gracefully when SMTP is not configured (email features disabled, no crashes)
 - [x] **SMTP-03**: SMTP env vars are forwarded in docker-compose.yml for Docker deployments
 - [x] **SMTP-04**: APP_URL env var is used for generating reset links in emails
 
@@ -75,8 +75,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement  | Phase    | Status   |
 | ------------ | -------- | -------- |
-| SMTP-01      | Phase 7  | Pending  |
-| SMTP-02      | Phase 7  | Pending  |
+| SMTP-01      | Phase 7  | Complete |
+| SMTP-02      | Phase 7  | Complete |
 | SMTP-03      | Phase 7  | Complete |
 | SMTP-04      | Phase 7  | Complete |
 | RESET-01     | Phase 10 | Pending  |

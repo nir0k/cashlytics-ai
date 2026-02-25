@@ -43,6 +43,13 @@
       "when": 1771941364786,
       "tag": "0005_high_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772012752141,
+      "tag": "0006_curly_rattler",
+      "breakpoints": true
     }
   ]
 }

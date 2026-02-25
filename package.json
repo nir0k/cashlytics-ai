@@ -32,6 +32,8 @@
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-toast": "^1.2.15",
+    "@react-email/components": "^1.0.8",
+    "@react-email/render": "^2.0.4",
     "ai": "^6.0.85",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",

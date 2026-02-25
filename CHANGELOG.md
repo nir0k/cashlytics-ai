@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v1.0.0...v1.0.1) (2026-02-25)
+
+### 🐛 Bug Fixes
+
+- trigger initial v0.1.0 release ([765aa0b](https://github.com/aaronjoeldev/cashlytics-ai/commit/765aa0bdde306c2d047b5c53e8a69e1731d6f40f))
+
 ## 1.0.0 (2026-02-25)
 
 ### ✨ Features

@@ -16,7 +16,7 @@ import {
   consumeResetToken,
   invalidateUserTokens,
 } from "@/lib/auth/reset-token";
-import { renderResetPasswordEmail } from "@/emails";
+import { renderResetPasswordEmail, renderWelcomeEmail } from "@/emails";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
@@ -108,6 +108,16 @@ export async function registerAction(
 
   const hashedPassword = await hashPassword(password);
   await db.insert(users).values({ email, password: hashedPassword });
+
+  // Send welcome email (non-blocking, failures ignored)
+  if (isEmailConfigured()) {
+    const userName = email.split("@")[0];
+    renderWelcomeEmail(userName)
+      .then(({ html, text, subject }) => sendEmail({ to: email, subject, html, text }))
+      .catch((error) => {
+        logger.error("Failed to send welcome email", "auth", error);
+      });
+  }
 
   // Auto-login after registration, then redirect manually
   let shouldRedirect = false;

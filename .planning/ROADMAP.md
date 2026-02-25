@@ -52,7 +52,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 Plans:
 
-- [ ] 06-01: Create password_reset_tokens schema and migration
+- [x] 06-01: Create password_reset_tokens schema and migration (planned)
 
 ### Phase 7: SMTP Infrastructure
 

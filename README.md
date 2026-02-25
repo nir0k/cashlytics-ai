@@ -18,6 +18,8 @@ Cashlytics helps you take control of your finances with a beautiful, intuitive i
 - 💸 **Expense Tracking** — Categorize and monitor your spending habits
 - 🔄 **Account Transfers** — Move money between your accounts with ease
 - 📈 **Analytics & Forecasting** — Visualize trends and predict future balances
+- 🔐 **User Authentication** — Secure multi-user support with login system
+- 🔑 **Password Reset** — Self-service password recovery via email (optional SMTP)
 - 🤖 **AI Assistant** — Chat with an AI-powered financial assistant (requires OpenAI API key)
 - 🏷️ **Categories** — Organize transactions with custom categories
 - 🌍 **Multi-Language** — Available in English and German
@@ -76,6 +78,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### Option A: Docker Compose (Recommended)
 
 The Docker Compose setup includes everything you need:
+
 - **Cashlytics App** — The main application
 - **PostgreSQL 16** — Database for storing your financial data
 
@@ -147,11 +150,20 @@ npm start
 
 ### Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | ✅ Yes | — | PostgreSQL connection string |
-| `NEXT_PUBLIC_APP_URL` | ✅ Yes | `http://localhost:3000` | Public URL of your Cashlytics instance |
-| `OPENAI_API_KEY` | ❌ No | — | OpenAI API key for AI Assistant feature |
+| Variable              | Required | Default                 | Description                                                 |
+| --------------------- | -------- | ----------------------- | ----------------------------------------------------------- |
+| `DATABASE_URL`        | ✅ Yes   | —                       | PostgreSQL connection string                                |
+| `NEXT_PUBLIC_APP_URL` | ✅ Yes   | `http://localhost:3000` | Public URL of your Cashlytics instance                      |
+| `AUTH_SECRET`         | ✅ Yes   | —                       | Secret for JWT encryption (generate with `npx auth secret`) |
+| `SINGLE_USER_MODE`    | ❌ No    | `true`                  | Set to `false` to allow open registration                   |
+| `SINGLE_USER_EMAIL`   | ❌ No    | —                       | Email for single-user mode data migration                   |
+| `OPENAI_API_KEY`      | ❌ No    | —                       | OpenAI API key for AI Assistant feature                     |
+| `SMTP_HOST`           | ❌ No    | —                       | SMTP server hostname (e.g., `smtp.gmail.com`)               |
+| `SMTP_PORT`           | ❌ No    | —                       | SMTP port (587 for STARTTLS, 465 for TLS)                   |
+| `SMTP_USER`           | ❌ No    | —                       | SMTP authentication username                                |
+| `SMTP_PASS`           | ❌ No    | —                       | SMTP authentication password                                |
+| `SMTP_FROM`           | ❌ No    | `SMTP_USER`             | From address for outgoing emails                            |
+| `APP_URL`             | ❌ No    | `NEXT_PUBLIC_APP_URL`   | Server-side URL for email links                             |
 
 ### Database Configuration
 
@@ -162,6 +174,7 @@ postgresql://[user]:[password]@[host]:[port]/[database]
 ```
 
 Example:
+
 ```
 postgresql://cashlytics:mypassword@postgres:5432/cashlytics
 ```
@@ -178,6 +191,32 @@ To enable the AI-powered financial assistant:
 
 > **Note:** Without an OpenAI API key, Cashlytics will still work, but the AI Assistant feature will be disabled.
 
+### Email & Password Reset (Optional)
+
+To enable password reset and welcome emails, configure SMTP:
+
+1. Add your SMTP settings to `.env`:
+
+   ```
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=your-app-password
+   SMTP_FROM=noreply@yourdomain.com
+   APP_URL=https://your-domain.com
+   ```
+
+2. For Gmail, you'll need an [App Password](https://support.google.com/accounts/answer/185833)
+
+> **Note:** Without SMTP configuration, Cashlytics works normally but users cannot reset passwords via email. Registration still works — users just won't receive welcome emails.
+
+### Registration Modes
+
+Cashlytics supports two registration modes:
+
+- **Single User Mode** (`SINGLE_USER_MODE=true`) — Only the first user can register. Perfect for personal/self-hosted deployments.
+- **Multi User Mode** (`SINGLE_USER_MODE=false`) — Open registration for anyone. Suitable for family or team deployments.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -185,6 +224,8 @@ To enable the AI-powered financial assistant:
 - **Frontend:** [Next.js 16](https://nextjs.org/), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/)
 - **UI Components:** [shadcn/ui](https://ui.shadcn.com/), [Radix UI](https://www.radix-ui.com/)
 - **Database:** [PostgreSQL](https://www.postgresql.org/), [Drizzle ORM](https://orm.drizzle.team/)
+- **Authentication:** [Auth.js](https://authjs.dev/), bcrypt password hashing
+- **Email:** [Nodemailer](https://nodemailer.com/), [React Email](https://react.email/)
 - **AI:** [Vercel AI SDK](https://sdk.vercel.ai/), [OpenAI](https://openai.com/)
 - **Internationalization:** [next-intl](https://next-intl-docs.vercel.app/)
 - **Containerization:** [Docker](https://www.docker.com/)
@@ -195,23 +236,25 @@ To enable the AI-powered financial assistant:
 
 ### High Priority 🔴
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| User Authentication | 🔲 Planned | Multi-user support with secure login system |
-| Budget Alerts | 🔲 Planned | Notifications when exceeding budget limits |
+| Feature             | Status      | Description                                     |
+| ------------------- | ----------- | ----------------------------------------------- |
+| User Authentication | ✅ Complete | Multi-user support with secure login system     |
+| Password Reset      | ✅ Complete | Self-service password recovery via email (SMTP) |
+| Welcome Emails      | ✅ Complete | Branded welcome email on registration (SMTP)    |
+| Budget Alerts       | 🔲 Planned  | Notifications when exceeding budget limits      |
 
 ### Medium Priority 🟡
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Export/Import | 🔲 Planned | CSV & PDF export; data import functionality |
-| Bank Integration | 🔲 Planned | FinTS/PSD2 API connection for German banks |
+| Feature          | Status     | Description                                 |
+| ---------------- | ---------- | ------------------------------------------- |
+| Export/Import    | 🔲 Planned | CSV & PDF export; data import functionality |
+| Bank Integration | 🔲 Planned | FinTS/PSD2 API connection for German banks  |
 
 ### Future 🟢
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Mobile PWA | 🔲 Planned | Progressive Web App for mobile devices |
+| Feature             | Status     | Description                            |
+| ------------------- | ---------- | -------------------------------------- |
+| Mobile PWA          | 🔲 Planned | Progressive Web App for mobile devices |
 | Investment Tracking | 🔲 Planned | Enhanced portfolio management features |
 | Currency Conversion | 🔲 Planned | Multi-currency support with live rates |
 

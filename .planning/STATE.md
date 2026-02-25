@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database- und Middleware-Ebene.
-**Current focus:** Phase 6 - Database Schema
+**Current focus:** Phase 7 - SMTP Infrastructure
 
 ## Current Position
 
-Phase: 6 of 12 (Database Schema)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-25 — Completed 06-01 password reset tokens table
+Phase: 7 of 12 (SMTP Infrastructure)
+Plan: 2 of 2 in current phase
+Status: In Progress (07-01 pending)
+Last activity: 2026-02-25 — Completed 07-02 Docker SMTP configuration
 
-Progress: [████████░░░░░░░░░░] 61% (19/31 plans across v1.0+v1.1)
+Progress: [█████████░░░░░░░░░] 65% (20/31 plans across v1.0+v1.1)
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: [████████░░░░░░░░░░] 61% (19/31 pl
 - v1.0 shipped successfully 2026-02-25
 - Starting v1.1 milestone (13 plans remaining)
   | Phase 06-database-schema P01 | 1 min | 2 tasks | 3 files |
+  | Phase 07-02 P02 | 1 min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -50,6 +51,7 @@ v1.1 key decisions:
 
 - **Phase 6**: Dedicated `password_reset_tokens` table (not reusing Auth.js tables)
 - **Phase 7**: Nodemailer with singleton transporter pattern
+- **Phase 7.02**: No default values for SMTP vars in Docker - app handles missing vars gracefully
 - **Phase 8**: @react-email/components for HTML templates with inline styles
 
 ### Pending Todos
@@ -67,5 +69,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 06-01-PLAN.md - Password reset tokens table
+Stopped at: Completed 07-02-PLAN.md - Docker SMTP configuration
 Resume file: None

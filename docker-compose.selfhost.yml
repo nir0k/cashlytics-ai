@@ -19,8 +19,21 @@ services:
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       # Default locale (de or en)
       - NEXT_PUBLIC_DEFAULT_LOCALE=${NEXT_PUBLIC_DEFAULT_LOCALE:-de}
+      # Auth.js secret for JWT encryption (generate with: npx auth secret)
+      - AUTH_SECRET=${AUTH_SECRET}
+      # Registration mode: true = single user, false = open registration
+      - SINGLE_USER_MODE=${SINGLE_USER_MODE:-true}
+      # Email of the single user (used for data migration)
+      - SINGLE_USER_EMAIL=${SINGLE_USER_EMAIL}
       # OpenAI API Key for AI Assistant (optional)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # SMTP configuration (optional, for password reset emails)
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - APP_URL=${APP_URL:-}
     depends_on:
       postgres:
         condition: service_healthy

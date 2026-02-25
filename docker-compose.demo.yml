@@ -10,12 +10,12 @@
 #   APP_PORT          Port to expose the app on         (default: 3000)
 #   APP_URL           Public URL shown in the app        (default: http://localhost:3000)
 #   POSTGRES_PASSWORD Internal DB password               (default: cashlytics_demo)
+#   AUTH_SECRET       Auth.js secret for JWT encryption  (default: demo_secret_change_in_production)
 #   OPENAI_API_KEY    For the AI assistant feature       (default: empty, feature disabled)
 
 name: cashlytics-demo
 
 services:
-
   # ------------------------------------------------------------
   # PostgreSQL database (internal only, not exposed)
   # ------------------------------------------------------------
@@ -50,13 +50,14 @@ services:
     environment:
       DATABASE_URL: postgresql://cashlytics:${POSTGRES_PASSWORD:-cashlytics_demo}@postgres:5432/cashlytics
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3333}
+      AUTH_SECRET: ${AUTH_SECRET:-demo_secret_change_in_production}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3333"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 15s
       timeout: 10s
       retries: 20

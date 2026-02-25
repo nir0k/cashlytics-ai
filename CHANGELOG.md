@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.2.0...v0.3.0) (2026-02-25)
+
+### ✨ Features
+
+- add new env vars to compose files ([55a7f78](https://github.com/aaronjoeldev/cashlytics-ai/commit/55a7f785ea078a8a6a9e01cffefe41920c9149ef))
+
 ## [0.2.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.1.1...v0.2.0) (2026-02-25)
 
 ### ✨ Features

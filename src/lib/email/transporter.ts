@@ -13,6 +13,7 @@ interface SmtpConfig {
 let transporter: nodemailer.Transporter | null = null;
 let configChecked = false;
 let isConfigured = false;
+let fromAddress: string = "";
 
 function getSmtpConfig(): SmtpConfig | null {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
@@ -36,16 +37,44 @@ function getSmtpConfig(): SmtpConfig | null {
   };
 }
 
+function isSendmailConfigured(): boolean {
+  const { EMAIL_TRANSPORT, SMTP_HOST } = process.env;
+  if (EMAIL_TRANSPORT === "sendmail") {
+    return true;
+  }
+  return false;
+}
+
 export function isEmailConfigured(): boolean {
   if (!configChecked) {
     configChecked = true;
-    isConfigured = getSmtpConfig() !== null;
+
+    if (isSendmailConfigured()) {
+      isConfigured = true;
+      fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@localhost";
+      logger.info("Using sendmail for email delivery", "email");
+    } else {
+      const config = getSmtpConfig();
+      isConfigured = config !== null;
+      if (config) {
+        fromAddress = config.from;
+      }
+    }
   }
   return isConfigured;
 }
 
 export function getTransporter(): nodemailer.Transporter | null {
   if (transporter) {
+    return transporter;
+  }
+
+  if (isSendmailConfigured()) {
+    transporter = nodemailer.createTransport({
+      sendmail: true,
+      newline: "unix",
+      path: "/usr/sbin/sendmail",
+    });
     return transporter;
   }
 
@@ -58,7 +87,7 @@ export function getTransporter(): nodemailer.Transporter | null {
   transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
-    secure: config.port === 465, // true for 465, false for other ports
+    secure: config.port === 465,
     auth: {
       user: config.user,
       pass: config.pass,
@@ -70,8 +99,8 @@ export function getTransporter(): nodemailer.Transporter | null {
 
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   if (!isEmailConfigured()) {
-    logger.info(`Email not sent (SMTP not configured): ${options.to}`, "email");
-    return { success: false, error: "SMTP_NOT_CONFIGURED" };
+    logger.info(`Email not sent (not configured): ${options.to}`, "email");
+    return { success: false, error: "EMAIL_NOT_CONFIGURED" };
   }
 
   const mailTransporter = getTransporter();
@@ -79,11 +108,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     return { success: false, error: "TRANSPORTER_UNAVAILABLE" };
   }
 
-  const config = getSmtpConfig();
-
   try {
     await mailTransporter.sendMail({
-      from: config!.from,
+      from: fromAddress,
       to: options.to,
       subject: options.subject,
       text: options.text,

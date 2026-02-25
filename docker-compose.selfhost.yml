@@ -27,7 +27,9 @@ services:
       - SINGLE_USER_EMAIL=${SINGLE_USER_EMAIL}
       # OpenAI API Key for AI Assistant (optional)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      # SMTP configuration (optional, for password reset emails)
+      # Email configuration (optional, for password reset emails)
+      # Set EMAIL_TRANSPORT=sendmail to use local Postfix, or configure SMTP
+      - EMAIL_TRANSPORT=${EMAIL_TRANSPORT:-}
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-}
       - SMTP_USER=${SMTP_USER:-}

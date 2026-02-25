@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { verifyPassword } from "@/lib/auth/password";
 import { signInSchema } from "@/lib/validations/auth";
 import { ZodError } from "zod";
+import { authConfig } from "./auth.config";
 
 // Extend Session type to include user.id
 declare module "next-auth" {
@@ -19,16 +20,13 @@ declare module "next-auth" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: authAccounts,
     sessionsTable: authSessions,
     verificationTokensTable: authVerificationTokens,
   }),
-  session: { strategy: "jwt" }, // REQUIRED for Edge compatibility with proxy.ts
-  pages: {
-    signIn: "/login",
-  },
   providers: [
     Credentials({
       credentials: {
@@ -66,21 +64,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt: async ({ token, user }) => {
-      if (user) {
-        token.sub = user.id;
-      }
-      return token;
-    },
-    session: async ({ session, token }) => {
-      if (token?.sub) {
-        session.user.id = token.sub;
-      }
-      return session;
-    },
-    authorized: async ({ auth }) => {
-      return !!auth;
-    },
-  },
 });

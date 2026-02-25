@@ -28,9 +28,9 @@
 
 ### Welcome Email
 
-- [ ] **WELCOME-01**: User receives welcome email after successful registration
-- [ ] **WELCOME-02**: Welcome email is sent non-blocking (registration doesn't wait for email)
-- [ ] **WELCOME-03**: Welcome email failure doesn't affect registration success
+- [x] **WELCOME-01**: User receives welcome email after successful registration
+- [x] **WELCOME-02**: Welcome email is sent non-blocking (registration doesn't wait for email)
+- [x] **WELCOME-03**: Welcome email failure doesn't affect registration success
 
 ### Email Templates
 
@@ -90,9 +90,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RESET-09     | Phase 10 | Complete |
 | RESET-10     | Phase 9  | Complete |
 | RESET-11     | Phase 6  | Complete |
-| WELCOME-01   | Phase 12 | Pending  |
-| WELCOME-02   | Phase 12 | Pending  |
-| WELCOME-03   | Phase 12 | Pending  |
+| WELCOME-01   | Phase 12 | Complete |
+| WELCOME-02   | Phase 12 | Complete |
+| WELCOME-03   | Phase 12 | Complete |
 | TEMPLATES-01 | Phase 8  | Complete |
 | TEMPLATES-02 | Phase 8  | Complete |
 | TEMPLATES-03 | Phase 8  | Complete |

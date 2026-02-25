@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Jeder User sieht nur seine eigenen Finanzdaten — sicher isoliert auf Database- und Middleware-Ebene.
-**Current focus:** Phase 11 - Reset Flow Pages
+**Current focus:** Phase 12 - Welcome Email (v1.1 complete)
 
 ## Current Position
 
-Phase: 11 of 12 (Reset Flow Pages)
-Plan: 3 of 3 in current phase
-Status: Complete (Phase 11 finished)
-Last activity: 2026-02-25 — Completed 11-03 Login Page Reset Link
+Phase: 12 of 12 (Welcome Email)
+Plan: 1 of 1 in current phase
+Status: Complete (v1.1 milestone shipped)
+Last activity: 2026-02-25 — Completed 12-01 Welcome Email Integration
 
-Progress: [█████████░░░░░░░░░] 91% (29/32 plans across v1.0+v1.1)
+Progress: [██████████░░░░░░░░] 94% (30/32 plans across v1.0+v1.1)
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [█████████░░░░░░░░░] 91% (29/32 pl
   | Phase 11-01 P01 | 6 min | 2 tasks | 2 files |
   | Phase 11-02 P02 | 10 min | 2 tasks | 2 files |
   | Phase 11-03 P03 | 9 min | 2 tasks | 2 files |
+  | Phase 12-01 P01 | 2 min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,7 @@ v1.1 key decisions:
 - **Phase 11.01**: Redirect to /login on forgot-password success instead of in-page success message
 - **Phase 11.02**: Inline error display for reset password with unified message, success redirects to /login with toast
 - **Phase 11.03**: Modified LoginForm directly for useSearchParams (already 'use client'), Suspense boundary in page.tsx
+- [Phase 12]: Use email local part as userName since name field is optional and not collected during registration — Registration form only collects email/password, deriving name from email provides personalization without requiring additional user input
 
 ### Pending Todos
 
@@ -87,5 +89,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 11-03-PLAN.md - Login Page Reset Link (Phase 11 complete)
+Stopped at: Completed 12-01-PLAN.md - Welcome Email Integration (v1.1 milestone complete)
 Resume file: None

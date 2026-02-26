@@ -45,8 +45,6 @@ services:
     image: ghcr.io/aaronjoeldev/cashlytics-ai:latest
     container_name: cashlytics-demo-app
     restart: unless-stopped
-    ports:
-      - "${APP_PORT:-3333}:3000"
     environment:
       DATABASE_URL: postgresql://cashlytics:${POSTGRES_PASSWORD:-cashlytics_demo}@postgres:5432/cashlytics
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3333}
@@ -89,12 +87,14 @@ services:
       app:
         condition: service_healthy
     networks:
-      - demo_network
+      - default
+      - web_network
 
 volumes:
   demo_postgres_data:
     driver: local
 
 networks:
-  demo_network:
-    driver: bridge
+  web_network:
+    external: true
+

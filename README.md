@@ -1,14 +1,20 @@
-# Cashlytics 💰
+<p align="center">
+  <img src="https://raw.githubusercontent.com/aaronjoeldev/cashlytics-ai/main/public/logo.svg" alt="Cashlytics" width="220" />
+</p>
 
-[![Release](https://img.shields.io/github/v/release/aaronjoeldev/cashlytics-ai?include_prereleases)](https://github.com/aaronjoeldev/cashlytics-ai/releases)
-[![Docker](https://img.shields.io/badge/ghcr.io-aaronjoeldev%2Fcashlytics--ai-blue)](https://github.com/aaronjoeldev/cashlytics-ai/pkgs/container/cashlytics-ai)
-[![License](https://img.shields.io/github/license/aaronjoeldev/cashlytics-ai)](LICENSE)
+<h1 align="center">Cashlytics</h1>
 
-**Self-hosted personal finance & budget planning application with AI-powered assistance.**
+<p align="center">
+  <a href="https://github.com/aaronjoeldev/cashlytics-ai/releases"><img src="https://img.shields.io/github/v/release/aaronjoeldev/cashlytics-ai?include_prereleases" alt="Release" /></a>
+  <a href="https://github.com/aaronjoeldev/cashlytics-ai/pkgs/container/cashlytics-ai"><img src="https://img.shields.io/badge/ghcr.io-aaronjoeldev%2Fcashlytics--ai-blue" alt="Docker" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/aaronjoeldev/cashlytics-ai" alt="License" /></a>
+</p>
 
-Cashlytics helps you take control of your finances with a beautiful, intuitive interface. Track your income, expenses, and account balances all in one place — without sending your data to third parties.
+<p align="center"><strong>Self-hosted personal finance &amp; budget planning application with AI-powered assistance.</strong></p>
 
-![Dashboard Preview](docs/screenshots/dashboard.png)
+<p align="center">Cashlytics helps you take control of your finances with a beautiful, intuitive interface. Track your income, expenses, and account balances all in one place — without sending your data to third parties.</p>
+
+![Dashboard Preview](https://cashlytics.online/_next/image?url=%2Fscreenshots%2Fhero-dashboard.jpg&w=1200&q=75)
 
 ## ✨ Features
 

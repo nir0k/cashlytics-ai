@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.1.0...v0.1.1) (2026-02-26)
+
+### 🐛 Bug Fixes
+
+- change port in demo compose ([a9298a8](https://github.com/aaronjoeldev/cashlytics-ai/commit/a9298a83f30a57034a0f5aa296c8ae836faa7e60))
+
 ## [0.1.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.0.0...v0.1.0) (2026-02-25)
 
 ### ✨ Features

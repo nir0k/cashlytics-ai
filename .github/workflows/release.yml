@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 permissions:
   contents: write
@@ -16,6 +17,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       released: ${{ steps.version.outputs.released }}
+      is_dev: ${{ steps.version.outputs.is_dev }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,11 +35,12 @@ jobs:
 
       - name: Run Semantic Release
         id: semantic
+        if: github.ref_name == 'main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx semantic-release
-          
+
           # Get the new version if released
           if [ -f "VERSION" ]; then
             echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
@@ -52,17 +55,25 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          if [ "${{ steps.semantic.outputs.released }}" = "true" ]; then
+          if [ "${{ github.ref_name }}" = "dev" ]; then
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            echo "version=${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "released=true" >> $GITHUB_OUTPUT
+            echo "is_dev=true" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.semantic.outputs.released }}" = "true" ]; then
             echo "version=${{ steps.semantic.outputs.version }}" >> $GITHUB_OUTPUT
             echo "released=true" >> $GITHUB_OUTPUT
+            echo "is_dev=false" >> $GITHUB_OUTPUT
           else
             # Get version from package.json or use default
             CURRENT_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
             echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
             echo "released=false" >> $GITHUB_OUTPUT
+            echo "is_dev=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload version.ts
+        if: github.ref_name == 'main'
         uses: actions/upload-artifact@v4
         with:
           name: version-file
@@ -76,9 +87,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release.outputs.released == 'true' && 'main' || github.sha }}
+          ref: ${{ needs.release.outputs.is_dev == 'true' && github.sha || needs.release.outputs.released == 'true' && 'main' || github.sha }}
 
       - name: Download version.ts
+        if: needs.release.outputs.is_dev == 'false'
         uses: actions/download-artifact@v4
         with:
           name: version-file
@@ -94,15 +106,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=v${{ needs.release.outputs.version }},priority=100
-            type=raw,value=latest
-            type=sha,prefix=
+      - name: Set Docker tags
+        id: docker-tags
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          REPO="ghcr.io/${{ github.repository }}"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+
+          if [ "${{ needs.release.outputs.is_dev }}" = "true" ]; then
+            DISPLAY_VERSION="dev-${VERSION}"
+            TAGS="${REPO}:dev-${VERSION},${REPO}:dev-latest,${REPO}:dev-${SHORT_SHA}"
+          else
+            DISPLAY_VERSION="v${VERSION}"
+            TAGS="${REPO}:v${VERSION},${REPO}:latest,${REPO}:${SHORT_SHA}"
+          fi
+
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "display_version=${DISPLAY_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -110,17 +130,18 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.docker-tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Summary
         run: |
-          echo "### 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`v${{ needs.release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Image:** \`ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.docker-tags.outputs.display_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Image:** \`ghcr.io/${{ github.repository }}:${{ steps.docker-tags.outputs.display_version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Released:** ${{ needs.release.outputs.released }}" >> $GITHUB_STEP_SUMMARY

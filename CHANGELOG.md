@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.1.2...v0.2.0) (2026-02-27)
+
+### ✨ Features
+
+- add margin to email btn ([7d0cfb8](https://github.com/aaronjoeldev/cashlytics-ai/commit/7d0cfb8686d49e95ed43f9be7c6d63433e9dff66))
+- add more spacing to email content ([d8d021d](https://github.com/aaronjoeldev/cashlytics-ai/commit/d8d021ddd3da4be1a0e491e8449e0f5e4455e290))
+- implement dev image ([9f84539](https://github.com/aaronjoeldev/cashlytics-ai/commit/9f84539568fa408b2845694ed200e05a8c481672))
+- improve email template style ([ff88133](https://github.com/aaronjoeldev/cashlytics-ai/commit/ff881334b8c87bcda6d591bfd8bd414b46c4bcee))
+
 ## [0.3.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.2.0...v0.3.0) (2026-02-27)
 
 ### ✨ Features

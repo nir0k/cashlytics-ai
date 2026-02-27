@@ -53,10 +53,9 @@ export function BaseEmail({ preview, children }: BaseEmailProps) {
             border: `1px solid ${VAULT_COLORS.border}`,
             maxWidth: "480px",
             margin: "0 auto",
-            padding: "40px",
           }}
         >
-          {children}
+          <Section style={{ padding: "48px 56px" }}>{children}</Section>
         </Container>
         <Section
           style={{
@@ -66,7 +65,7 @@ export function BaseEmail({ preview, children }: BaseEmailProps) {
           }}
         >
           <img
-            src="https://cashlytics.app/logo.png"
+            src="https://cashlytics.online/logo.svg"
             alt="Cashlytics"
             width="32"
             height="32"

@@ -37,7 +37,7 @@ export async function createCategory(
       .values({ ...data, userId: authResult.userId })
       .returning();
     revalidatePath("/settings");
-    revalidatePath("/settings/categories");
+
     revalidatePath("/categories");
     revalidatePath("/expenses");
     return { success: true, data: category };
@@ -64,7 +64,7 @@ export async function updateCategory(
       return { success: false, error: "Category not found" };
     }
     revalidatePath("/settings");
-    revalidatePath("/settings/categories");
+
     revalidatePath("/categories");
     revalidatePath("/expenses");
     return { success: true, data: category };
@@ -83,7 +83,7 @@ export async function deleteCategory(id: string): Promise<ApiResponse<void>> {
       .delete(categories)
       .where(and(eq(categories.id, id), eq(categories.userId, authResult.userId)));
     revalidatePath("/settings");
-    revalidatePath("/settings/categories");
+
     revalidatePath("/categories");
     revalidatePath("/expenses");
     return { success: true, data: undefined };

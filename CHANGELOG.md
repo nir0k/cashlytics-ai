@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.2.0...v0.3.0) (2026-02-27)
+
+### ✨ Features
+
+- implement dev image ([9f84539](https://github.com/aaronjoeldev/cashlytics-ai/commit/9f84539568fa408b2845694ed200e05a8c481672))
+
 ## [0.2.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.1.2...v0.2.0) (2026-02-27)
 
 ### ✨ Features

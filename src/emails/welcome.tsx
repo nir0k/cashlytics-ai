@@ -26,6 +26,7 @@ export function WelcomeEmail({ userName }: WelcomeEmailProps) {
           fontSize: "24px",
           fontWeight: 700,
           margin: "0 0 16px 0",
+          padding: "16px 16px 0 16px",
         }}
       >
         Welcome to Cashlytics
@@ -36,6 +37,7 @@ export function WelcomeEmail({ userName }: WelcomeEmailProps) {
           fontSize: "16px",
           lineHeight: 1.6,
           margin: "0 0 16px 0",
+          padding: "0 16px 0 16px",
         }}
       >
         Hi {userName},
@@ -46,6 +48,7 @@ export function WelcomeEmail({ userName }: WelcomeEmailProps) {
           fontSize: "16px",
           lineHeight: 1.6,
           margin: "0 0 24px 0",
+          padding: "0 16px 0 16px",
         }}
       >
         Thanks for creating your account. You&apos;re all set to start tracking your finances and
@@ -57,6 +60,7 @@ export function WelcomeEmail({ userName }: WelcomeEmailProps) {
           fontSize: "16px",
           lineHeight: 1.6,
           margin: "0 0 24px 0",
+          padding: "0 16px 0 16px",
         }}
       >
         If you have any questions, feel free to reach out. We&apos;re here to help!
@@ -73,6 +77,7 @@ export function WelcomeEmail({ userName }: WelcomeEmailProps) {
           fontSize: "14px",
           lineHeight: 1.5,
           margin: 0,
+          padding: "0 16px 16px 16px",
         }}
       >
         The Cashlytics Team

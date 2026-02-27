@@ -28,6 +28,7 @@ export function ResetPasswordEmail({ resetUrl, expiresInHours }: ResetPasswordEm
           fontSize: "24px",
           fontWeight: 700,
           margin: "0 0 16px 0",
+          padding: "16px 16px 0 16px",
         }}
       >
         Reset Your Password
@@ -38,6 +39,7 @@ export function ResetPasswordEmail({ resetUrl, expiresInHours }: ResetPasswordEm
           fontSize: "16px",
           lineHeight: 1.6,
           margin: "0 0 24px 0",
+          padding: "0 16px 0 16px",
         }}
       >
         We received a request to reset your password. Click the button below to create a new one.
@@ -68,6 +70,7 @@ export function ResetPasswordEmail({ resetUrl, expiresInHours }: ResetPasswordEm
           fontSize: "14px",
           lineHeight: 1.5,
           margin: 0,
+          padding: "0 16px 16px 16px",
         }}
       >
         This link expires in {expiresInHours} hour

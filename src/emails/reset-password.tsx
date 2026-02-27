@@ -53,6 +53,7 @@ export function ResetPasswordEmail({ resetUrl, expiresInHours }: ResetPasswordEm
           borderRadius: "8px",
           textDecoration: "none",
           fontWeight: 600,
+          margin: "0 16px 0 16px",
           display: "inline-block",
         }}
       >

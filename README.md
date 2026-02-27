@@ -10,6 +10,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/aaronjoeldev/cashlytics-ai" alt="License" /></a>
 </p>
 
+<p align="center">
+  <a href="https://cashlytics.online"><strong>🌐 cashlytics.online</strong></a>
+</p>
+
 <p align="center"><strong>Self-hosted personal finance &amp; budget planning application with AI-powered assistance.</strong></p>
 
 <p align="center">Cashlytics helps you take control of your finances with a beautiful, intuitive interface. Track your income, expenses, and account balances all in one place — without sending your data to third parties.</p>

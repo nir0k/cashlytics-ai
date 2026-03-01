@@ -77,7 +77,7 @@ export function NotificationSettings() {
       if (!keyRes.ok) {
         throw new Error("VAPID-Schlüssel konnte nicht abgerufen werden.");
       }
-      const { publicKey } = await keyRes.json();
+      const { key: publicKey } = await keyRes.json();
 
       // 4. Subscribe the browser to push.
       const subscription = await registration.pushManager.subscribe({

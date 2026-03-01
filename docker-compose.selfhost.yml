@@ -29,8 +29,12 @@ services:
       - SINGLE_USER_EMAIL=${SINGLE_USER_EMAIL}
       # OpenAI API Key for AI Assistant (optional)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # Push Notifications (generate keys: npx web-push generate-vapid-keys)
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-}
       # Secret token for cron job authentication (generate: openssl rand -hex 32)
-      - CRON_SECRET=${CRON_SECRET}
+      - CRON_SECRET=${CRON_SECRET:-}
       # Email configuration (optional, for password reset emails)
       # Set EMAIL_TRANSPORT=sendmail to use local Postfix, or configure SMTP
       - EMAIL_TRANSPORT=${EMAIL_TRANSPORT:-}

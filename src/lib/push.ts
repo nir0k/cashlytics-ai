@@ -3,12 +3,6 @@ import { db } from "@/lib/db";
 import { pushSubscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 export interface PushPayload {
   title: string;
   body: string;
@@ -18,6 +12,13 @@ export interface PushPayload {
 }
 
 export async function sendPushNotification(userId: string, payload: PushPayload): Promise<void> {
+  // setVapidDetails hier (nicht auf Modulebene) — sonst schlägt der Next.js-Build fehl,
+  // weil Env-Vars zur Build-Zeit nicht gesetzt sind.
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT!,
+    process.env.VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
   const subscriptions = await db
     .select()
     .from(pushSubscriptions)

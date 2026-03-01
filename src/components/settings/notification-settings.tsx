@@ -86,10 +86,17 @@ export function NotificationSettings() {
       });
 
       // 5. Send the subscription object to the server for storage.
+      // PushSubscription.toJSON() nests keys under { keys: { p256dh, auth } } —
+      // wir schicken sie flach, wie die API es erwartet.
+      const subJson = subscription.toJSON();
       const subRes = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subscription),
+        body: JSON.stringify({
+          endpoint: subscription.endpoint,
+          p256dh: subJson.keys?.p256dh,
+          auth: subJson.keys?.auth,
+        }),
       });
       if (!subRes.ok) {
         throw new Error("Abonnement konnte nicht gespeichert werden.");

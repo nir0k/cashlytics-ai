@@ -29,6 +29,8 @@ services:
       - SINGLE_USER_EMAIL=${SINGLE_USER_EMAIL}
       # OpenAI API Key for AI Assistant (optional)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # Secret token for cron job authentication (generate: openssl rand -hex 32)
+      - CRON_SECRET=${CRON_SECRET}
       # Email configuration (optional, for password reset emails)
       # Set EMAIL_TRANSPORT=sendmail to use local Postfix, or configure SMTP
       - EMAIL_TRANSPORT=${EMAIL_TRANSPORT:-}
@@ -48,6 +50,20 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  cashlytics-cron:
+    image: alpine:3.20
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+      APP_URL: http://cashlytics:3000
+    depends_on:
+      cashlytics:
+        condition: service_healthy
+    command: >
+      sh -c "apk add --no-cache curl --quiet &&
+             echo '0 8 * * * curl -sf -H \"Authorization: Bearer $$CRON_SECRET\" $$APP_URL/api/cron/upcoming-payments >> /var/log/cron.log 2>&1' | crontab - &&
+             crond -f -l 2"
 
   postgres:
     image: postgres:16-alpine

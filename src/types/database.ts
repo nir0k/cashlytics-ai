@@ -1,5 +1,16 @@
-import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { accounts, categories, expenses, incomes, dailyExpenses, transfers, conversations, messages, documents } from '@/lib/db/schema';
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import {
+  accounts,
+  categories,
+  expenses,
+  incomes,
+  dailyExpenses,
+  transfers,
+  conversations,
+  messages,
+  documents,
+  pushSubscriptions,
+} from "@/lib/db/schema";
 
 export type Account = InferSelectModel<typeof accounts>;
 export type NewAccount = InferInsertModel<typeof accounts>;
@@ -28,6 +39,9 @@ export type Message = InferSelectModel<typeof messages>;
 export type NewMessage = InferInsertModel<typeof messages>;
 export type ConversationWithMessages = Conversation & { messages: Message[] };
 
+export type PushSubscription = InferSelectModel<typeof pushSubscriptions>;
+export type NewPushSubscription = InferInsertModel<typeof pushSubscriptions>;
+
 export type ExpenseWithDetails = Expense & {
   category: Category | null;
   account: Account | null;
@@ -47,9 +61,7 @@ export type TransferWithDetails = Transfer & {
   targetAccount: Account | null;
 };
 
-export type ApiResponse<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+export type ApiResponse<T> = { success: true; data: T } | { success: false; error: string };
 
 export type MonthlyOverview = {
   month: number;

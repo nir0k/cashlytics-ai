@@ -1,7 +1,21 @@
 {
-  "name": "Cashlytics",
+  "name": "Cashlytics — Budget Planer",
   "short_name": "Cashlytics",
+  "description": "Dein persönlicher KI-gestützter Budget Planer",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#08080a",
+  "background_color": "#08080a",
+  "categories": ["finance", "productivity"],
   "icons": [
+    {
+      "src": "/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
@@ -14,8 +28,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "theme_color": "#2c2c2c",
-  "background_color": "#414141",
-  "display": "standalone"
+  ]
 }

@@ -18,6 +18,10 @@ vectors.db
 /.next/
 /out/
 
+# PWA (workbox generated at build time, if applicable)
+/public/workbox-*.js
+/public/workbox-*.js.map
+
 # production
 /build
 

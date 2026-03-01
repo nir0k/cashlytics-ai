@@ -43,12 +43,13 @@ services:
     environment:
       CRON_SECRET: ${CRON_SECRET}
       APP_URL: http://app:3000
+      NOTIFICATION_SCHEDULE: ${NOTIFICATION_SCHEDULE:-0 8 * * *}
     depends_on:
       app:
         condition: service_healthy
     command: >
       sh -c "apk add --no-cache curl --quiet &&
-             echo '0 8 * * * curl -sf -H \"Authorization: Bearer $$CRON_SECRET\" $$APP_URL/api/cron/upcoming-payments >> /var/log/cron.log 2>&1' | crontab - &&
+             echo \"$$NOTIFICATION_SCHEDULE curl -sf -H 'Authorization: Bearer $$CRON_SECRET' $$APP_URL/api/cron/upcoming-payments >> /var/log/cron.log 2>&1\" | crontab - &&
              crond -f -l 2"
 
   postgres:

@@ -226,8 +226,11 @@ export function NotificationSettings() {
           <div className="border-border/60 bg-muted/40 flex items-start gap-3 rounded-xl border px-4 py-3 dark:border-white/[0.06]">
             <AlertTriangle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Dein Browser unterstützt keine Push-Benachrichtigungen. Bitte verwende einen modernen
-              Browser wie Chrome, Edge oder Firefox.
+              Dein Browser unterstützt keine Push-Benachrichtigungen. <strong>iPhone/iPad:</strong>{" "}
+              Öffne Cashlytics in Safari, tippe auf den Teilen-Button und wähle &bdquo;Zum
+              Home-Bildschirm&ldquo; — dann die App von dort starten und Benachrichtigungen hier
+              aktivieren. Außerdem ist HTTPS erforderlich. <strong>Desktop:</strong> Bitte verwende
+              Chrome, Edge oder Firefox.
             </p>
           </div>
         )}

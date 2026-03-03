@@ -40,6 +40,49 @@ interface AccountDetailClientProps {
   initialTransfers: TransferWithDetails[];
 }
 
+function isTransactionInMonth(
+  item: {
+    startDate: Date | string;
+    endDate?: Date | string | null;
+    recurrenceType: string;
+    recurrenceInterval?: number | null;
+  },
+  monthStart: Date,
+  monthEnd: Date
+): boolean {
+  const itemStart = new Date(item.startDate);
+  const itemEnd = item.endDate ? new Date(item.endDate) : null;
+
+  if (itemStart > monthEnd) return false;
+  if (itemEnd !== null && itemEnd < monthStart) return false;
+
+  const monthDiff =
+    (monthStart.getFullYear() - itemStart.getFullYear()) * 12 +
+    (monthStart.getMonth() - itemStart.getMonth());
+
+  switch (item.recurrenceType) {
+    case "once":
+      return itemStart >= monthStart && itemStart <= monthEnd;
+    case "daily":
+    case "weekly":
+    case "monthly":
+      return true;
+    case "quarterly":
+      return monthDiff >= 0 && monthDiff % 3 === 0;
+    case "semiannual":
+      return monthDiff >= 0 && monthDiff % 6 === 0;
+    case "yearly":
+      return monthDiff >= 0 && monthDiff % 12 === 0;
+    case "custom": {
+      const interval = item.recurrenceInterval;
+      if (!interval) return true;
+      return monthDiff >= 0 && monthDiff % interval === 0;
+    }
+    default:
+      return true;
+  }
+}
+
 function formatDate(date: Date | string) {
   return new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
@@ -102,32 +145,15 @@ export function AccountDetailClient({
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
-    const filteredExpenses = initialExpenses.filter((e) => {
-      const expenseStart = new Date(e.startDate);
-      const expenseEnd = e.endDate ? new Date(e.endDate) : null;
-      if (e.recurrenceType === "once") {
-        return expenseStart >= startDate && expenseStart <= endDate;
-      }
-      return expenseStart <= endDate && (expenseEnd === null || expenseEnd >= startDate);
-    });
-
-    const filteredIncomes = initialIncomes.filter((i) => {
-      const incomeStart = new Date(i.startDate);
-      const incomeEnd = i.endDate ? new Date(i.endDate) : null;
-      if (i.recurrenceType === "once") {
-        return incomeStart >= startDate && incomeStart <= endDate;
-      }
-      return incomeStart <= endDate && (incomeEnd === null || incomeEnd >= startDate);
-    });
-
-    const filteredTransfers = initialTransfers.filter((t) => {
-      const transferStart = new Date(t.startDate);
-      const transferEnd = t.endDate ? new Date(t.endDate) : null;
-      if (t.recurrenceType === "once") {
-        return transferStart >= startDate && transferStart <= endDate;
-      }
-      return transferStart <= endDate && (transferEnd === null || transferEnd >= startDate);
-    });
+    const filteredExpenses = initialExpenses.filter((e) =>
+      isTransactionInMonth(e, startDate, endDate)
+    );
+    const filteredIncomes = initialIncomes.filter((i) =>
+      isTransactionInMonth(i, startDate, endDate)
+    );
+    const filteredTransfers = initialTransfers.filter((t) =>
+      isTransactionInMonth(t, startDate, endDate)
+    );
 
     const expenseTransactions: Transaction[] = filteredExpenses.map((e) => ({
       id: e.id,

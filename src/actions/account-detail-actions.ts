@@ -1,12 +1,18 @@
-'use server';
+"use server";
 
-import { db } from '@/lib/db';
-import { accounts, incomes, expenses, dailyExpenses, categories } from '@/lib/db/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
-import type { ApiResponse, AccountDetail, IncomeWithAccount, ExpenseWithDetails, DailyExpenseWithDetails } from '@/types/database';
-import { safeParseFloat } from '@/lib/safe-parse';
-import { logger } from '@/lib/logger';
-import { requireAuth } from '@/lib/auth/require-auth';
+import { db } from "@/lib/db";
+import { accounts, incomes, expenses, dailyExpenses, categories } from "@/lib/db/schema";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
+import type {
+  ApiResponse,
+  AccountDetail,
+  IncomeWithAccount,
+  ExpenseWithDetails,
+  DailyExpenseWithDetails,
+} from "@/types/database";
+import { safeParseFloat } from "@/lib/safe-parse";
+import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 function getMonthDateRange(month: number, year: number): { startDate: Date; endDate: Date } {
   const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
@@ -20,7 +26,7 @@ export async function getAccountTransactions(
   year?: number
 ): Promise<ApiResponse<AccountDetail>> {
   const auth = await requireAuth();
-  if (auth.error) return { success: false, error: 'Unauthorized' };
+  if (auth.error) return { success: false, error: "Unauthorized" };
   const { userId } = auth;
 
   try {
@@ -31,7 +37,7 @@ export async function getAccountTransactions(
       .limit(1);
 
     if (!account) {
-      return { success: false, error: 'Konto nicht gefunden.' };
+      return { success: false, error: "Konto nicht gefunden." };
     }
 
     let dateFilter: { startDate: Date; endDate: Date } | null = null;
@@ -41,13 +47,22 @@ export async function getAccountTransactions(
 
     const incomeConditions = [eq(incomes.accountId, accountId), eq(incomes.userId, userId)];
     const expenseConditions = [eq(expenses.accountId, accountId), eq(expenses.userId, userId)];
-    const dailyExpenseConditions = [eq(dailyExpenses.accountId, accountId), eq(dailyExpenses.userId, userId)];
+    const dailyExpenseConditions = [
+      eq(dailyExpenses.accountId, accountId),
+      eq(dailyExpenses.userId, userId),
+    ];
 
     if (dateFilter) {
-      incomeConditions.push(gte(incomes.startDate, dateFilter.startDate));
+      // Recurring items: started before/during the month AND not ended before the month
       incomeConditions.push(lte(incomes.startDate, dateFilter.endDate));
-      expenseConditions.push(gte(expenses.startDate, dateFilter.startDate));
+      incomeConditions.push(
+        sql`(${incomes.endDate} IS NULL OR ${incomes.endDate} >= ${dateFilter.startDate.toISOString()})`
+      );
       expenseConditions.push(lte(expenses.startDate, dateFilter.endDate));
+      expenseConditions.push(
+        sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${dateFilter.startDate.toISOString()})`
+      );
+      // Daily expenses are one-off events, so exact date range match is correct
       dailyExpenseConditions.push(gte(dailyExpenses.date, dateFilter.startDate));
       dailyExpenseConditions.push(lte(dailyExpenses.date, dateFilter.endDate));
     }
@@ -132,7 +147,7 @@ export async function getAccountTransactions(
       },
     };
   } catch (error) {
-    logger.error('Failed to fetch account transactions', 'getAccountTransactions', error);
-    return { success: false, error: 'Transaktionen konnten nicht geladen werden.' };
+    logger.error("Failed to fetch account transactions", "getAccountTransactions", error);
+    return { success: false, error: "Transaktionen konnten nicht geladen werden." };
   }
 }

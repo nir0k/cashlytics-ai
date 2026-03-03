@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { transfers, accounts } from "@/lib/db/schema";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { ApiResponse, Transfer, NewTransfer, TransferWithDetails } from "@/types/database";
 import { logger } from "@/lib/logger";
@@ -83,24 +83,10 @@ export async function createTransfer(
       return { success: false, error: "Zielkonto nicht gefunden oder kein Zugriff." };
     }
 
-    const transfer = await db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(transfers)
-        .values({ ...data, userId })
-        .returning();
-
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} - ${data.amount}` })
-        .where(eq(accounts.id, data.sourceAccountId));
-
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} + ${data.amount}` })
-        .where(eq(accounts.id, data.targetAccountId));
-
-      return created;
-    });
+    const [transfer] = await db
+      .insert(transfers)
+      .values({ ...data, userId })
+      .returning();
 
     revalidatePath("/transfers");
     revalidatePath("/dashboard");
@@ -131,51 +117,11 @@ export async function updateTransfer(
     }
     const { userId } = authResult;
 
-    const transfer = await db.transaction(async (tx) => {
-      // Fetch old transfer to reverse its balance effect (userId scoped)
-      const [old] = await tx
-        .select()
-        .from(transfers)
-        .where(and(eq(transfers.id, id), eq(transfers.userId, userId)));
-      if (!old) {
-        return null;
-      }
-
-      // Reverse old balance change
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} + ${old.amount}` })
-        .where(eq(accounts.id, old.sourceAccountId));
-
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} - ${old.amount}` })
-        .where(eq(accounts.id, old.targetAccountId));
-
-      // Write the update (userId scoped)
-      const [updated] = await tx
-        .update(transfers)
-        .set(data)
-        .where(and(eq(transfers.id, id), eq(transfers.userId, userId)))
-        .returning();
-
-      // Apply new balance change (merge old values with the patch)
-      const newSourceId = data.sourceAccountId ?? old.sourceAccountId;
-      const newTargetId = data.targetAccountId ?? old.targetAccountId;
-      const newAmount = data.amount ?? old.amount;
-
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} - ${newAmount}` })
-        .where(eq(accounts.id, newSourceId));
-
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} + ${newAmount}` })
-        .where(eq(accounts.id, newTargetId));
-
-      return updated;
-    });
+    const [transfer] = await db
+      .update(transfers)
+      .set(data)
+      .where(and(eq(transfers.id, id), eq(transfers.userId, userId)))
+      .returning();
 
     if (!transfer) {
       return { success: false, error: "Transfer nicht gefunden." };
@@ -199,30 +145,10 @@ export async function deleteTransfer(id: string): Promise<ApiResponse<void>> {
     }
     const { userId } = authResult;
 
-    const deleted = await db.transaction(async (tx) => {
-      const [transfer] = await tx
-        .select()
-        .from(transfers)
-        .where(and(eq(transfers.id, id), eq(transfers.userId, userId)));
-      if (!transfer) {
-        return null;
-      }
-
-      // Reverse the balance change
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} + ${transfer.amount}` })
-        .where(eq(accounts.id, transfer.sourceAccountId));
-
-      await tx
-        .update(accounts)
-        .set({ balance: sql`${accounts.balance} - ${transfer.amount}` })
-        .where(eq(accounts.id, transfer.targetAccountId));
-
-      await tx.delete(transfers).where(and(eq(transfers.id, id), eq(transfers.userId, userId)));
-
-      return transfer;
-    });
+    const [deleted] = await db
+      .delete(transfers)
+      .where(and(eq(transfers.id, id), eq(transfers.userId, userId)))
+      .returning();
 
     if (!deleted) {
       return { success: false, error: "Transfer nicht gefunden." };

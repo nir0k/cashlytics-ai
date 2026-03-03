@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.2.0...v0.3.0) (2026-03-03)
+
+### ✨ Features
+
+- add variable for cronjob ([177c973](https://github.com/aaronjoeldev/cashlytics-ai/commit/177c973c266cbbcc6e7b4b77cf4ca55f918d8998))
+- implement notifications on payment date ([eedca9d](https://github.com/aaronjoeldev/cashlytics-ai/commit/eedca9d458a7b15387a2692d266669a5db360b3c))
+- implement pwa ([9f3a65c](https://github.com/aaronjoeldev/cashlytics-ai/commit/9f3a65cc4bc576d7601727a51ccf744ecb0146e9))
+
+### 🐛 Bug Fixes
+
+- allow cron api route in proxy ([75cf2a2](https://github.com/aaronjoeldev/cashlytics-ai/commit/75cf2a2373715a5a68554649dc80e43d55edcf53))
+- solve cron schedule call ([cae73f9](https://github.com/aaronjoeldev/cashlytics-ai/commit/cae73f9852071a5ebc7e481c121efd298928d4f8))
+- solve module build failure ([73db7a3](https://github.com/aaronjoeldev/cashlytics-ai/commit/73db7a3df0ce0be68d9a546475a4ec9efc7b69a3))
+- solve pubkey error ([2c031de](https://github.com/aaronjoeldev/cashlytics-ai/commit/2c031ded54e3b8be31d6988199d8c853e9568eb6))
+- solve pubkey error ([af17930](https://github.com/aaronjoeldev/cashlytics-ai/commit/af1793064ab00a0b2a8f94d7a7033fa3d387b6f1))
+
 ## [0.2.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.1.2...v0.2.0) (2026-02-27)
 
 ### ✨ Features

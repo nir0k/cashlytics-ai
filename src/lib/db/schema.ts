@@ -105,6 +105,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   transfers: many(transfers),
   documents: many(documents),
   conversations: many(conversations),
+  pushSubscriptions: many(pushSubscriptions),
 }));
 
 export const accounts = pgTable("accounts", {
@@ -340,5 +341,24 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   conversation: one(conversations, {
     fields: [messages.conversationId],
     references: [conversations.id],
+  }),
+}));
+
+// Web Push subscriptions (VAPID-based push notifications)
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [pushSubscriptions.userId],
+    references: [users.id],
   }),
 }));

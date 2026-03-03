@@ -22,13 +22,35 @@ services:
       - SMTP_FROM=${SMTP_FROM}
       - APP_URL=${APP_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CRON_SECRET=${CRON_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
+
+  cashlytics-cron:
+    image: alpine:3.20
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+      APP_URL: http://app:3000
+      NOTIFICATION_SCHEDULE: ${NOTIFICATION_SCHEDULE:-0 8 * * *}
+    depends_on:
+      app:
+        condition: service_healthy
+    command: >
+      sh -c "apk add --no-cache curl --quiet &&
+             echo \"$$NOTIFICATION_SCHEDULE curl -s -H 'Authorization: Bearer $$CRON_SECRET' $$APP_URL/api/cron/upcoming-payments >> /var/log/cron.log 2>&1\" | crontab - &&
+             crond -f -l 2"
 
   postgres:
     image: postgres:16-alpine

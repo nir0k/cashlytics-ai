@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.0...v0.3.1) (2026-03-03)
+
+### 🐛 Bug Fixes
+
+- align balances to monthly planning views ([bf56bd9](https://github.com/aaronjoeldev/cashlytics-ai/commit/bf56bd9187139ffada65752cf7807c5f2aaf56f5))
+- correct month filter logic for recurring expenses and incomes ([02e34c7](https://github.com/aaronjoeldev/cashlytics-ai/commit/02e34c718ea0c1d6eead64190577b833b31514a3))
+- correct quarterly next payment date and add semiannual support, rename monthly balance label ([3284d10](https://github.com/aaronjoeldev/cashlytics-ai/commit/3284d10431e79d378e029c7b8962199b45713c80))
+- show recurring transactions only in months they are actually due ([1d9ca3e](https://github.com/aaronjoeldev/cashlytics-ai/commit/1d9ca3ebc1dd08442a01aedf414578bd5562e680))
+- solve recurring expenses client view ([4c5faef](https://github.com/aaronjoeldev/cashlytics-ai/commit/4c5faeff264cf3d4bb6ca8aca1c0bd1fed078f19))
+
 ## [0.3.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.2.0...v0.3.0) (2026-03-03)
 
 ### ✨ Features

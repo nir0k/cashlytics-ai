@@ -56,17 +56,28 @@
     "noTransactions": "Noch keine Transaktionen vorhanden. Füge deine erste Ausgabe oder Einnahme hinzu!",
     "monthlyIncome": "Monatliche Einnahmen",
     "monthlyExpenses": "Monatliche Ausgaben",
+    "monthlyBalance": "Monatliche Bilanz",
     "categoriesCount": "{count} Kategorien",
     "noExpensesThisMonth": "Noch keine Ausgaben diesen Monat",
     "yourRecentExpenses": "Deine letzten Ausgaben",
     "allAccountsSummarized": "Alle Konten summiert",
+    "allAccountsMonthly": "Alle Konten im aktuellen Monat",
     "surplusThisMonth": "Überschuss diesen Monat",
     "deficitThisMonth": "Defizit diesen Monat",
     "upcomingPayments": "Nächste Zahlungen",
     "next14Days": "Die nächsten 14 Tage",
     "pendingCount": "{count} anstehend",
     "thisMonth": "Dieser Monat",
-    "entriesCount": "{count} Einträge"
+    "entriesCount": "{count} Einträge",
+    "calculationView": "Berechnungsansicht",
+    "viewModes": {
+      "reserve": "Rücklage",
+      "cashflow": "Cashflow"
+    },
+    "viewExplanation": {
+      "reserve": "Rücklage: Nicht-monatliche Posten werden auf einen Monatswert verteilt.",
+      "cashflow": "Cashflow: Es zählen die tatsächlich im Monat fälligen Abbuchungen/Zahlungen."
+    }
   },
   "overview": {
     "title": "Übersicht",
@@ -170,7 +181,15 @@
     "monthlyProjection": "Monatliche Projektion",
     "cumulative": "kumuliert",
     "cumulativeDevelopment": "Kumulative Entwicklung",
-    "monthlyBalance": "Monatliche Bilanz"
+    "monthlyBalance": "Monatliche Bilanz",
+    "viewModes": {
+      "reserve": "Rücklage",
+      "cashflow": "Cashflow"
+    },
+    "viewExplanation": {
+      "reserve": "Rücklage: Wiederkehrende Zahlungen werden auf einen Monatswert verteilt.",
+      "cashflow": "Cashflow: Zeigt die im gewählten Monat tatsächlich fälligen Buchungen."
+    }
   },
   "expenses": {
     "title": "Ausgaben",

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { expenses, dailyExpenses, accounts, categories } from "@/lib/db/schema";
-import { eq, and, gte, lte, desc, sql, ilike } from "drizzle-orm";
+import { eq, and, gte, lte, desc, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type {
   ApiResponse,
@@ -102,16 +102,6 @@ export async function createExpense(
       .values({ ...data, userId })
       .returning();
 
-    // Kontostand aktualisieren (abziehen) mit SQL
-    if (data.accountId) {
-      await db
-        .update(accounts)
-        .set({
-          balance: sql`${accounts.balance} - ${data.amount}`,
-        })
-        .where(eq(accounts.id, data.accountId));
-    }
-
     revalidatePath("/expenses");
     revalidatePath("/dashboard");
     revalidatePath("/accounts");
@@ -157,21 +147,6 @@ export async function deleteExpense(id: string): Promise<ApiResponse<void>> {
       return { success: false, error: "Unauthorized" };
     }
     const { userId } = authResult;
-
-    // Erst die Expense holen um den Betrag und Account zu kennen (userId filter ensures ownership)
-    const [expense] = await db
-      .select()
-      .from(expenses)
-      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
-    if (expense && expense.accountId) {
-      // Kontostand aktualisieren (zurückbuchen)
-      await db
-        .update(accounts)
-        .set({
-          balance: sql`${accounts.balance} + ${expense.amount}`,
-        })
-        .where(eq(accounts.id, expense.accountId));
-    }
 
     await db.delete(expenses).where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
     revalidatePath("/expenses");
@@ -258,16 +233,6 @@ export async function createDailyExpense(
       .values({ ...data, userId })
       .returning();
 
-    // Kontostand aktualisieren (abziehen)
-    if (data.accountId) {
-      await db
-        .update(accounts)
-        .set({
-          balance: sql`${accounts.balance} - ${data.amount}`,
-        })
-        .where(eq(accounts.id, data.accountId));
-    }
-
     revalidatePath("/expenses");
     revalidatePath("/dashboard");
     revalidatePath("/accounts");
@@ -313,19 +278,6 @@ export async function deleteDailyExpense(id: string): Promise<ApiResponse<void>>
       return { success: false, error: "Unauthorized" };
     }
     const { userId } = authResult;
-
-    const [expense] = await db
-      .select()
-      .from(dailyExpenses)
-      .where(and(eq(dailyExpenses.id, id), eq(dailyExpenses.userId, userId)));
-    if (expense && expense.accountId) {
-      await db
-        .update(accounts)
-        .set({
-          balance: sql`${accounts.balance} + ${expense.amount}`,
-        })
-        .where(eq(accounts.id, expense.accountId));
-    }
 
     await db
       .delete(dailyExpenses)

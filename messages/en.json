@@ -56,17 +56,28 @@
     "noTransactions": "No transactions yet. Add your first expense or income!",
     "monthlyIncome": "Monthly Income",
     "monthlyExpenses": "Monthly Expenses",
+    "monthlyBalance": "Monthly Balance",
     "categoriesCount": "{count} Categories",
     "noExpensesThisMonth": "No expenses this month yet",
     "yourRecentExpenses": "Your recent expenses",
     "allAccountsSummarized": "All accounts combined",
+    "allAccountsMonthly": "All accounts in the current month",
     "surplusThisMonth": "Surplus this month",
     "deficitThisMonth": "Deficit this month",
     "upcomingPayments": "Upcoming Payments",
     "next14Days": "Next 14 days",
     "pendingCount": "{count} pending",
     "thisMonth": "This month",
-    "entriesCount": "{count} entries"
+    "entriesCount": "{count} entries",
+    "calculationView": "Calculation View",
+    "viewModes": {
+      "reserve": "Reserve",
+      "cashflow": "Cashflow"
+    },
+    "viewExplanation": {
+      "reserve": "Reserve: Non-monthly items are spread into a monthly amount.",
+      "cashflow": "Cashflow: Shows payments that are actually due this month."
+    }
   },
   "overview": {
     "title": "Overview",
@@ -170,7 +181,15 @@
     "monthlyProjection": "Monthly Projection",
     "cumulative": "cumulative",
     "cumulativeDevelopment": "Cumulative Development",
-    "monthlyBalance": "Monthly Balance"
+    "monthlyBalance": "Monthly Balance",
+    "viewModes": {
+      "reserve": "Reserve",
+      "cashflow": "Cashflow"
+    },
+    "viewExplanation": {
+      "reserve": "Reserve: Recurring payments are distributed into monthly values.",
+      "cashflow": "Cashflow: Shows transactions actually due in the selected month."
+    }
   },
   "expenses": {
     "title": "Expenses",

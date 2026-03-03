@@ -150,6 +150,55 @@ type Transaction = {
   description?: string | null;
 };
 
+function normalizeExpenseToMonthly(
+  amount: number,
+  recurrenceType: string,
+  recurrenceInterval: number | null
+): number {
+  switch (recurrenceType) {
+    case "daily":
+      return amount * 30;
+    case "weekly":
+      return amount * 4.33;
+    case "monthly":
+      return amount;
+    case "quarterly":
+      return amount / 3;
+    case "semiannual":
+      return amount / 6;
+    case "yearly":
+      return amount / 12;
+    case "custom":
+      return recurrenceInterval ? amount / recurrenceInterval : amount;
+    default:
+      return amount;
+  }
+}
+
+function normalizeIncomeToMonthly(amount: number, recurrenceType: string): number {
+  switch (recurrenceType) {
+    case "monthly":
+      return amount;
+    case "yearly":
+      return amount / 12;
+    default:
+      return amount;
+  }
+}
+
+function normalizeTransferToMonthly(amount: number, recurrenceType: string): number {
+  switch (recurrenceType) {
+    case "monthly":
+      return amount;
+    case "quarterly":
+      return amount / 3;
+    case "yearly":
+      return amount / 12;
+    default:
+      return amount;
+  }
+}
+
 export function AccountDetailClient({
   account,
   initialExpenses,
@@ -164,6 +213,7 @@ export function AccountDetailClient({
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
+  const [calculationMode, setCalculationMode] = useState<"cashflow" | "reserve">("cashflow");
   const t = useTranslations("accounts");
   const tCommon = useTranslations("common");
 
@@ -174,6 +224,8 @@ export function AccountDetailClient({
   };
 
   const monthOptions = getMonthOptions();
+  const selectedMonthLabel =
+    monthOptions.find((option) => option.value === selectedMonth)?.label ?? selectedMonth;
 
   const transactions = useMemo<Transaction[]>(() => {
     const [year, month] = selectedMonth.split("-").map(Number);
@@ -190,39 +242,71 @@ export function AccountDetailClient({
       isTransactionInMonth(t, startDate, endDate)
     );
 
-    const expenseTransactions: Transaction[] = filteredExpenses.map((e) => ({
-      id: e.id,
-      type: "expense" as const,
-      name: e.name,
-      amount: e.amount,
-      date: getTransactionDateForMonth(e, startDate, endDate),
-      category: e.category,
-    }));
+    const expenseTransactions: Transaction[] = filteredExpenses.map((e) => {
+      const rawAmount = parseFloat(e.amount);
+      const normalizedAmount =
+        calculationMode === "reserve" && e.recurrenceType !== "once"
+          ? normalizeExpenseToMonthly(rawAmount, e.recurrenceType, e.recurrenceInterval)
+          : rawAmount;
 
-    const incomeTransactions: Transaction[] = filteredIncomes.map((i) => ({
-      id: i.id,
-      type: "income" as const,
-      name: i.source,
-      amount: i.amount,
-      date: getTransactionDateForMonth(i, startDate, endDate),
-    }));
+      return {
+        id: e.id,
+        type: "expense" as const,
+        name: e.name,
+        amount: normalizedAmount.toString(),
+        date: getTransactionDateForMonth(e, startDate, endDate),
+        category: e.category,
+      };
+    });
 
-    const transferTransactions: Transaction[] = filteredTransfers.map((t) => ({
-      id: t.id,
-      type: t.targetAccountId === account.id ? ("transfer_in" as const) : ("transfer_out" as const),
-      name: t.description || "Transfer",
-      amount: t.amount,
-      date: getTransactionDateForMonth(t, startDate, endDate),
-      description:
-        t.targetAccountId === account.id
-          ? `von ${t.sourceAccount?.name || "Unbekannt"}`
-          : `nach ${t.targetAccount?.name || "Unbekannt"}`,
-    }));
+    const incomeTransactions: Transaction[] = filteredIncomes.map((i) => {
+      const rawAmount = parseFloat(i.amount);
+      const normalizedAmount =
+        calculationMode === "reserve" && i.recurrenceType !== "once"
+          ? normalizeIncomeToMonthly(rawAmount, i.recurrenceType)
+          : rawAmount;
+
+      return {
+        id: i.id,
+        type: "income" as const,
+        name: i.source,
+        amount: normalizedAmount.toString(),
+        date: getTransactionDateForMonth(i, startDate, endDate),
+      };
+    });
+
+    const transferTransactions: Transaction[] = filteredTransfers.map((t) => {
+      const rawAmount = parseFloat(t.amount);
+      const normalizedAmount =
+        calculationMode === "reserve" && t.recurrenceType !== "once"
+          ? normalizeTransferToMonthly(rawAmount, t.recurrenceType)
+          : rawAmount;
+
+      return {
+        id: t.id,
+        type:
+          t.targetAccountId === account.id ? ("transfer_in" as const) : ("transfer_out" as const),
+        name: t.description || "Transfer",
+        amount: normalizedAmount.toString(),
+        date: getTransactionDateForMonth(t, startDate, endDate),
+        description:
+          t.targetAccountId === account.id
+            ? `von ${t.sourceAccount?.name || "Unbekannt"}`
+            : `nach ${t.targetAccount?.name || "Unbekannt"}`,
+      };
+    });
 
     return [...expenseTransactions, ...incomeTransactions, ...transferTransactions].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [selectedMonth, initialExpenses, initialIncomes, initialTransfers, account.id]);
+  }, [
+    selectedMonth,
+    initialExpenses,
+    initialIncomes,
+    initialTransfers,
+    account.id,
+    calculationMode,
+  ]);
 
   const summary = useMemo(() => {
     const income = transactions
@@ -281,11 +365,13 @@ export function AccountDetailClient({
             </div>
             <div className="flex-shrink-0 text-right">
               <div
-                className={`text-2xl font-bold sm:text-3xl ${parseFloat(account.balance) >= 0 ? "text-emerald-500" : "text-red-500"}`}
+                className={`text-2xl font-bold sm:text-3xl ${summary.balance >= 0 ? "text-emerald-500" : "text-red-500"}`}
               >
-                {formatCurrency(account.balance)}
+                {formatCurrency(summary.balance)}
               </div>
-              <p className="text-muted-foreground text-xs">{t("balance")}</p>
+              <p className="text-muted-foreground text-xs">
+                {t("monthlyBalance")} • {selectedMonthLabel}
+              </p>
             </div>
           </div>
         </CardHeader>
@@ -306,19 +392,47 @@ export function AccountDetailClient({
         <TabsContent value="transactions" className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h3 className="text-xl font-semibold">{t("transactions")}</h3>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[180px] rounded-xl border-white/[0.08] bg-white/5 backdrop-blur-sm">
-                <SelectValue placeholder={t("selectMonth")} />
-              </SelectTrigger>
-              <SelectContent>
-                {monthOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center rounded-lg border border-white/[0.08] bg-white/5 p-1">
+                <button
+                  type="button"
+                  onClick={() => setCalculationMode("cashflow")}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                    calculationMode === "cashflow"
+                      ? "text-foreground bg-white/10"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("viewModes.cashflow")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalculationMode("reserve")}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                    calculationMode === "reserve"
+                      ? "text-foreground bg-white/10"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("viewModes.reserve")}
+                </button>
+              </div>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[180px] rounded-xl border-white/[0.08] bg-white/5 backdrop-blur-sm">
+                  <SelectValue placeholder={t("selectMonth")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          <p className="text-muted-foreground text-xs">{t(`viewExplanation.${calculationMode}`)}</p>
 
           <div className="grid gap-4 md:grid-cols-4">
             <Card className="border border-white/[0.08] bg-white/5 backdrop-blur-xl">

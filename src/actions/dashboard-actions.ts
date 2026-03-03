@@ -35,11 +35,80 @@ function normalizeToMonthly(
 
 interface DashboardStats {
   totalAssets: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  savingsRate: number;
-  incomeTrend: number;
-  expenseTrend: number;
+  reserveView: {
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    savingsRate: number;
+    incomeTrend: number;
+    expenseTrend: number;
+  };
+  cashflowView: {
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    savingsRate: number;
+    incomeTrend: number;
+    expenseTrend: number;
+  };
+}
+
+function getMonthDateRange(reference: Date): { monthStart: Date; monthEnd: Date } {
+  const monthStart = new Date(reference.getFullYear(), reference.getMonth(), 1, 0, 0, 0, 0);
+  const monthEnd = new Date(reference.getFullYear(), reference.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { monthStart, monthEnd };
+}
+
+function normalizeIncomeToMonthly(amount: number, recurrenceType: string): number {
+  switch (recurrenceType) {
+    case "monthly":
+      return amount;
+    case "yearly":
+      return amount / 12;
+    default:
+      return 0;
+  }
+}
+
+function isRecurringInMonth(
+  item: {
+    startDate: Date;
+    endDate?: Date | null;
+    recurrenceType: string;
+    recurrenceInterval?: number | null;
+  },
+  monthStart: Date,
+  monthEnd: Date
+): boolean {
+  const itemStart = new Date(item.startDate);
+  const itemEnd = item.endDate ? new Date(item.endDate) : null;
+
+  if (itemStart > monthEnd) return false;
+  if (itemEnd !== null && itemEnd < monthStart) return false;
+
+  const monthDiff =
+    (monthStart.getFullYear() - itemStart.getFullYear()) * 12 +
+    (monthStart.getMonth() - itemStart.getMonth());
+
+  switch (item.recurrenceType) {
+    case "once":
+      return itemStart >= monthStart && itemStart <= monthEnd;
+    case "daily":
+    case "weekly":
+    case "monthly":
+      return true;
+    case "quarterly":
+      return monthDiff >= 0 && monthDiff % 3 === 0;
+    case "semiannual":
+      return monthDiff >= 0 && monthDiff % 6 === 0;
+    case "yearly":
+      return monthDiff >= 0 && monthDiff % 12 === 0;
+    case "custom": {
+      const interval = item.recurrenceInterval;
+      if (!interval) return true;
+      return monthDiff >= 0 && monthDiff % interval === 0;
+    }
+    default:
+      return false;
+  }
 }
 
 interface CategoryBreakdown {
@@ -66,118 +135,215 @@ export async function getDashboardStats(): Promise<ApiResponse<DashboardStats>> 
       .where(eq(accounts.userId, userId));
     const totalAssets = safeParseFloat(accountsResult[0]?.total || "0");
 
-    // Aktueller Monat
     const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const { monthStart: currentMonthStart, monthEnd: currentMonthEnd } = getMonthDateRange(now);
+    const { monthStart: lastMonthStart, monthEnd: lastMonthEnd } = getMonthDateRange(
+      new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    );
 
-    // Einnahmen: alle aktiven wiederkehrenden Einnahmen (startDate <= jetzt)
-    const activeIncomes = await db
-      .select({
-        amount: incomes.amount,
-        recurrenceType: incomes.recurrenceType,
-      })
-      .from(incomes)
-      .where(and(lte(incomes.startDate, now), eq(incomes.userId, userId)));
+    const [allIncomes, allExpenses, currentMonthDailyExpenses, lastMonthDailyExpenses] =
+      await Promise.all([
+        db
+          .select({
+            amount: incomes.amount,
+            recurrenceType: incomes.recurrenceType,
+            startDate: incomes.startDate,
+            endDate: incomes.endDate,
+          })
+          .from(incomes)
+          .where(eq(incomes.userId, userId)),
 
-    const monthlyIncome = activeIncomes.reduce((sum, inc) => {
+        db
+          .select({
+            amount: expenses.amount,
+            recurrenceType: expenses.recurrenceType,
+            recurrenceInterval: expenses.recurrenceInterval,
+            startDate: expenses.startDate,
+            endDate: expenses.endDate,
+          })
+          .from(expenses)
+          .where(eq(expenses.userId, userId)),
+
+        db
+          .select({
+            total: sql<string>`COALESCE(SUM(amount), 0)`,
+          })
+          .from(dailyExpenses)
+          .where(
+            and(
+              eq(dailyExpenses.userId, userId),
+              gte(dailyExpenses.date, currentMonthStart),
+              lte(dailyExpenses.date, currentMonthEnd)
+            )
+          ),
+
+        db
+          .select({
+            total: sql<string>`COALESCE(SUM(amount), 0)`,
+          })
+          .from(dailyExpenses)
+          .where(
+            and(
+              eq(dailyExpenses.userId, userId),
+              gte(dailyExpenses.date, lastMonthStart),
+              lte(dailyExpenses.date, lastMonthEnd)
+            )
+          ),
+      ]);
+
+    const currentDailyExpensesTotal = safeParseFloat(currentMonthDailyExpenses[0]?.total || "0");
+    const lastDailyExpensesTotal = safeParseFloat(lastMonthDailyExpenses[0]?.total || "0");
+
+    const reserveMonthlyIncome = allIncomes.reduce((sum, inc) => {
       const amount = safeParseFloat(inc.amount);
-      if (inc.recurrenceType === "monthly") return sum + amount;
-      if (inc.recurrenceType === "yearly") return sum + amount / 12;
       if (inc.recurrenceType === "once") {
-        // Einmalige Einnahmen nur zählen wenn im aktuellen Monat
-        // (wird oben schon gefiltert, hier ist startDate <= now)
-        return sum;
+        return inc.startDate >= currentMonthStart && inc.startDate <= currentMonthEnd
+          ? sum + amount
+          : sum;
       }
-      return sum;
+      const hasStarted = inc.startDate <= now;
+      const isActive = !inc.endDate || inc.endDate >= currentMonthStart;
+      if (!hasStarted || !isActive) return sum;
+      return sum + normalizeIncomeToMonthly(amount, inc.recurrenceType);
     }, 0);
 
-    // Einmalige Einnahmen dieses Monats separat
-    const oneTimeIncomes = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(amount), 0)`,
-      })
-      .from(incomes)
-      .where(
-        and(
-          eq(incomes.userId, userId),
-          gte(incomes.startDate, currentMonthStart),
-          sql`${incomes.recurrenceType} = 'once'`
-        )
-      );
-    const totalMonthlyIncome = monthlyIncome + safeParseFloat(oneTimeIncomes[0]?.total || "0");
-
-    // Ausgaben diesen Monat: tägliche Ausgaben
-    const currentMonthDailyExpenses = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(amount), 0)`,
-      })
-      .from(dailyExpenses)
-      .where(and(eq(dailyExpenses.userId, userId), gte(dailyExpenses.date, currentMonthStart)));
-    const dailyExpensesTotal = safeParseFloat(currentMonthDailyExpenses[0]?.total || "0");
-
-    // Ausgaben: periodische Ausgaben (normalisiert auf monatlich)
-    const activeExpenses = await db
-      .select({
-        amount: expenses.amount,
-        recurrenceType: expenses.recurrenceType,
-        recurrenceInterval: expenses.recurrenceInterval,
-        endDate: expenses.endDate,
-      })
-      .from(expenses)
-      .where(
-        and(
-          eq(expenses.userId, userId),
-          lte(expenses.startDate, now),
-          sql`(${expenses.endDate} IS NULL OR ${expenses.endDate} >= ${currentMonthStart.toISOString()})`
-        )
-      );
-
-    const periodicExpensesTotal = activeExpenses.reduce((sum, exp) => {
-      return (
-        sum +
-        normalizeToMonthly(safeParseFloat(exp.amount), exp.recurrenceType, exp.recurrenceInterval)
-      );
+    const reserveLastMonthlyIncome = allIncomes.reduce((sum, inc) => {
+      const amount = safeParseFloat(inc.amount);
+      if (inc.recurrenceType === "once") {
+        return inc.startDate >= lastMonthStart && inc.startDate <= lastMonthEnd
+          ? sum + amount
+          : sum;
+      }
+      const hasStarted = inc.startDate <= lastMonthEnd;
+      const isActive = !inc.endDate || inc.endDate >= lastMonthStart;
+      if (!hasStarted || !isActive) return sum;
+      return sum + normalizeIncomeToMonthly(amount, inc.recurrenceType);
     }, 0);
 
-    const monthlyExpenses = dailyExpensesTotal + periodicExpensesTotal;
+    const reserveMonthlyExpenses =
+      currentDailyExpensesTotal +
+      allExpenses.reduce((sum, exp) => {
+        const hasStarted = exp.startDate <= now;
+        const isActive = !exp.endDate || exp.endDate >= currentMonthStart;
+        if (!hasStarted || !isActive) return sum;
+        return (
+          sum +
+          normalizeToMonthly(safeParseFloat(exp.amount), exp.recurrenceType, exp.recurrenceInterval)
+        );
+      }, 0);
 
-    // Ausgaben letzten Monat (für Trend) - tägliche + periodische
-    const lastMonthDailyExp = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(amount), 0)`,
-      })
-      .from(dailyExpenses)
-      .where(
-        and(
-          eq(dailyExpenses.userId, userId),
-          gte(dailyExpenses.date, lastMonthStart),
-          lte(dailyExpenses.date, lastMonthEnd)
-        )
+    const reserveLastMonthlyExpenses =
+      lastDailyExpensesTotal +
+      allExpenses.reduce((sum, exp) => {
+        const hasStarted = exp.startDate <= lastMonthEnd;
+        const isActive = !exp.endDate || exp.endDate >= lastMonthStart;
+        if (!hasStarted || !isActive) return sum;
+        return (
+          sum +
+          normalizeToMonthly(safeParseFloat(exp.amount), exp.recurrenceType, exp.recurrenceInterval)
+        );
+      }, 0);
+
+    const cashflowMonthlyIncome = allIncomes.reduce((sum, inc) => {
+      const inCurrentMonth = isRecurringInMonth(
+        {
+          startDate: inc.startDate,
+          endDate: inc.endDate,
+          recurrenceType: inc.recurrenceType,
+        },
+        currentMonthStart,
+        currentMonthEnd
       );
-    // Periodische Ausgaben waren letzten Monat gleich (selbe Fixkosten)
-    const lastMonthExpensesTotal =
-      safeParseFloat(lastMonthDailyExp[0]?.total || "0") + periodicExpensesTotal;
+      return inCurrentMonth ? sum + safeParseFloat(inc.amount) : sum;
+    }, 0);
 
-    // Sparquote
-    const savingsRate = totalMonthlyIncome - monthlyExpenses;
+    const cashflowLastMonthlyIncome = allIncomes.reduce((sum, inc) => {
+      const inLastMonth = isRecurringInMonth(
+        {
+          startDate: inc.startDate,
+          endDate: inc.endDate,
+          recurrenceType: inc.recurrenceType,
+        },
+        lastMonthStart,
+        lastMonthEnd
+      );
+      return inLastMonth ? sum + safeParseFloat(inc.amount) : sum;
+    }, 0);
 
-    // Trends berechnen
-    const expenseTrend =
-      lastMonthExpensesTotal > 0
-        ? ((monthlyExpenses - lastMonthExpensesTotal) / lastMonthExpensesTotal) * 100
+    const cashflowMonthlyExpenses =
+      currentDailyExpensesTotal +
+      allExpenses.reduce((sum, exp) => {
+        const inCurrentMonth = isRecurringInMonth(
+          {
+            startDate: exp.startDate,
+            endDate: exp.endDate,
+            recurrenceType: exp.recurrenceType,
+            recurrenceInterval: exp.recurrenceInterval,
+          },
+          currentMonthStart,
+          currentMonthEnd
+        );
+        return inCurrentMonth ? sum + safeParseFloat(exp.amount) : sum;
+      }, 0);
+
+    const cashflowLastMonthlyExpenses =
+      lastDailyExpensesTotal +
+      allExpenses.reduce((sum, exp) => {
+        const inLastMonth = isRecurringInMonth(
+          {
+            startDate: exp.startDate,
+            endDate: exp.endDate,
+            recurrenceType: exp.recurrenceType,
+            recurrenceInterval: exp.recurrenceInterval,
+          },
+          lastMonthStart,
+          lastMonthEnd
+        );
+        return inLastMonth ? sum + safeParseFloat(exp.amount) : sum;
+      }, 0);
+
+    const reserveSavingsRate = reserveMonthlyIncome - reserveMonthlyExpenses;
+    const cashflowSavingsRate = cashflowMonthlyIncome - cashflowMonthlyExpenses;
+
+    const reserveIncomeTrend =
+      reserveLastMonthlyIncome > 0
+        ? ((reserveMonthlyIncome - reserveLastMonthlyIncome) / reserveLastMonthlyIncome) * 100
+        : 0;
+
+    const reserveExpenseTrend =
+      reserveLastMonthlyExpenses > 0
+        ? ((reserveMonthlyExpenses - reserveLastMonthlyExpenses) / reserveLastMonthlyExpenses) * 100
+        : 0;
+
+    const cashflowIncomeTrend =
+      cashflowLastMonthlyIncome > 0
+        ? ((cashflowMonthlyIncome - cashflowLastMonthlyIncome) / cashflowLastMonthlyIncome) * 100
+        : 0;
+
+    const cashflowExpenseTrend =
+      cashflowLastMonthlyExpenses > 0
+        ? ((cashflowMonthlyExpenses - cashflowLastMonthlyExpenses) / cashflowLastMonthlyExpenses) *
+          100
         : 0;
 
     return {
       success: true,
       data: {
         totalAssets,
-        monthlyIncome: totalMonthlyIncome,
-        monthlyExpenses,
-        savingsRate,
-        incomeTrend: 0, // TODO: Historische Daten vergleichen
-        expenseTrend: -expenseTrend, // Negativ anzeigen, da weniger Ausgaben gut ist
+        reserveView: {
+          monthlyIncome: reserveMonthlyIncome,
+          monthlyExpenses: reserveMonthlyExpenses,
+          savingsRate: reserveSavingsRate,
+          incomeTrend: reserveIncomeTrend,
+          expenseTrend: -reserveExpenseTrend,
+        },
+        cashflowView: {
+          monthlyIncome: cashflowMonthlyIncome,
+          monthlyExpenses: cashflowMonthlyExpenses,
+          savingsRate: cashflowSavingsRate,
+          incomeTrend: cashflowIncomeTrend,
+          expenseTrend: -cashflowExpenseTrend,
+        },
       },
     };
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { incomes, accounts } from "@/lib/db/schema";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { ApiResponse, Income, NewIncome, IncomeWithAccount } from "@/types/database";
 import { logger } from "@/lib/logger";
@@ -78,16 +78,6 @@ export async function createIncome(data: Omit<NewIncome, "userId">): Promise<Api
       .values({ ...data, userId })
       .returning();
 
-    // Kontostand aktualisieren (hinzufügen)
-    if (data.accountId) {
-      await db
-        .update(accounts)
-        .set({
-          balance: sql`${accounts.balance} + ${data.amount}`,
-        })
-        .where(eq(accounts.id, data.accountId));
-    }
-
     revalidatePath("/income");
     revalidatePath("/dashboard");
     revalidatePath("/accounts");
@@ -133,21 +123,6 @@ export async function deleteIncome(id: string): Promise<ApiResponse<void>> {
       return { success: false, error: "Unauthorized" };
     }
     const { userId } = authResult;
-
-    // Erst die Income holen um den Betrag und Account zu kennen (userId filter ensures ownership)
-    const [income] = await db
-      .select()
-      .from(incomes)
-      .where(and(eq(incomes.id, id), eq(incomes.userId, userId)));
-    if (income && income.accountId) {
-      // Kontostand aktualisieren (abziehen)
-      await db
-        .update(accounts)
-        .set({
-          balance: sql`${accounts.balance} - ${income.amount}`,
-        })
-        .where(eq(accounts.id, income.accountId));
-    }
 
     await db.delete(incomes).where(and(eq(incomes.id, id), eq(incomes.userId, userId)));
     revalidatePath("/income");

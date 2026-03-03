@@ -845,6 +845,10 @@ function getPaymentDatesInMonth(
 ): Date[] {
   const dates: Date[] = [];
   const start = toUTCDate(startDate);
+  const paymentDay = Math.min(
+    start.getDate(),
+    new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate()
+  );
 
   switch (recurrenceType) {
     case "daily": {
@@ -865,7 +869,6 @@ function getPaymentDatesInMonth(
       break;
     }
     case "monthly": {
-      const paymentDay = Math.min(start.getDate(), 28);
       const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
       if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {
         dates.push(paymentDate);
@@ -875,7 +878,6 @@ function getPaymentDatesInMonth(
     case "quarterly": {
       const monthDiff = (monthStart.getMonth() - start.getMonth() + 12) % 3;
       if (monthDiff === 0) {
-        const paymentDay = Math.min(start.getDate(), 28);
         const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
         if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {
           dates.push(paymentDate);
@@ -888,7 +890,6 @@ function getPaymentDatesInMonth(
         (monthStart.getFullYear() - start.getFullYear()) * 12 +
         (monthStart.getMonth() - start.getMonth());
       if (monthsDiff >= 0 && monthsDiff % 6 === 0) {
-        const paymentDay = Math.min(start.getDate(), 28);
         const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
         if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {
           dates.push(paymentDate);
@@ -898,7 +899,6 @@ function getPaymentDatesInMonth(
     }
     case "yearly": {
       if (monthStart.getMonth() === start.getMonth()) {
-        const paymentDay = Math.min(start.getDate(), 28);
         const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
         if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {
           dates.push(paymentDate);
@@ -912,7 +912,6 @@ function getPaymentDatesInMonth(
           (monthStart.getFullYear() - start.getFullYear()) * 12 +
           (monthStart.getMonth() - start.getMonth());
         if (monthsDiff >= 0 && monthsDiff % recurrenceInterval === 0) {
-          const paymentDay = Math.min(start.getDate(), 28);
           const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), paymentDay);
           if (paymentDate >= start && paymentDate >= monthStart && paymentDate <= monthEnd) {
             dates.push(paymentDate);
@@ -1071,7 +1070,10 @@ export async function getMonthlyPaymentsCalendar(
               });
             }
           } else if (item.income.recurrenceType === "monthly") {
-            const paymentDay = Math.min(incomeStart.getDate(), 28);
+            const paymentDay = Math.min(
+              incomeStart.getDate(),
+              new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+            );
             if (dayOfMonth === paymentDay && incomeStart <= currentDate) {
               payments.push({
                 id: item.income.id,
@@ -1083,9 +1085,13 @@ export async function getMonthlyPaymentsCalendar(
               });
             }
           } else if (item.income.recurrenceType === "yearly") {
+            const paymentDay = Math.min(
+              incomeStart.getDate(),
+              new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+            );
             if (
               currentDate.getMonth() === incomeStart.getMonth() &&
-              dayOfMonth === Math.min(incomeStart.getDate(), 28) &&
+              dayOfMonth === paymentDay &&
               incomeStart <= currentDate
             ) {
               payments.push({

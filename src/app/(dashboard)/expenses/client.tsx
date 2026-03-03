@@ -47,6 +47,11 @@ function getNextPaymentDate(expense: {
   now.setHours(0, 0, 0, 0);
   const start = new Date(expense.startDate);
 
+  const buildDateWithStartDay = (year: number, month: number): Date => {
+    const maxDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(start.getDate(), maxDay));
+  };
+
   if (expense.endDate) {
     const endDate = new Date(expense.endDate);
     if (endDate < now) return null;
@@ -65,44 +70,55 @@ function getNextPaymentDate(expense: {
       return next;
     }
     case "monthly": {
-      const next = new Date(now.getFullYear(), now.getMonth(), start.getDate());
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth());
       if (next <= now) {
-        next.setMonth(next.getMonth() + 1);
+        next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + 1);
       }
       return next;
     }
     case "quarterly": {
-      const monthsToAdd = 3 - ((now.getMonth() - start.getMonth() + 3) % 3);
-      const next = new Date(now.getFullYear(), now.getMonth() + monthsToAdd, start.getDate());
+      const monthsSinceStart =
+        (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+      const remainder = ((monthsSinceStart % 3) + 3) % 3;
+      const monthsUntilNext = remainder === 0 ? 0 : 3 - remainder;
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext);
       if (next <= now) {
-        next.setMonth(next.getMonth() + 3);
+        next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext + 3);
       }
       return next;
     }
     case "semiannual": {
-      const monthsToAdd = 6 - ((now.getMonth() - start.getMonth() + 6) % 6);
-      const next = new Date(now.getFullYear(), now.getMonth() + monthsToAdd, start.getDate());
+      const monthsSinceStart =
+        (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+      const remainder = ((monthsSinceStart % 6) + 6) % 6;
+      const monthsUntilNext = remainder === 0 ? 0 : 6 - remainder;
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext);
       if (next <= now) {
-        next.setMonth(next.getMonth() + 6);
+        next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext + 6);
       }
       return next;
     }
     case "yearly": {
-      const next = new Date(now.getFullYear(), start.getMonth(), start.getDate());
+      let next = buildDateWithStartDay(now.getFullYear(), start.getMonth());
       if (next <= now) {
-        next.setFullYear(next.getFullYear() + 1);
+        next = buildDateWithStartDay(now.getFullYear() + 1, start.getMonth());
       }
       return next;
     }
     case "custom": {
       if (!expense.recurrenceInterval) return start;
-      const monthsDiff =
+      const monthsSinceStart =
         (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-      const monthsUntilNext =
-        expense.recurrenceInterval - (monthsDiff % expense.recurrenceInterval);
-      const next = new Date(now.getFullYear(), now.getMonth() + monthsUntilNext, start.getDate());
+      const remainder =
+        ((monthsSinceStart % expense.recurrenceInterval) + expense.recurrenceInterval) %
+        expense.recurrenceInterval;
+      const monthsUntilNext = remainder === 0 ? 0 : expense.recurrenceInterval - remainder;
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext);
       if (next <= now) {
-        next.setMonth(next.getMonth() + expense.recurrenceInterval);
+        next = buildDateWithStartDay(
+          now.getFullYear(),
+          now.getMonth() + monthsUntilNext + expense.recurrenceInterval
+        );
       }
       return next;
     }
@@ -358,11 +374,11 @@ export function ExpensesClient({
         >
           {expense.category?.icon ?? "📄"}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {/* Zeile 1: Name + Buttons */}
           <div className="flex items-start justify-between gap-1">
             <p className="font-medium">{expense.name}</p>
-            <div className="flex items-center gap-0.5 flex-shrink-0 -mt-1 -mr-2">
+            <div className="-mt-1 -mr-2 flex flex-shrink-0 items-center gap-0.5">
               <Button variant="ghost" size="icon" onClick={onEdit}>
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -383,13 +399,13 @@ export function ExpensesClient({
               {tRecurrence(expense.recurrenceType)}
             </span>
             {!isMonthly && !isOnce && (
-              <span className="text-xs font-medium text-violet-500 dark:text-violet-400 whitespace-nowrap">
+              <span className="text-xs font-medium whitespace-nowrap text-violet-500 dark:text-violet-400">
                 {formatCurrency(monthly)}/Mo {t("reserve") || "Rücklage"}
               </span>
             )}
           </div>
           {/* Zeile 3: Datum-Info links + Betrag rechts */}
-          <div className="flex items-end justify-between mt-1.5 gap-2">
+          <div className="mt-1.5 flex items-end justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               {debitLabel && (
                 <div className="flex items-center gap-1">
@@ -412,7 +428,9 @@ export function ExpensesClient({
                 </span>
               )}
             </div>
-            <p className="font-semibold whitespace-nowrap flex-shrink-0">{formatCurrency(amount)}</p>
+            <p className="flex-shrink-0 font-semibold whitespace-nowrap">
+              {formatCurrency(amount)}
+            </p>
           </div>
         </div>
       </div>
@@ -421,14 +439,14 @@ export function ExpensesClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="from-foreground to-foreground/60 bg-gradient-to-br bg-clip-text text-[2rem] leading-none font-bold tracking-[-0.03em] text-transparent">
             {t("title")}
           </h2>
           <p className="text-muted-foreground/60 mt-1.5 text-sm">{t("description")}</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {isMounted && accounts.length > 1 && (
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
               <SelectTrigger className="w-[180px]">
@@ -523,20 +541,23 @@ export function ExpensesClient({
 
       <Tabs defaultValue="fixed" className="space-y-4">
         <TabsList className="!flex !h-auto !w-full flex-col gap-1 sm:flex-row sm:gap-0">
-          <TabsTrigger value="fixed" className="w-full sm:w-auto justify-start sm:justify-center">
+          <TabsTrigger value="fixed" className="w-full justify-start sm:w-auto sm:justify-center">
             <Wallet className="mr-1.5 h-3.5 w-3.5" />
             {t("fixedCosts")} ({monthlyFixed.length})
           </TabsTrigger>
-          <TabsTrigger value="periodic" className="w-full sm:w-auto justify-start sm:justify-center">
+          <TabsTrigger
+            value="periodic"
+            className="w-full justify-start sm:w-auto sm:justify-center"
+          >
             <PiggyBank className="mr-1.5 h-3.5 w-3.5" />
             {t("reserves")} ({periodicReserves.length})
           </TabsTrigger>
           {oneTimeExpenses.length > 0 && (
-            <TabsTrigger value="once" className="w-full sm:w-auto justify-start sm:justify-center">
+            <TabsTrigger value="once" className="w-full justify-start sm:w-auto sm:justify-center">
               {tRecurrence("once")} ({oneTimeExpenses.length})
             </TabsTrigger>
           )}
-          <TabsTrigger value="daily" className="w-full sm:w-auto justify-start sm:justify-center">
+          <TabsTrigger value="daily" className="w-full justify-start sm:w-auto sm:justify-center">
             <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
             {t("daily")} ({filteredDailyExpenses.length})
           </TabsTrigger>
@@ -679,11 +700,11 @@ export function ExpensesClient({
                       >
                         {expense.category?.icon ?? "📄"}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         {/* Zeile 1: Beschreibung + Buttons */}
                         <div className="flex items-start justify-between gap-1">
                           <p className="font-medium">{expense.description}</p>
-                          <div className="flex items-center gap-0.5 flex-shrink-0 -mt-1 -mr-2">
+                          <div className="-mt-1 -mr-2 flex flex-shrink-0 items-center gap-0.5">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -695,23 +716,27 @@ export function ExpensesClient({
                               variant="ghost"
                               size="icon"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteDailyExpense(expense.id, expense.description)}
+                              onClick={() =>
+                                handleDeleteDailyExpense(expense.id, expense.description)
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
                         {/* Zeile 2: Kategorie + Datum */}
-                        <p className="text-muted-foreground text-sm mt-0.5">
+                        <p className="text-muted-foreground mt-0.5 text-sm">
                           {expense.category?.name ?? tCommon("withoutCategory")} •{" "}
                           {formatDate(expense.date)}
                         </p>
                         {/* Zeile 3: Konto links + Betrag rechts */}
-                        <div className="flex items-end justify-between mt-1.5 gap-2">
+                        <div className="mt-1.5 flex items-end justify-between gap-2">
                           <p className="text-muted-foreground text-xs">
                             {expense.account?.name ?? t("unknownAccount")}
                           </p>
-                          <p className="font-semibold whitespace-nowrap flex-shrink-0">{formatCurrency(expense.amount)}</p>
+                          <p className="flex-shrink-0 font-semibold whitespace-nowrap">
+                            {formatCurrency(expense.amount)}
+                          </p>
                         </div>
                       </div>
                     </div>

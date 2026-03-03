@@ -83,6 +83,41 @@ function isTransactionInMonth(
   }
 }
 
+function getTransactionDateForMonth(
+  item: {
+    startDate: Date | string;
+    recurrenceType: string;
+  },
+  monthStart: Date,
+  monthEnd: Date
+): Date {
+  const itemStart = new Date(item.startDate);
+
+  switch (item.recurrenceType) {
+    case "once":
+      return itemStart;
+    case "daily":
+      return itemStart > monthStart ? itemStart : monthStart;
+    case "weekly": {
+      const firstInMonth = new Date(monthStart);
+      const daysToAdd = (itemStart.getDay() - firstInMonth.getDay() + 7) % 7;
+      firstInMonth.setDate(firstInMonth.getDate() + daysToAdd);
+      if (firstInMonth < itemStart) {
+        firstInMonth.setDate(firstInMonth.getDate() + 7);
+      }
+      return firstInMonth <= monthEnd ? firstInMonth : monthStart;
+    }
+    default: {
+      const maxDay = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+      return new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth(),
+        Math.min(itemStart.getDate(), maxDay)
+      );
+    }
+  }
+}
+
 function formatDate(date: Date | string) {
   return new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
@@ -160,7 +195,7 @@ export function AccountDetailClient({
       type: "expense" as const,
       name: e.name,
       amount: e.amount,
-      date: e.startDate,
+      date: getTransactionDateForMonth(e, startDate, endDate),
       category: e.category,
     }));
 
@@ -169,7 +204,7 @@ export function AccountDetailClient({
       type: "income" as const,
       name: i.source,
       amount: i.amount,
-      date: i.startDate,
+      date: getTransactionDateForMonth(i, startDate, endDate),
     }));
 
     const transferTransactions: Transaction[] = filteredTransfers.map((t) => ({
@@ -177,7 +212,7 @@ export function AccountDetailClient({
       type: t.targetAccountId === account.id ? ("transfer_in" as const) : ("transfer_out" as const),
       name: t.description || "Transfer",
       amount: t.amount,
-      date: t.startDate,
+      date: getTransactionDateForMonth(t, startDate, endDate),
       description:
         t.targetAccountId === account.id
           ? `von ${t.sourceAccount?.name || "Unbekannt"}`

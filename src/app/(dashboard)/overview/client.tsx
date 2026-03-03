@@ -65,6 +65,11 @@ function getNextPaymentDate(expense: {
   now.setHours(0, 0, 0, 0);
   const start = new Date(expense.startDate);
 
+  const buildDateWithStartDay = (year: number, month: number): Date => {
+    const maxDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(start.getDate(), maxDay));
+  };
+
   if (expense.endDate) {
     const endDate = new Date(expense.endDate);
     if (endDate < now) return null;
@@ -83,9 +88,9 @@ function getNextPaymentDate(expense: {
       return next;
     }
     case "monthly": {
-      const next = new Date(now.getFullYear(), now.getMonth(), start.getDate());
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth());
       if (next <= now) {
-        next.setMonth(next.getMonth() + 1);
+        next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + 1);
       }
       return next;
     }
@@ -94,10 +99,9 @@ function getNextPaymentDate(expense: {
         (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
       const remainder = ((monthsSinceStart % 3) + 3) % 3;
       const monthsUntilNext = remainder === 0 ? 0 : 3 - remainder;
-      const paymentDay = Math.min(start.getDate(), 28);
-      const next = new Date(now.getFullYear(), now.getMonth() + monthsUntilNext, paymentDay);
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext);
       if (next <= now) {
-        next.setMonth(next.getMonth() + 3);
+        next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext + 3);
       }
       return next;
     }
@@ -106,17 +110,16 @@ function getNextPaymentDate(expense: {
         (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
       const remainder = ((monthsSinceStart % 6) + 6) % 6;
       const monthsUntilNext = remainder === 0 ? 0 : 6 - remainder;
-      const paymentDay = Math.min(start.getDate(), 28);
-      const next = new Date(now.getFullYear(), now.getMonth() + monthsUntilNext, paymentDay);
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext);
       if (next <= now) {
-        next.setMonth(next.getMonth() + 6);
+        next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext + 6);
       }
       return next;
     }
     case "yearly": {
-      const next = new Date(now.getFullYear(), start.getMonth(), start.getDate());
+      let next = buildDateWithStartDay(now.getFullYear(), start.getMonth());
       if (next <= now) {
-        next.setFullYear(next.getFullYear() + 1);
+        next = buildDateWithStartDay(now.getFullYear() + 1, start.getMonth());
       }
       return next;
     }
@@ -126,9 +129,12 @@ function getNextPaymentDate(expense: {
         (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
       const monthsUntilNext =
         expense.recurrenceInterval - (monthsDiff % expense.recurrenceInterval);
-      const next = new Date(now.getFullYear(), now.getMonth() + monthsUntilNext, start.getDate());
+      let next = buildDateWithStartDay(now.getFullYear(), now.getMonth() + monthsUntilNext);
       if (next <= now) {
-        next.setMonth(next.getMonth() + expense.recurrenceInterval);
+        next = buildDateWithStartDay(
+          now.getFullYear(),
+          now.getMonth() + monthsUntilNext + expense.recurrenceInterval
+        );
       }
       return next;
     }

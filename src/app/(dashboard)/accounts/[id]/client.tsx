@@ -347,7 +347,7 @@ export function AccountDetailClient({
               <CardHeader className="pb-2">
                 <CardTitle className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
                   <TrendingUp className="h-4 w-4" />
-                  {t("balance")}
+                  {t("monthlyBalance")}
                 </CardTitle>
               </CardHeader>
               <CardContent>

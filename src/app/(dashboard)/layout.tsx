@@ -1,68 +1,65 @@
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/app-sidebar';
-import { Header } from '@/components/layout/header';
-import { Toaster } from '@/components/ui/toaster';
-import { FloatingActions } from '@/components/organisms/floating-actions';
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { Header } from "@/components/layout/header";
+import { Toaster } from "@/components/ui/toaster";
+import { FloatingActions } from "@/components/organisms/floating-actions";
+import { isAiEnabled } from "@/lib/import/feature-gating";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const aiEnabled = isAiEnabled();
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar aiEnabled={aiEnabled} />
       <SidebarInset>
         <Header />
         <main className="relative flex-1 overflow-auto">
           {/* Ambient background layer */}
-          <div className="fixed inset-0 -z-20 pointer-events-none">
+          <div className="pointer-events-none fixed inset-0 -z-20">
             {/* Light mode: warm parchment with subtle grid */}
-            <div className="absolute inset-0 bg-[#f9f7f4] dark:bg-[#08080a] vault-grid opacity-100" />
+            <div className="vault-grid absolute inset-0 bg-[#f9f7f4] opacity-100 dark:bg-[#08080a]" />
           </div>
 
           {/* Dark mode organic blobs */}
-          <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none hidden dark:block">
+          <div className="pointer-events-none fixed inset-0 -z-10 hidden overflow-hidden dark:block">
             {/* Primary amber glow — top left */}
             <div
-              className="absolute blob-primary"
+              className="blob-primary absolute"
               style={{
-                top: '-15%',
-                left: '-10%',
-                width: '55%',
-                height: '55%',
+                top: "-15%",
+                left: "-10%",
+                width: "55%",
+                height: "55%",
               }}
             />
             {/* Secondary glow — middle right */}
             <div
-              className="absolute blob-secondary"
+              className="blob-secondary absolute"
               style={{
-                top: '30%',
-                right: '-15%',
-                width: '40%',
-                height: '40%',
+                top: "30%",
+                right: "-15%",
+                width: "40%",
+                height: "40%",
               }}
             />
             {/* Tertiary warm glow — bottom center */}
             <div
               className="absolute"
               style={{
-                bottom: '-10%',
-                left: '30%',
-                width: '35%',
-                height: '35%',
-                background: 'radial-gradient(ellipse, rgba(180,83,9,0.04) 0%, transparent 60%)',
-                filter: 'blur(80px)',
+                bottom: "-10%",
+                left: "30%",
+                width: "35%",
+                height: "35%",
+                background: "radial-gradient(ellipse, rgba(180,83,9,0.04) 0%, transparent 60%)",
+                filter: "blur(80px)",
               }}
             />
           </div>
 
-          <div className="p-6">
-            {children}
-          </div>
+          <div className="p-6">{children}</div>
         </main>
       </SidebarInset>
-      <FloatingActions />
+      <FloatingActions aiEnabled={aiEnabled} />
       <Toaster />
     </SidebarProvider>
   );

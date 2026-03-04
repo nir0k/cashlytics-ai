@@ -33,6 +33,7 @@
 - 🔐 **User Authentication** — Secure multi-user support with login system
 - 🔑 **Password Reset** — Self-service password recovery via email (optional SMTP)
 - 🤖 **AI Assistant** — Chat with an AI-powered financial assistant (requires OpenAI API key)
+- 📥 **CSV Import + AI Reconciliation** — Import bank CSV files, detect duplicates, review conflicts, and confirm transactionally (requires OpenAI API key)
 - 🏷️ **Categories** — Organize transactions with custom categories
 - 🌍 **Multi-Language** — Available in English and German
 - 🌓 **Dark/Light Theme** — Easy on the eyes, day or night
@@ -265,6 +266,35 @@ To enable the AI-powered financial assistant:
    ```
 
 > **Note:** Without an OpenAI API key, Cashlytics will still work, but the AI Assistant feature will be disabled.
+
+### CSV Import With AI Reconciliation (Optional)
+
+CSV import is available only when `OPENAI_API_KEY` is configured. If the key is missing, import entry points are hidden and import endpoints reject access.
+
+Implementation references:
+
+- `/.planning/features/csv-import/IMPLEMENTATION-PLAN.md`
+- `/.planning/features/csv-import/AI-RECONCILIATION-PROMPT.md`
+- `/.planning/features/csv-import/PROJECT-CONTEXT.md`
+
+Canonical CSV header template used by the import pipeline:
+
+```csv
+booking_date,amount,currency,description,counterparty,sender_account,receiver_account,balance_after_booking,reference
+```
+
+Prompt/output contract highlights:
+
+- Prompt language is English.
+- AI response must be strict JSON only.
+- Each result includes `import_row_id`, `match_type`, `matched_existing_id`, `similarity_score`, `confidence`, `decision_suggestion`, `reason_short`, and `field_comparison`.
+
+Operational constraints:
+
+- All import reads/writes are user-scoped.
+- Import is staged first; rows are reviewed before final confirmation.
+- Final import confirmation is transactional.
+- Conflict decisions are required before confirmation.
 
 ### Email & Password Reset (Optional)
 

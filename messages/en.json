@@ -33,6 +33,7 @@
     "transfers": "Transfers",
     "categories": "Categories",
     "documents": "Documents",
+    "import": "CSV Import",
     "accounts": "Accounts",
     "analytics": "Analytics",
     "goals": "Goals",
@@ -414,6 +415,136 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System"
+  },
+  "csvImport": {
+    "title": "CSV Import",
+    "description": "Import transactions from a CSV file and reconcile duplicates before saving.",
+    "actions": {
+      "startImport": "Start import",
+      "uploadFile": "Upload CSV",
+      "parseFile": "Parse file",
+      "runReconciliation": "Find possible duplicates",
+      "continueToReview": "Continue to review",
+      "saveDecisions": "Save decisions",
+      "confirmImport": "Confirm import",
+      "importAnother": "Import another file",
+      "cancelImport": "Cancel import"
+    },
+    "steps": {
+      "upload": "Upload",
+      "mapHeaders": "Map headers",
+      "reconcile": "Reconcile",
+      "resolveConflicts": "Resolve conflicts",
+      "reviewRows": "Review rows",
+      "confirm": "Confirm"
+    },
+    "form": {
+      "accountLabel": "Target account",
+      "accountPlaceholder": "Select an account",
+      "fileLabel": "CSV file",
+      "fileHint": "Supported formats: comma or semicolon separated values",
+      "headerMappingTitle": "Header mapping",
+      "autoMappingFailedHint": "Automatic header detection failed. Please provide a manual header mapping.",
+      "manualMappingHint": "Map unknown columns before continuing"
+    },
+    "mapping": {
+      "title": "Map CSV columns",
+      "detectedHeaders": "Detected headers",
+      "targetField": "Target field",
+      "sourceColumn": "Source column",
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "headerFields": {
+      "bookingDate": "Booking date",
+      "amount": "Amount",
+      "currency": "Currency",
+      "description": "Description",
+      "counterparty": "Counterparty",
+      "senderAccount": "Sender account",
+      "receiverAccount": "Receiver account",
+      "balanceAfterBooking": "Balance after booking",
+      "reference": "Reference"
+    },
+    "summary": {
+      "totalRows": "Total rows",
+      "validRows": "Valid rows",
+      "invalidRows": "Invalid rows",
+      "stagedRows": "Staged rows",
+      "conflictRows": "Rows with conflicts",
+      "removedRows": "Removed rows"
+    },
+    "conflict": {
+      "title": "Potential duplicate detected",
+      "subtitle": "Review this imported row and choose how to proceed.",
+      "confidence": "Confidence: {value}%",
+      "explanation": "Reason",
+      "existingRecord": "Existing record",
+      "importedRecord": "Imported row",
+      "chooseDecision": "Choose a decision",
+      "unresolvedWarning": "You must resolve all conflicts before confirmation."
+    },
+    "decisions": {
+      "keepBoth": "Keep both",
+      "replaceExisting": "Replace existing record",
+      "skipImportRow": "Skip imported row",
+      "needsUserReview": "Needs review"
+    },
+    "review": {
+      "title": "Review staged rows",
+      "subtitle": "Edit or remove rows before final confirmation.",
+      "editRow": "Edit row",
+      "removeRow": "Remove row",
+      "noRowsRemaining": "No rows left to import.",
+      "excludedBadge": "Excluded"
+    },
+    "table": {
+      "bookingDate": "Booking date",
+      "amount": "Amount",
+      "currency": "Currency",
+      "description": "Description",
+      "counterparty": "Counterparty",
+      "senderAccount": "Sender account",
+      "receiverAccount": "Receiver account",
+      "balanceAfterBooking": "Balance after booking",
+      "reference": "Reference",
+      "actions": "Actions"
+    },
+    "confirm": {
+      "title": "Confirm import",
+      "subtitle": "Apply approved rows to your transactions.",
+      "irreversibleWarning": "This action cannot be undone.",
+      "confirmButton": "Confirm and import"
+    },
+    "toasts": {
+      "stagedSuccess": "CSV file staged successfully.",
+      "reconciliationSuccess": "Reconciliation finished.",
+      "decisionsSaved": "Conflict decisions saved.",
+      "rowUpdated": "Staged row updated.",
+      "rowRemoved": "Staged row removed.",
+      "importConfirmed": "Import completed successfully."
+    },
+    "errors": {
+      "aiDisabled": "CSV import is unavailable because AI is not configured.",
+      "unauthorized": "You must be signed in to import data.",
+      "accountRequired": "Please select an account.",
+      "accountNotFound": "Selected account was not found.",
+      "fileRequired": "Please choose a CSV file.",
+      "invalidFileType": "Only CSV files are allowed.",
+      "fileTooLarge": "The selected file is too large.",
+      "emptyFile": "The file is empty.",
+      "parseFailed": "CSV parsing failed. Check your file format.",
+      "mappingRequired": "Map all required fields before continuing.",
+      "invalidHeaders": "Required CSV headers are missing.",
+      "reconciliationFailed": "Reconciliation failed. Please try again.",
+      "decisionSaveFailed": "Could not save conflict decisions.",
+      "updateRowFailed": "Could not update staged row.",
+      "removeRowFailed": "Could not remove staged row.",
+      "commitFailed": "Import could not be completed.",
+      "sessionNotFound": "Import session not found.",
+      "ownershipMismatch": "You do not have access to this import session.",
+      "unknown": "An unexpected import error occurred."
+    }
   },
   "currency": {
     "EUR": "Euro",

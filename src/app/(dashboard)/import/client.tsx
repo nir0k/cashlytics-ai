@@ -1,0 +1,473 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  confirmImportSession,
+  getImportSessionSnapshot,
+  removeStagedImportRow,
+  runImportReconciliation,
+  saveImportConflictDecisions,
+  stageCsvImportUpload,
+  type ImportSessionSnapshot,
+} from "@/actions/import-actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/lib/settings-context";
+import { useTranslations } from "next-intl";
+import type { Account } from "@/types/database";
+import {
+  buildDecisionPayload,
+  getImportFlowStep,
+  getUnresolvedConflictCount,
+  type ImportConflictItem,
+} from "./flow";
+
+type DecisionValue = "keep_both" | "replace_existing" | "skip_import_row";
+
+interface ImportClientProps {
+  accounts: Account[];
+}
+
+function buildConflictItems(snapshot: ImportSessionSnapshot | null): ImportConflictItem[] {
+  if (!snapshot) {
+    return [];
+  }
+
+  return snapshot.conflicts.map((conflict) => ({
+    id: conflict.id,
+    decision: conflict.decision,
+  }));
+}
+
+export function ImportClient({ accounts }: ImportClientProps) {
+  const { toast } = useToast();
+  const { formatCurrency: fmt } = useSettings();
+  const t = useTranslations("csvImport");
+
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(accounts[0]?.id ?? "");
+  const [file, setFile] = useState<File | null>(null);
+  const [headerMappingText, setHeaderMappingText] = useState("{}");
+  const [showHeaderMapping, setShowHeaderMapping] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [snapshot, setSnapshot] = useState<ImportSessionSnapshot | null>(null);
+
+  const isMissingHeaderMappingError = (errorMessage: string): boolean => {
+    const normalized = errorMessage.toLowerCase();
+    return (
+      normalized.includes("header mapping missing required fields") ||
+      normalized.includes("required csv headers are missing")
+    );
+  };
+
+  const rowById = useMemo(() => {
+    return new Map(snapshot?.rows.map((row) => [row.id, row]) ?? []);
+  }, [snapshot]);
+
+  const conflictItems = useMemo(() => buildConflictItems(snapshot), [snapshot]);
+  const unresolvedConflictCount = getUnresolvedConflictCount(conflictItems);
+  const currentStep = getImportFlowStep({
+    hasSession: snapshot !== null,
+    rowCount: snapshot?.rows.length ?? 0,
+    conflictCount: snapshot?.conflicts.length ?? 0,
+    unresolvedConflictCount,
+  });
+
+  const formatCurrency = (value: string) => fmt(Number.parseFloat(value));
+
+  const refreshSnapshot = async (sessionId: string) => {
+    const response = await getImportSessionSnapshot(sessionId);
+    if (!response.success) {
+      toast({ title: t("errors.unknown"), description: response.error, variant: "destructive" });
+      return false;
+    }
+
+    setSnapshot(response.data);
+    return true;
+  };
+
+  const handleUpload = async () => {
+    if (!selectedAccountId) {
+      toast({ title: t("errors.accountRequired"), variant: "destructive" });
+      return;
+    }
+
+    if (!file) {
+      toast({ title: t("errors.fileRequired"), variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("accountId", selectedAccountId);
+      formData.append("file", file);
+      if (showHeaderMapping && headerMappingText.trim().length > 0) {
+        formData.append("headerMapping", headerMappingText);
+      }
+
+      const stageResult = await stageCsvImportUpload(formData);
+      if (!stageResult.success) {
+        if (isMissingHeaderMappingError(stageResult.error)) {
+          setShowHeaderMapping(true);
+          toast({
+            title: t("errors.mappingRequired"),
+            description: t("form.autoMappingFailedHint"),
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: t("errors.parseFailed"),
+          description: stageResult.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: t("toasts.stagedSuccess") });
+
+      const reconciliationResult = await runImportReconciliation(stageResult.data.sessionId);
+      if (!reconciliationResult.success) {
+        toast({
+          title: t("errors.reconciliationFailed"),
+          description: reconciliationResult.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: t("toasts.reconciliationSuccess") });
+      }
+
+      await refreshSnapshot(stageResult.data.sessionId);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDecisions = async () => {
+    if (!snapshot) {
+      return;
+    }
+
+    const payload = buildDecisionPayload(conflictItems);
+    if (payload.length === 0) {
+      toast({ title: t("errors.decisionSaveFailed"), variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await saveImportConflictDecisions(snapshot.session.id, payload);
+      if (!result.success) {
+        toast({
+          title: t("errors.decisionSaveFailed"),
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: t("toasts.decisionsSaved") });
+      await refreshSnapshot(snapshot.session.id);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDecisionChange = (conflictId: string, decision: DecisionValue) => {
+    if (!snapshot) {
+      return;
+    }
+
+    const nextSnapshot: ImportSessionSnapshot = {
+      ...snapshot,
+      conflicts: snapshot.conflicts.map((conflict) =>
+        conflict.id === conflictId ? { ...conflict, decision } : conflict
+      ),
+    };
+    setSnapshot(nextSnapshot);
+  };
+
+  const handleRemoveRow = async (rowId: string) => {
+    if (!snapshot) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await removeStagedImportRow(snapshot.session.id, rowId);
+      if (!result.success) {
+        toast({
+          title: t("errors.removeRowFailed"),
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: t("toasts.rowRemoved") });
+      await refreshSnapshot(snapshot.session.id);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!snapshot) {
+      return;
+    }
+
+    const decisions = buildDecisionPayload(conflictItems);
+    if (snapshot.conflicts.length > 0 && decisions.length !== snapshot.conflicts.length) {
+      toast({ title: t("conflict.unresolvedWarning"), variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await confirmImportSession(snapshot.session.id, decisions);
+      if (!result.success) {
+        toast({
+          title: t("errors.commitFailed"),
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: t("toasts.importConfirmed") });
+      setSnapshot(null);
+      setFile(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="from-foreground to-foreground/60 bg-gradient-to-br bg-clip-text text-[2rem] leading-none font-bold tracking-[-0.03em] text-transparent">
+          {t("title")}
+        </h2>
+        <p className="text-muted-foreground/60 mt-1.5 text-sm">{t("description")}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={currentStep === "upload" ? "default" : "secondary"}>
+          {t("steps.upload")}
+        </Badge>
+        <Badge variant={currentStep === "resolveConflicts" ? "default" : "secondary"}>
+          {t("steps.resolveConflicts")}
+        </Badge>
+        <Badge variant={currentStep === "reviewRows" ? "default" : "secondary"}>
+          {t("steps.reviewRows")}
+        </Badge>
+        <Badge variant={currentStep === "confirm" ? "default" : "secondary"}>
+          {t("steps.confirm")}
+        </Badge>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("steps.upload")}</CardTitle>
+          <CardDescription>{t("form.fileHint")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t("form.accountLabel")}</Label>
+            <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("form.accountPlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("form.fileLabel")}</Label>
+            <Input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            />
+          </div>
+
+          {showHeaderMapping && (
+            <div className="space-y-2">
+              <Label>{t("form.headerMappingTitle")}</Label>
+              <Input
+                value={headerMappingText}
+                onChange={(event) => setHeaderMappingText(event.target.value)}
+              />
+              <p className="text-muted-foreground text-xs">{t("form.manualMappingHint")}</p>
+            </div>
+          )}
+
+          <Button onClick={handleUpload} disabled={isSubmitting}>
+            {t("actions.uploadFile")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {snapshot && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("review.title")}</CardTitle>
+            <CardDescription>{snapshot.session.sourceFileName}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 text-sm sm:grid-cols-3">
+              <p>
+                {t("summary.totalRows")}: <strong>{snapshot.session.totalRows}</strong>
+              </p>
+              <p>
+                {t("summary.stagedRows")}: <strong>{snapshot.rows.length}</strong>
+              </p>
+              <p>
+                {t("summary.conflictRows")}: <strong>{snapshot.conflicts.length}</strong>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {snapshot && snapshot.conflicts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("conflict.title")}</CardTitle>
+            <CardDescription>{t("conflict.subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {snapshot.conflicts.map((conflict) => {
+              const importRow = rowById.get(conflict.importRowId);
+              const confidenceValue = conflict.confidence
+                ? Math.round(Number.parseFloat(conflict.confidence) * 100)
+                : null;
+
+              return (
+                <div key={conflict.id} className="space-y-2 rounded-xl border p-4">
+                  <p className="font-medium">{t("conflict.importedRecord")}</p>
+                  <p className="text-sm">{importRow?.description ?? "-"}</p>
+                  <p className="text-sm">{importRow ? formatCurrency(importRow.amount) : "-"}</p>
+                  {conflict.existingRecord && (
+                    <>
+                      <p className="font-medium">{t("conflict.existingRecord")}</p>
+                      <p className="text-sm">{conflict.existingRecord.description}</p>
+                      <p className="text-sm">{formatCurrency(conflict.existingRecord.amount)}</p>
+                    </>
+                  )}
+                  {confidenceValue !== null && (
+                    <p className="text-muted-foreground text-sm">
+                      {t("conflict.confidence", { value: confidenceValue })}
+                    </p>
+                  )}
+                  {conflict.explanation && (
+                    <p className="text-muted-foreground text-sm">
+                      {t("conflict.explanation")}: {conflict.explanation}
+                    </p>
+                  )}
+                  <Select
+                    value={conflict.decision ?? undefined}
+                    onValueChange={(value) =>
+                      handleDecisionChange(conflict.id, value as DecisionValue)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("conflict.chooseDecision")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="keep_both">{t("decisions.keepBoth")}</SelectItem>
+                      <SelectItem value="replace_existing">
+                        {t("decisions.replaceExisting")}
+                      </SelectItem>
+                      <SelectItem value="skip_import_row">
+                        {t("decisions.skipImportRow")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })}
+
+            {unresolvedConflictCount > 0 && (
+              <p className="text-destructive text-sm">{t("conflict.unresolvedWarning")}</p>
+            )}
+
+            <Button onClick={handleSaveDecisions} disabled={isSubmitting}>
+              {t("actions.saveDecisions")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {snapshot && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("review.title")}</CardTitle>
+            <CardDescription>{t("review.subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {snapshot.rows.length === 0 ? (
+              <p className="text-muted-foreground text-sm">{t("review.noRowsRemaining")}</p>
+            ) : (
+              snapshot.rows.map((row) => (
+                <div
+                  key={row.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border p-3"
+                >
+                  <div>
+                    <p className="font-medium">{row.description}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {formatCurrency(row.amount)} - {row.currency}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleRemoveRow(row.id)}
+                  >
+                    {t("review.removeRow")}
+                  </Button>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {snapshot && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("confirm.title")}</CardTitle>
+            <CardDescription>{t("confirm.subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-muted-foreground text-sm">{t("confirm.irreversibleWarning")}</p>
+            <Button
+              onClick={handleConfirmImport}
+              disabled={isSubmitting || snapshot.rows.length === 0 || unresolvedConflictCount > 0}
+            >
+              {t("confirm.confirmButton")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

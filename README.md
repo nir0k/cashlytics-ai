@@ -12,6 +12,8 @@
 
 <p align="center">
   <a href="https://cashlytics.online"><strong>🌐 cashlytics.online</strong></a>
+  &nbsp;•&nbsp;
+  <a href="https://docs.cashlytics.online"><strong>📚 docs.cashlytics.online</strong></a>
 </p>
 
 <p align="center"><strong>Self-hosted personal finance &amp; budget planning application with AI-powered assistance.</strong></p>
@@ -34,6 +36,8 @@
 - 🏷️ **Categories** — Organize transactions with custom categories
 - 🌍 **Multi-Language** — Available in English and German
 - 🌓 **Dark/Light Theme** — Easy on the eyes, day or night
+- 📱 **Progressive Web App (PWA)** — Installable on desktop and mobile with offline support
+- 🔔 **Push Notifications** — Browser notifications for upcoming payment reminders
 - 🐳 **Self-Hostable** — Run it on your own server with Docker
 
 ---
@@ -64,11 +68,29 @@ Edit `.env` and set your values:
 # Required: Set a secure password for the database
 POSTGRES_PASSWORD=your_secure_password_here
 
-# Required: Update DATABASE_URL with the same password
-DATABASE_URL=postgresql://cashlytics:your_secure_password_here@postgres:5432/cashlytics
+# Required: Auth.js secret (generate with: npx auth secret)
+AUTH_SECRET=replace_with_a_long_random_secret
+
+# Recommended for Docker/VPS/reverse proxy deployments
+AUTH_TRUST_HOST=true
+
+# Optional: Registration mode
+# true = only first user can register, false = open registration
+SINGLE_USER_MODE=true
+
+# Optional: Default language/currency
+NEXT_PUBLIC_DEFAULT_LOCALE=de
+NEXT_PUBLIC_DEFAULT_CURRENCY=EUR
 
 # Optional: Enable AI Assistant (requires OpenAI API key)
 OPENAI_API_KEY=sk-your-openai-key
+
+# Optional: Enable push notifications and scheduler for payment reminders
+# VAPID_PUBLIC_KEY=
+# VAPID_PRIVATE_KEY=
+# VAPID_SUBJECT=mailto:you@example.com
+# CRON_SECRET=
+# NOTIFICATION_SCHEDULE=0 8 * * *
 ```
 
 ### 3. Start Cashlytics
@@ -90,6 +112,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 The Docker Compose setup includes everything you need:
 
 - **Cashlytics App** — The main application
+- **Cashlytics Cron** — Scheduled upcoming-payment notification checks
 - **PostgreSQL 16** — Database for storing your financial data
 
 ```yaml
@@ -100,19 +123,51 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://cashlytics:your_password@postgres:5432/cashlytics
-      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://cashlytics:${POSTGRES_PASSWORD}@postgres:5432/cashlytics
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_DEFAULT_LOCALE=${NEXT_PUBLIC_DEFAULT_LOCALE:-de}
+      - NEXT_PUBLIC_DEFAULT_CURRENCY=${NEXT_PUBLIC_DEFAULT_CURRENCY:-EUR}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
+      - SINGLE_USER_MODE=${SINGLE_USER_MODE:-true}
+      - SINGLE_USER_EMAIL=${SINGLE_USER_EMAIL:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-}
+      - CRON_SECRET=${CRON_SECRET:-}
+      - EMAIL_TRANSPORT=${EMAIL_TRANSPORT:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - APP_URL=${APP_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
 
+  cashlytics-cron:
+    image: alpine:3.20
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+      APP_URL: http://cashlytics:3000
+      NOTIFICATION_SCHEDULE: ${NOTIFICATION_SCHEDULE:-0 8 * * *}
+    depends_on:
+      cashlytics:
+        condition: service_healthy
+    command: >
+      sh -c "apk add --no-cache curl --quiet &&
+             echo \"$$NOTIFICATION_SCHEDULE curl -s -H 'Authorization: Bearer $$CRON_SECRET' $$APP_URL/api/cron/upcoming-payments >> /var/log/cron.log 2>&1\" | crontab - &&
+             crond -f -l 2"
+
   postgres:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=cashlytics
-      - POSTGRES_PASSWORD=your_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=cashlytics
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -160,20 +215,30 @@ npm start
 
 ### Environment Variables
 
-| Variable              | Required | Default                 | Description                                                 |
-| --------------------- | -------- | ----------------------- | ----------------------------------------------------------- |
-| `DATABASE_URL`        | ✅ Yes   | —                       | PostgreSQL connection string                                |
-| `NEXT_PUBLIC_APP_URL` | ✅ Yes   | `http://localhost:3000` | Public URL of your Cashlytics instance                      |
-| `AUTH_SECRET`         | ✅ Yes   | —                       | Secret for JWT encryption (generate with `npx auth secret`) |
-| `SINGLE_USER_MODE`    | ❌ No    | `true`                  | Set to `false` to allow open registration                   |
-| `SINGLE_USER_EMAIL`   | ❌ No    | —                       | Email for single-user mode data migration                   |
-| `OPENAI_API_KEY`      | ❌ No    | —                       | OpenAI API key for AI Assistant feature                     |
-| `SMTP_HOST`           | ❌ No    | —                       | SMTP server hostname (e.g., `smtp.gmail.com`)               |
-| `SMTP_PORT`           | ❌ No    | —                       | SMTP port (587 for STARTTLS, 465 for TLS)                   |
-| `SMTP_USER`           | ❌ No    | —                       | SMTP authentication username                                |
-| `SMTP_PASS`           | ❌ No    | —                       | SMTP authentication password                                |
-| `SMTP_FROM`           | ❌ No    | `SMTP_USER`             | From address for outgoing emails                            |
-| `APP_URL`             | ❌ No    | `NEXT_PUBLIC_APP_URL`   | Server-side URL for email links                             |
+| Variable                       | Required | Default                 | Description                                                     |
+| ------------------------------ | -------- | ----------------------- | --------------------------------------------------------------- |
+| `DATABASE_URL`                 | ✅ Yes   | —                       | PostgreSQL connection string                                    |
+| `POSTGRES_PASSWORD`            | ✅ Yes   | —                       | PostgreSQL password used by Compose and `DATABASE_URL`          |
+| `NEXT_PUBLIC_APP_URL`          | ✅ Yes   | `http://localhost:3000` | Public URL of your Cashlytics instance                          |
+| `AUTH_SECRET`                  | ✅ Yes   | —                       | Secret for JWT encryption (generate with `npx auth secret`)     |
+| `AUTH_TRUST_HOST`              | ⚠️ Often | `true`                  | Set to `true` for IP/domain, reverse proxy, VPS, Docker ingress |
+| `SINGLE_USER_MODE`             | ❌ No    | `true`                  | Set to `false` to allow open registration                       |
+| `SINGLE_USER_EMAIL`            | ❌ No    | —                       | Email used by single-user migration scripts                     |
+| `NEXT_PUBLIC_DEFAULT_LOCALE`   | ❌ No    | `de`                    | Default locale (`de` or `en`)                                   |
+| `NEXT_PUBLIC_DEFAULT_CURRENCY` | ❌ No    | `EUR`                   | Default currency for new UI/session state                       |
+| `OPENAI_API_KEY`               | ❌ No    | —                       | OpenAI API key for AI Assistant feature                         |
+| `EMAIL_TRANSPORT`              | ❌ No    | `smtp`/auto             | Mail transport (`smtp` or `sendmail`)                           |
+| `SMTP_HOST`                    | ❌ No    | —                       | SMTP server hostname (e.g., `smtp.gmail.com`)                   |
+| `SMTP_PORT`                    | ❌ No    | —                       | SMTP port (587 for STARTTLS, 465 for TLS)                       |
+| `SMTP_USER`                    | ❌ No    | —                       | SMTP authentication username                                    |
+| `SMTP_PASS`                    | ❌ No    | —                       | SMTP authentication password                                    |
+| `SMTP_FROM`                    | ❌ No    | `SMTP_USER`             | From address for outgoing emails                                |
+| `APP_URL`                      | ❌ No    | `NEXT_PUBLIC_APP_URL`   | Server-side URL for email links                                 |
+| `VAPID_PUBLIC_KEY`             | ❌ No    | —                       | Public VAPID key for browser push subscriptions                 |
+| `VAPID_PRIVATE_KEY`            | ❌ No    | —                       | Private VAPID key used to sign push messages                    |
+| `VAPID_SUBJECT`                | ❌ No    | —                       | Contact URI for VAPID (`mailto:...` or `https://...`)           |
+| `CRON_SECRET`                  | ❌ No    | —                       | Bearer token used by scheduled reminder endpoint                |
+| `NOTIFICATION_SCHEDULE`        | ❌ No    | `0 8 * * *`             | Cron schedule for upcoming-payment checks                       |
 
 ### Database Configuration
 
@@ -220,6 +285,31 @@ To enable password reset and welcome emails, configure SMTP:
 
 > **Note:** Without SMTP configuration, Cashlytics works normally but users cannot reset passwords via email. Registration still works — users just won't receive welcome emails.
 
+### PWA & Push Notifications (Optional)
+
+Cashlytics is now available as a Progressive Web App (PWA) and supports browser push notifications for upcoming payments.
+
+1. Generate VAPID keys:
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+2. Add these values to `.env`:
+
+   ```bash
+   VAPID_PUBLIC_KEY=...
+   VAPID_PRIVATE_KEY=...
+   VAPID_SUBJECT=mailto:you@example.com
+   CRON_SECRET=$(openssl rand -hex 32)
+   # Optional: run daily at 08:00 UTC by default
+   NOTIFICATION_SCHEDULE=0 8 * * *
+   ```
+
+3. Keep the `cashlytics-cron` service enabled in `docker-compose.selfhost.yml`.
+
+4. In the app, open Settings and enable notification permissions in your browser.
+
 ### Registration Modes
 
 Cashlytics supports two registration modes:
@@ -251,7 +341,9 @@ Cashlytics supports two registration modes:
 | User Authentication | ✅ Complete | Multi-user support with secure login system     |
 | Password Reset      | ✅ Complete | Self-service password recovery via email (SMTP) |
 | Welcome Emails      | ✅ Complete | Branded welcome email on registration (SMTP)    |
-| Budget Alerts       | 🔲 Planned  | Notifications when exceeding budget limits      |
+| Budget Alerts       | ✅ Complete | Notifications when expense is coming up         |
+| Mobile PWA          | ✅ Complete | Installable app experience on mobile/desktop    |
+| Push Notifications  | ✅ Complete | Browser push reminders for upcoming payments    |
 
 ### Medium Priority 🟡
 
@@ -264,7 +356,6 @@ Cashlytics supports two registration modes:
 
 | Feature             | Status     | Description                            |
 | ------------------- | ---------- | -------------------------------------- |
-| Mobile PWA          | 🔲 Planned | Progressive Web App for mobile devices |
 | Investment Tracking | 🔲 Planned | Enhanced portfolio management features |
 | Currency Conversion | 🔲 Planned | Multi-currency support with live rates |
 

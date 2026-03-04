@@ -14,7 +14,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate-userId": "npx tsx scripts/migrate-add-userId.ts"
+    "db:migrate-userId": "npx tsx scripts/migrate-add-userId.ts",
+    "check-context-deps": "node scripts/check-context-deps.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [

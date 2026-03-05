@@ -33,6 +33,7 @@
     "transfers": "Transfers",
     "categories": "Kategorien",
     "documents": "Dokumente",
+    "import": "CSV-Import",
     "accounts": "Konten",
     "analytics": "Analysen",
     "goals": "Ziele",
@@ -414,6 +415,158 @@
     "themeLight": "Hell",
     "themeDark": "Dunkel",
     "themeSystem": "System"
+  },
+  "csvImport": {
+    "title": "CSV-Import",
+    "description": "Importiere Buchungen aus einer CSV-Datei und gleiche Duplikate vor dem Speichern ab.",
+    "actions": {
+      "startImport": "Import starten",
+      "uploadFile": "CSV hochladen",
+      "parseFile": "Datei einlesen",
+      "runReconciliation": "Moegliche Duplikate finden",
+      "continueToReview": "Zur Pruefung weiter",
+      "saveDecisions": "Entscheidungen speichern",
+      "confirmImport": "Import bestaetigen",
+      "importAnother": "Weitere Datei importieren",
+      "cancelImport": "Import abbrechen"
+    },
+    "steps": {
+      "upload": "Hochladen",
+      "mapHeaders": "Spalten zuordnen",
+      "reconcile": "Abgleichen",
+      "resolveConflicts": "Konflikte loesen",
+      "reviewRows": "Zeilen pruefen",
+      "confirm": "Bestaetigen"
+    },
+    "form": {
+      "accountLabel": "Zielkonto",
+      "accountPlaceholder": "Konto auswaehlen",
+      "fileLabel": "CSV-Datei",
+      "fileHint": "Unterstuetzte Formate: komma- oder semikolongetrennte Werte",
+      "downloadTemplate": "CSV-Vorlage herunterladen",
+      "showStructureHelp": "CSV-Aufbau anzeigen",
+      "headerMappingTitle": "Spaltenzuordnung",
+      "autoMappingFailedHint": "Die automatische Header-Erkennung ist fehlgeschlagen. Bitte gib eine manuelle Spaltenzuordnung an.",
+      "manualMappingHint": "Ordne unbekannte Spalten vor dem Fortfahren zu"
+    },
+    "infoModal": {
+      "title": "Erwarteter CSV-Aufbau",
+      "description": "Nutze die Vorlage als Ausgangspunkt. Headernamen duerfen abweichen, aber diese kanonischen Felder sollten vorhanden sein.",
+      "requiredFieldsTitle": "Pflichtfelder",
+      "optionalFieldsTitle": "Optionale Felder",
+      "exampleHint": "Tipp: Wenn die automatische Header-Erkennung fehlschlaegt, oeffne die Spaltenzuordnung und ordne bank-spezifische Spalten manuell zu.",
+      "closeButton": "Schliessen"
+    },
+    "mapping": {
+      "title": "CSV-Spalten zuordnen",
+      "detectedHeaders": "Erkannte Spalten",
+      "targetField": "Zielfeld",
+      "sourceColumn": "Quellspalte",
+      "required": "Erforderlich",
+      "optional": "Optional"
+    },
+    "headerFields": {
+      "bookingDate": "Buchungsdatum",
+      "amount": "Betrag",
+      "currency": "Waehrung",
+      "description": "Beschreibung",
+      "counterparty": "Gegenpartei",
+      "senderAccount": "Absenderkonto",
+      "receiverAccount": "Empfaengerkonto",
+      "balanceAfterBooking": "Saldo nach Buchung",
+      "reference": "Referenz"
+    },
+    "summary": {
+      "totalRows": "Zeilen gesamt",
+      "validRows": "Gueltige Zeilen",
+      "invalidRows": "Ungueltige Zeilen",
+      "stagedRows": "Vorgemerkte Zeilen",
+      "conflictRows": "Zeilen mit Konflikten",
+      "removedRows": "Entfernte Zeilen"
+    },
+    "processing": {
+      "stagingTitle": "CSV wird hochgeladen und vorgemerkt",
+      "stagingDescription": "Die Datei wird validiert und fuer die Pruefung vorgemerkt.",
+      "reconcilingTitle": "KI-Abgleich wird ausgefuehrt",
+      "reconcilingDescription": "Importierte Zeilen werden mit bestehenden Eintraegen verglichen.",
+      "loadingTitle": "Pruefdaten werden geladen",
+      "loadingDescription": "Konflikte und vorgemerkte Zeilen werden fuer die Ansicht vorbereitet.",
+      "doneTitle": "Verarbeitung abgeschlossen",
+      "doneDescription": "Du kannst jetzt Konflikte pruefen und den Import bestaetigen.",
+      "errorTitle": "Verarbeitung unterbrochen",
+      "errorDescription": "Bitte pruefe die Fehlermeldung und versuche es erneut."
+    },
+    "conflict": {
+      "title": "Moegliches Duplikat erkannt",
+      "subtitle": "Pruefe diese importierte Zeile und entscheide, wie fortgefahren wird.",
+      "confidence": "Sicherheit: {value}%",
+      "explanation": "Begruendung",
+      "existingRecord": "Vorhandener Eintrag",
+      "importedRecord": "Importierte Zeile",
+      "chooseDecision": "Entscheidung waehlen",
+      "unresolvedWarning": "Alle Konflikte muessen vor der Bestaetigung geloest werden."
+    },
+    "decisions": {
+      "keepBoth": "Beide behalten",
+      "replaceExisting": "Vorhandenen Eintrag ersetzen",
+      "skipImportRow": "Importierte Zeile ueberspringen",
+      "needsUserReview": "Pruefung erforderlich"
+    },
+    "review": {
+      "title": "Vorgemerkte Zeilen pruefen",
+      "subtitle": "Bearbeite oder entferne Zeilen vor der finalen Bestaetigung.",
+      "editRow": "Zeile bearbeiten",
+      "removeRow": "Zeile entfernen",
+      "noRowsRemaining": "Keine Zeilen mehr zum Importieren.",
+      "excludedBadge": "Ausgeschlossen"
+    },
+    "table": {
+      "bookingDate": "Buchungsdatum",
+      "amount": "Betrag",
+      "currency": "Waehrung",
+      "description": "Beschreibung",
+      "counterparty": "Gegenpartei",
+      "senderAccount": "Absenderkonto",
+      "receiverAccount": "Empfaengerkonto",
+      "balanceAfterBooking": "Saldo nach Buchung",
+      "reference": "Referenz",
+      "actions": "Aktionen"
+    },
+    "confirm": {
+      "title": "Import bestaetigen",
+      "subtitle": "Uebertrage bestaetigte Zeilen in deine Transaktionen.",
+      "irreversibleWarning": "Diese Aktion kann nicht rueckgaengig gemacht werden.",
+      "confirmButton": "Bestaetigen und importieren"
+    },
+    "toasts": {
+      "stagedSuccess": "CSV-Datei wurde erfolgreich vorgemerkt.",
+      "reconciliationSuccess": "Abgleich wurde abgeschlossen.",
+      "decisionsSaved": "Konfliktentscheidungen wurden gespeichert.",
+      "rowUpdated": "Vorgemerkte Zeile wurde aktualisiert.",
+      "rowRemoved": "Vorgemerkte Zeile wurde entfernt.",
+      "importConfirmed": "Import wurde erfolgreich abgeschlossen."
+    },
+    "errors": {
+      "aiDisabled": "CSV-Import ist nicht verfuegbar, weil KI nicht konfiguriert ist.",
+      "unauthorized": "Du musst angemeldet sein, um Daten zu importieren.",
+      "accountRequired": "Bitte waehle ein Konto aus.",
+      "accountNotFound": "Das ausgewaehlte Konto wurde nicht gefunden.",
+      "fileRequired": "Bitte waehle eine CSV-Datei aus.",
+      "invalidFileType": "Nur CSV-Dateien sind erlaubt.",
+      "fileTooLarge": "Die ausgewaehlte Datei ist zu gross.",
+      "emptyFile": "Die Datei ist leer.",
+      "parseFailed": "CSV konnte nicht verarbeitet werden. Pruefe das Dateiformat.",
+      "mappingRequired": "Ordne alle erforderlichen Felder zu, bevor du fortfaehrst.",
+      "invalidHeaders": "Erforderliche CSV-Spalten fehlen.",
+      "reconciliationFailed": "Abgleich fehlgeschlagen. Bitte versuche es erneut.",
+      "decisionSaveFailed": "Konfliktentscheidungen konnten nicht gespeichert werden.",
+      "updateRowFailed": "Vorgemerkte Zeile konnte nicht aktualisiert werden.",
+      "removeRowFailed": "Vorgemerkte Zeile konnte nicht entfernt werden.",
+      "commitFailed": "Import konnte nicht abgeschlossen werden.",
+      "sessionNotFound": "Import-Sitzung nicht gefunden.",
+      "ownershipMismatch": "Du hast keinen Zugriff auf diese Import-Sitzung.",
+      "unknown": "Ein unerwarteter Importfehler ist aufgetreten."
+    }
   },
   "currency": {
     "EUR": "Euro",

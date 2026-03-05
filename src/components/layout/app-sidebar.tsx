@@ -14,6 +14,7 @@ import {
   ArrowRightLeft,
   FolderOpen,
   FileText,
+  FileUp,
   LogOut,
 } from "lucide-react";
 
@@ -44,7 +45,7 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const mainNavItems: NavItem[] = [
+const baseMainNavItems: NavItem[] = [
   { titleKey: "dashboard", url: "/dashboard", icon: LayoutDashboard },
   { titleKey: "overview", url: "/overview", icon: PieChart },
   { titleKey: "expenses", url: "/expenses", icon: Wallet },
@@ -55,6 +56,14 @@ const mainNavItems: NavItem[] = [
   { titleKey: "accounts", url: "/accounts", icon: Building2 },
   { titleKey: "analytics", url: "/analytics", icon: PieChart },
 ];
+
+export function getMainNavItems(aiEnabled: boolean): NavItem[] {
+  if (!aiEnabled) {
+    return baseMainNavItems;
+  }
+
+  return [...baseMainNavItems, { titleKey: "import", url: "/import", icon: FileUp }];
+}
 
 const bottomNavItems: NavItem[] = [
   { titleKey: "settings", url: "/settings", icon: Settings },
@@ -105,10 +114,10 @@ function NavItemButton({ item, isActive }: { item: NavItem; isActive: boolean })
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ aiEnabled }: { aiEnabled: boolean }) {
   const pathname = usePathname();
-  const tCommon = useTranslations("common");
   const { setOpenMobile } = useSidebar();
+  const mainNavItems = getMainNavItems(aiEnabled);
 
   useEffect(() => {
     setOpenMobile(false);

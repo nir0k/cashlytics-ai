@@ -33,6 +33,23 @@ export const transferRecurrenceTypeEnum = pgEnum("transfer_recurrence_type", [
   "quarterly",
   "yearly",
 ]);
+export const importSessionStatusEnum = pgEnum("import_session_status", [
+  "draft",
+  "review",
+  "confirmed",
+  "cancelled",
+]);
+export const importConflictSuggestionEnum = pgEnum("import_conflict_suggestion", [
+  "keep_both",
+  "replace_existing",
+  "skip_import_row",
+  "needs_user_review",
+]);
+export const importDecisionEnum = pgEnum("import_decision", [
+  "keep_both",
+  "replace_existing",
+  "skip_import_row",
+]);
 
 // Auth.js user table - extended with Auth.js adapter fields
 export const users = pgTable("users", {
@@ -106,6 +123,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),
   conversations: many(conversations),
   pushSubscriptions: many(pushSubscriptions),
+  importSessions: many(importSessions),
+  importRows: many(importRows),
+  importConflicts: many(importConflicts),
+  importDecisions: many(importDecisions),
 }));
 
 export const accounts = pgTable("accounts", {
@@ -213,6 +234,92 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const importSessions = pgTable("import_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  accountId: uuid("account_id")
+    .references(() => accounts.id, { onDelete: "cascade" })
+    .notNull(),
+  status: importSessionStatusEnum("status").notNull().default("draft"),
+  sourceFileName: text("source_file_name").notNull(),
+  sourceFileHash: text("source_file_hash"),
+  totalRows: integer("total_rows").notNull().default(0),
+  stagedRows: integer("staged_rows").notNull().default(0),
+  conflictRows: integer("conflict_rows").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const importRows = pgTable("import_rows", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  sessionId: uuid("session_id")
+    .references(() => importSessions.id, { onDelete: "cascade" })
+    .notNull(),
+  rowIndex: integer("row_index").notNull(),
+  bookingDate: timestamp("booking_date"),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR").notNull(),
+  description: text("description").notNull(),
+  counterparty: text("counterparty"),
+  senderAccount: text("sender_account"),
+  receiverAccount: text("receiver_account"),
+  balanceAfterBooking: decimal("balance_after_booking", { precision: 12, scale: 2 }),
+  normalizedPayload: text("normalized_payload").notNull(),
+  validationErrors: text("validation_errors"),
+  excludedByUser: boolean("excluded_by_user").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const importConflicts = pgTable("import_conflicts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  sessionId: uuid("session_id")
+    .references(() => importSessions.id, { onDelete: "cascade" })
+    .notNull(),
+  importRowId: uuid("import_row_id")
+    .references(() => importRows.id, { onDelete: "cascade" })
+    .notNull(),
+  existingExpenseId: uuid("existing_expense_id").references(() => dailyExpenses.id, {
+    onDelete: "cascade",
+  }),
+  existingIncomeId: uuid("existing_income_id").references(() => incomes.id, {
+    onDelete: "cascade",
+  }),
+  similarityScore: decimal("similarity_score", { precision: 5, scale: 4 }),
+  confidence: decimal("confidence", { precision: 5, scale: 4 }),
+  explanation: text("explanation"),
+  suggestion: importConflictSuggestionEnum("suggestion").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const importDecisions = pgTable("import_decisions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  sessionId: uuid("session_id")
+    .references(() => importSessions.id, { onDelete: "cascade" })
+    .notNull(),
+  conflictId: uuid("conflict_id")
+    .references(() => importConflicts.id, { onDelete: "cascade" })
+    .notNull()
+    .unique(),
+  decision: importDecisionEnum("decision").notNull(),
+  decidedAt: timestamp("decided_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
   user: one(users, {
     fields: [accounts.userId],
@@ -223,6 +330,7 @@ export const accountsRelations = relations(accounts, ({ one, many }) => ({
   dailyExpenses: many(dailyExpenses),
   outgoingTransfers: many(transfers, { relationName: "sourceAccount" }),
   incomingTransfers: many(transfers, { relationName: "targetAccount" }),
+  importSessions: many(importSessions),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -306,6 +414,74 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   dailyExpense: one(dailyExpenses, {
     fields: [documents.dailyExpenseId],
     references: [dailyExpenses.id],
+  }),
+}));
+
+export const importSessionsRelations = relations(importSessions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [importSessions.userId],
+    references: [users.id],
+  }),
+  account: one(accounts, {
+    fields: [importSessions.accountId],
+    references: [accounts.id],
+  }),
+  rows: many(importRows),
+  conflicts: many(importConflicts),
+  decisions: many(importDecisions),
+}));
+
+export const importRowsRelations = relations(importRows, ({ one, many }) => ({
+  user: one(users, {
+    fields: [importRows.userId],
+    references: [users.id],
+  }),
+  session: one(importSessions, {
+    fields: [importRows.sessionId],
+    references: [importSessions.id],
+  }),
+  conflicts: many(importConflicts),
+}));
+
+export const importConflictsRelations = relations(importConflicts, ({ one }) => ({
+  user: one(users, {
+    fields: [importConflicts.userId],
+    references: [users.id],
+  }),
+  session: one(importSessions, {
+    fields: [importConflicts.sessionId],
+    references: [importSessions.id],
+  }),
+  importRow: one(importRows, {
+    fields: [importConflicts.importRowId],
+    references: [importRows.id],
+  }),
+  existingExpense: one(dailyExpenses, {
+    fields: [importConflicts.existingExpenseId],
+    references: [dailyExpenses.id],
+  }),
+  existingIncome: one(incomes, {
+    fields: [importConflicts.existingIncomeId],
+    references: [incomes.id],
+  }),
+  decision: one(importDecisions, {
+    fields: [importConflicts.id],
+    references: [importDecisions.conflictId],
+  }),
+}));
+
+export const importDecisionsRelations = relations(importDecisions, ({ one }) => ({
+  user: one(users, {
+    fields: [importDecisions.userId],
+    references: [users.id],
+  }),
+  session: one(importSessions, {
+    fields: [importDecisions.sessionId],
+    references: [importSessions.id],
+  }),
+  conflict: one(importConflicts, {
+    fields: [importDecisions.conflictId],
+    references: [importConflicts.id],
   }),
 }));
 

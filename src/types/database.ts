@@ -10,6 +10,10 @@ import {
   messages,
   documents,
   pushSubscriptions,
+  importSessions,
+  importRows,
+  importConflicts,
+  importDecisions,
 } from "@/lib/db/schema";
 
 export type Account = InferSelectModel<typeof accounts>;
@@ -41,6 +45,18 @@ export type ConversationWithMessages = Conversation & { messages: Message[] };
 
 export type PushSubscription = InferSelectModel<typeof pushSubscriptions>;
 export type NewPushSubscription = InferInsertModel<typeof pushSubscriptions>;
+
+export type ImportSession = InferSelectModel<typeof importSessions>;
+export type NewImportSession = InferInsertModel<typeof importSessions>;
+
+export type ImportRow = InferSelectModel<typeof importRows>;
+export type NewImportRow = InferInsertModel<typeof importRows>;
+
+export type ImportConflict = InferSelectModel<typeof importConflicts>;
+export type NewImportConflict = InferInsertModel<typeof importConflicts>;
+
+export type ImportDecision = InferSelectModel<typeof importDecisions>;
+export type NewImportDecision = InferInsertModel<typeof importDecisions>;
 
 export type ExpenseWithDetails = Expense & {
   category: Category | null;

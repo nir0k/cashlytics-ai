@@ -484,6 +484,18 @@
       "conflictRows": "Rows with conflicts",
       "removedRows": "Removed rows"
     },
+    "processing": {
+      "stagingTitle": "Uploading and staging CSV",
+      "stagingDescription": "The file is validated and staged for review.",
+      "reconcilingTitle": "Running AI reconciliation",
+      "reconcilingDescription": "Imported rows are compared against existing entries.",
+      "loadingTitle": "Loading review data",
+      "loadingDescription": "Preparing conflicts and staged rows for your review.",
+      "doneTitle": "Processing complete",
+      "doneDescription": "You can now review conflicts and confirm the import.",
+      "errorTitle": "Processing interrupted",
+      "errorDescription": "Please review the error message and try again."
+    },
     "conflict": {
       "title": "Potential duplicate detected",
       "subtitle": "Review this imported row and choose how to proceed.",

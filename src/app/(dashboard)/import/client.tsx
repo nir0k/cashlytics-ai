@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,13 @@ import {
 } from "./flow";
 
 type DecisionValue = "keep_both" | "replace_existing" | "skip_import_row";
+type UploadProcessingStage =
+  | "idle"
+  | "staging"
+  | "reconciling"
+  | "loadingSnapshot"
+  | "done"
+  | "error";
 
 interface ImportClientProps {
   accounts: Account[];
@@ -85,6 +93,34 @@ function buildConflictItems(snapshot: ImportSessionSnapshot | null): ImportConfl
   }));
 }
 
+function getUploadProcessingMeta(stage: UploadProcessingStage): {
+  value: number;
+  titleKey: "stagingTitle" | "reconcilingTitle" | "loadingTitle" | "doneTitle" | "errorTitle";
+  descriptionKey:
+    | "stagingDescription"
+    | "reconcilingDescription"
+    | "loadingDescription"
+    | "doneDescription"
+    | "errorDescription";
+} | null {
+  switch (stage) {
+    case "staging":
+      return { value: 30, titleKey: "stagingTitle", descriptionKey: "stagingDescription" };
+    case "reconciling":
+      return { value: 70, titleKey: "reconcilingTitle", descriptionKey: "reconcilingDescription" };
+    case "loadingSnapshot":
+      return { value: 90, titleKey: "loadingTitle", descriptionKey: "loadingDescription" };
+    case "done":
+      return { value: 100, titleKey: "doneTitle", descriptionKey: "doneDescription" };
+    case "error":
+      return { value: 100, titleKey: "errorTitle", descriptionKey: "errorDescription" };
+    case "idle":
+      return null;
+    default:
+      return null;
+  }
+}
+
 export function ImportClient({ accounts }: ImportClientProps) {
   const { toast } = useToast();
   const { formatCurrency: fmt } = useSettings();
@@ -96,6 +132,7 @@ export function ImportClient({ accounts }: ImportClientProps) {
   const [showHeaderMapping, setShowHeaderMapping] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [snapshot, setSnapshot] = useState<ImportSessionSnapshot | null>(null);
+  const [uploadProcessingStage, setUploadProcessingStage] = useState<UploadProcessingStage>("idle");
 
   const isMissingHeaderMappingError = (errorMessage: string): boolean => {
     const normalized = errorMessage.toLowerCase();
@@ -119,6 +156,7 @@ export function ImportClient({ accounts }: ImportClientProps) {
   });
 
   const formatCurrency = (value: string) => fmt(Number.parseFloat(value));
+  const uploadProcessingMeta = getUploadProcessingMeta(uploadProcessingStage);
 
   const refreshSnapshot = async (sessionId: string) => {
     const response = await getImportSessionSnapshot(sessionId);
@@ -143,6 +181,7 @@ export function ImportClient({ accounts }: ImportClientProps) {
     }
 
     setIsSubmitting(true);
+    setUploadProcessingStage("staging");
     try {
       const formData = new FormData();
       formData.append("accountId", selectedAccountId);
@@ -153,6 +192,7 @@ export function ImportClient({ accounts }: ImportClientProps) {
 
       const stageResult = await stageCsvImportUpload(formData);
       if (!stageResult.success) {
+        setUploadProcessingStage("error");
         if (isMissingHeaderMappingError(stageResult.error)) {
           setShowHeaderMapping(true);
           toast({
@@ -172,8 +212,10 @@ export function ImportClient({ accounts }: ImportClientProps) {
 
       toast({ title: t("toasts.stagedSuccess") });
 
+      setUploadProcessingStage("reconciling");
       const reconciliationResult = await runImportReconciliation(stageResult.data.sessionId);
       if (!reconciliationResult.success) {
+        setUploadProcessingStage("error");
         toast({
           title: t("errors.reconciliationFailed"),
           description: reconciliationResult.error,
@@ -183,7 +225,12 @@ export function ImportClient({ accounts }: ImportClientProps) {
         toast({ title: t("toasts.reconciliationSuccess") });
       }
 
+      setUploadProcessingStage("loadingSnapshot");
       await refreshSnapshot(stageResult.data.sessionId);
+      setUploadProcessingStage("done");
+    } catch {
+      setUploadProcessingStage("error");
+      toast({ title: t("errors.unknown"), variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -318,6 +365,21 @@ export function ImportClient({ accounts }: ImportClientProps) {
           <CardDescription>{t("form.fileHint")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {uploadProcessingMeta && (
+            <div className="space-y-2 rounded-xl border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  {t(`processing.${uploadProcessingMeta.titleKey}`)}
+                </p>
+                <span className="text-muted-foreground text-xs">{uploadProcessingMeta.value}%</span>
+              </div>
+              <Progress value={uploadProcessingMeta.value} />
+              <p className="text-muted-foreground text-xs">
+                {t(`processing.${uploadProcessingMeta.descriptionKey}`)}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>{t("form.accountLabel")}</Label>
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>

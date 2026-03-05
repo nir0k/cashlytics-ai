@@ -1,5 +1,12 @@
 import { and, eq } from "drizzle-orm";
+import { openai } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import { db } from "@/lib/db";
+import {
+  buildCsvReconciliationPrompt,
+  parseAndValidateCsvReconciliationOutput,
+} from "@/lib/ai/csv-reconciliation";
+import { logger } from "@/lib/logger";
 import {
   dailyExpenses,
   importConflicts,
@@ -110,6 +117,10 @@ export type ImportReconciliationResult = {
   nearMatchCount: number;
   conflictRows: number;
   candidates: ImportConflictCandidate[];
+};
+
+type AiNearMatchResolverDeps = {
+  runReconciliationPrompt?: (prompt: string) => Promise<string>;
 };
 
 const DEFAULT_RESOLUTION_OPTIONS: ImportConflictDecisionOption[] = [
@@ -234,6 +245,79 @@ function toNearMatchCandidate(
   };
 }
 
+function mapConfidenceToSuggestion(confidence: number): ImportConflictSuggestion {
+  return confidence >= 0.95 ? "replace_existing" : "needs_user_review";
+}
+
+export function createAiNearMatchResolver(deps: AiNearMatchResolverDeps = {}) {
+  const runReconciliationPrompt =
+    deps.runReconciliationPrompt ??
+    (async (prompt: string) => {
+      const result = await generateText({
+        model: openai("gpt-4o"),
+        prompt,
+      });
+      return result.text;
+    });
+
+  return async (input: NearMatchInput): Promise<NearMatchDecision[]> => {
+    if (input.rows.length === 0 || input.existingTransactions.length === 0) {
+      return [];
+    }
+
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      return [];
+    }
+
+    try {
+      const prompt = buildCsvReconciliationPrompt({
+        accountName: "CSV Import Account",
+        rows: input.rows.map((row) => ({
+          csvRowId: row.id,
+          date: row.bookingDate ? asDateKey(row.bookingDate) : "unknown",
+          amount: parseAmountToNumber(row.amount),
+          description: row.description,
+          currency: "UNKNOWN",
+        })),
+        existingTransactions: input.existingTransactions.map((transaction) => ({
+          transactionId: transaction.id,
+          date: asDateKey(transaction.date),
+          amount: parseAmountToNumber(transaction.amount),
+          description: transaction.description,
+          type: transaction.type,
+        })),
+      });
+
+      const parsed = parseAndValidateCsvReconciliationOutput(await runReconciliationPrompt(prompt));
+      if (!parsed.success) {
+        logger.warn(
+          `AI near-match output rejected (${parsed.errorCode}): ${parsed.message}`,
+          "createAiNearMatchResolver"
+        );
+        return [];
+      }
+
+      return parsed.data.decisions
+        .filter((decision) => decision.action === "match_existing")
+        .map((decision) => ({
+          importRowId: decision.csvRowId,
+          matchedTransactionId: decision.matchedTransactionId,
+          confidence: decision.confidence,
+          similarityScore: decision.confidence,
+          explanation: decision.reason,
+          suggestion: mapConfidenceToSuggestion(decision.confidence),
+        }));
+    } catch (error) {
+      logger.error(
+        "AI near-match resolution failed. Falling back to deterministic-only matching.",
+        "createAiNearMatchResolver",
+        error
+      );
+      return [];
+    }
+  };
+}
+
 export function createImportReconciliationEngine(deps: ImportReconciliationEngineDeps) {
   return {
     async detectAndStageConflicts(
@@ -265,10 +349,19 @@ export function createImportReconciliationEngine(deps: ImportReconciliationEngin
 
       let nearCandidates: ImportConflictCandidate[] = [];
       if (deps.resolveNearMatches && unresolvedRows.length > 0) {
-        const nearDecisions = await deps.resolveNearMatches({
-          rows: unresolvedRows,
-          existingTransactions: manualTransactions,
-        });
+        let nearDecisions: NearMatchDecision[] = [];
+        try {
+          nearDecisions = await deps.resolveNearMatches({
+            rows: unresolvedRows,
+            existingTransactions: manualTransactions,
+          });
+        } catch (error) {
+          logger.error(
+            "Near-match resolver failed. Continuing with deterministic exact matches only.",
+            "detectAndStageConflicts",
+            error
+          );
+        }
 
         const rowById = new Map(unresolvedRows.map((row) => [row.id, row]));
         const transactionById = new Map(
@@ -404,4 +497,5 @@ function createDbReconciliationStore(): ReconciliationStore {
 
 export const importReconciliationEngine = createImportReconciliationEngine({
   store: createDbReconciliationStore(),
+  resolveNearMatches: createAiNearMatchResolver(),
 });

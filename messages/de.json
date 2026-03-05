@@ -484,6 +484,18 @@
       "conflictRows": "Zeilen mit Konflikten",
       "removedRows": "Entfernte Zeilen"
     },
+    "processing": {
+      "stagingTitle": "CSV wird hochgeladen und vorgemerkt",
+      "stagingDescription": "Die Datei wird validiert und fuer die Pruefung vorgemerkt.",
+      "reconcilingTitle": "KI-Abgleich wird ausgefuehrt",
+      "reconcilingDescription": "Importierte Zeilen werden mit bestehenden Eintraegen verglichen.",
+      "loadingTitle": "Pruefdaten werden geladen",
+      "loadingDescription": "Konflikte und vorgemerkte Zeilen werden fuer die Ansicht vorbereitet.",
+      "doneTitle": "Verarbeitung abgeschlossen",
+      "doneDescription": "Du kannst jetzt Konflikte pruefen und den Import bestaetigen.",
+      "errorTitle": "Verarbeitung unterbrochen",
+      "errorDescription": "Bitte pruefe die Fehlermeldung und versuche es erneut."
+    },
     "conflict": {
       "title": "Moegliches Duplikat erkannt",
       "subtitle": "Pruefe diese importierte Zeile und entscheide, wie fortgefahren wird.",

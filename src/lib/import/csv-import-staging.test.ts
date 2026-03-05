@@ -58,3 +58,18 @@ test("stageCsvUpload stages normalized rows for owned account", async () => {
   assert.equal(stagedCalls[0]?.accountId, "account-1");
   assert.equal(stagedCalls[0]?.rowCount, 2);
 });
+
+test("parseAndNormalizeCsv supports two-digit day-month-year dates", () => {
+  const csv = ["booking_date;amount;currency;description", "02.03.26;120,50;EUR;Test Booking"].join(
+    "\n"
+  );
+
+  const result = parseAndNormalizeCsv(csv);
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.rows.length, 1);
+    assert.equal(result.rows[0]?.bookingDate.toISOString().slice(0, 10), "2026-03-02");
+    assert.equal(result.rows[0]?.amount, "120.50");
+  }
+});

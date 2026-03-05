@@ -1,0 +1,4 @@
+booking_date;amount;currency;description;counterparty;sender_account;receiver_account;balance_after_booking;reference
+2026-03-01;-49.90;EUR;Streaming Subscription;Media Service;DE44500105175407324931;;1875.23;sub-2026-03
+2026-03-02;3100.00;EUR;Salary;Example Employer;;DE44500105175407324931;4975.23;salary-2026-03
+2026-03-03;-120.35;EUR;Grocery Store;Fresh Market;DE44500105175407324931;;4854.88;gro-2026-03-03

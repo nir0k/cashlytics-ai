@@ -443,9 +443,19 @@
       "accountPlaceholder": "Select an account",
       "fileLabel": "CSV file",
       "fileHint": "Supported formats: comma or semicolon separated values",
+      "downloadTemplate": "Download CSV template",
+      "showStructureHelp": "Show CSV structure",
       "headerMappingTitle": "Header mapping",
       "autoMappingFailedHint": "Automatic header detection failed. Please provide a manual header mapping.",
       "manualMappingHint": "Map unknown columns before continuing"
+    },
+    "infoModal": {
+      "title": "Expected CSV format",
+      "description": "Use the template as a baseline. Header names may vary, but these canonical fields should be present.",
+      "requiredFieldsTitle": "Required fields",
+      "optionalFieldsTitle": "Optional fields",
+      "exampleHint": "Tip: If automatic header detection fails, open header mapping and map your bank-specific column names manually.",
+      "closeButton": "Close"
     },
     "mapping": {
       "title": "Map CSV columns",

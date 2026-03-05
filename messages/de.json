@@ -443,9 +443,19 @@
       "accountPlaceholder": "Konto auswaehlen",
       "fileLabel": "CSV-Datei",
       "fileHint": "Unterstuetzte Formate: komma- oder semikolongetrennte Werte",
+      "downloadTemplate": "CSV-Vorlage herunterladen",
+      "showStructureHelp": "CSV-Aufbau anzeigen",
       "headerMappingTitle": "Spaltenzuordnung",
       "autoMappingFailedHint": "Die automatische Header-Erkennung ist fehlgeschlagen. Bitte gib eine manuelle Spaltenzuordnung an.",
       "manualMappingHint": "Ordne unbekannte Spalten vor dem Fortfahren zu"
+    },
+    "infoModal": {
+      "title": "Erwarteter CSV-Aufbau",
+      "description": "Nutze die Vorlage als Ausgangspunkt. Headernamen duerfen abweichen, aber diese kanonischen Felder sollten vorhanden sein.",
+      "requiredFieldsTitle": "Pflichtfelder",
+      "optionalFieldsTitle": "Optionale Felder",
+      "exampleHint": "Tipp: Wenn die automatische Header-Erkennung fehlschlaegt, oeffne die Spaltenzuordnung und ordne bank-spezifische Spalten manuell zu.",
+      "closeButton": "Schliessen"
     },
     "mapping": {
       "title": "CSV-Spalten zuordnen",

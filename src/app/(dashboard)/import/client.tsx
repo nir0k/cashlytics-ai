@@ -13,6 +13,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DialogClose,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/lib/settings-context";
+import { CircleHelp, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Account } from "@/types/database";
 import {
@@ -38,6 +48,31 @@ type DecisionValue = "keep_both" | "replace_existing" | "skip_import_row";
 interface ImportClientProps {
   accounts: Account[];
 }
+
+const requiredFieldKeys = ["bookingDate", "amount", "currency"] as const;
+const optionalFieldKeys = [
+  "description",
+  "counterparty",
+  "senderAccount",
+  "receiverAccount",
+  "balanceAfterBooking",
+  "reference",
+] as const;
+
+const canonicalFieldByKey: Record<
+  (typeof requiredFieldKeys)[number] | (typeof optionalFieldKeys)[number],
+  string
+> = {
+  bookingDate: "booking_date",
+  amount: "amount",
+  currency: "currency",
+  description: "description",
+  counterparty: "counterparty",
+  senderAccount: "sender_account",
+  receiverAccount: "receiver_account",
+  balanceAfterBooking: "balance_after_booking",
+  reference: "reference",
+};
 
 function buildConflictItems(snapshot: ImportSessionSnapshot | null): ImportConflictItem[] {
   if (!snapshot) {
@@ -306,6 +341,68 @@ export function ImportClient({ accounts }: ImportClientProps) {
               accept=".csv,text/csv"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <a href="/examples/csv-import-template.csv" download>
+                <Download className="size-4" />
+                {t("form.downloadTemplate")}
+              </a>
+            </Button>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <CircleHelp className="size-4" />
+                  {t("form.showStructureHelp")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t("infoModal.title")}</DialogTitle>
+                  <DialogDescription>{t("infoModal.description")}</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <p className="font-medium">{t("infoModal.requiredFieldsTitle")}</p>
+                    <ul className="mt-2 space-y-1">
+                      {requiredFieldKeys.map((field) => (
+                        <li key={field} className="text-muted-foreground flex items-center gap-2">
+                          <code className="text-foreground bg-muted rounded px-1.5 py-0.5 text-xs">
+                            {canonicalFieldByKey[field]}
+                          </code>
+                          <span>{t(`headerFields.${field}`)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-medium">{t("infoModal.optionalFieldsTitle")}</p>
+                    <ul className="mt-2 space-y-1">
+                      {optionalFieldKeys.map((field) => (
+                        <li key={field} className="text-muted-foreground flex items-center gap-2">
+                          <code className="text-foreground bg-muted rounded px-1.5 py-0.5 text-xs">
+                            {canonicalFieldByKey[field]}
+                          </code>
+                          <span>{t(`headerFields.${field}`)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <p className="text-muted-foreground">{t("infoModal.exampleHint")}</p>
+                </div>
+
+                <div className="flex justify-end">
+                  <DialogClose asChild>
+                    <Button variant="outline">{t("infoModal.closeButton")}</Button>
+                  </DialogClose>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {showHeaderMapping && (

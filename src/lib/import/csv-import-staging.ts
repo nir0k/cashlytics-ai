@@ -237,23 +237,45 @@ function normalizeDate(rawValue: string): Date {
     throw new Error("Date is empty");
   }
 
-  const ymdMatch = value.match(/^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/);
-  if (ymdMatch) {
-    const year = Number.parseInt(ymdMatch[1], 10);
-    const month = Number.parseInt(ymdMatch[2], 10);
-    const day = Number.parseInt(ymdMatch[3], 10);
-    return new Date(Date.UTC(year, month - 1, day));
+  const normalizeYear = (rawYear: string): number => {
+    if (rawYear.length === 4) {
+      return Number.parseInt(rawYear, 10);
+    }
+
+    const twoDigitYear = Number.parseInt(rawYear, 10);
+    return twoDigitYear >= 70 ? 1900 + twoDigitYear : 2000 + twoDigitYear;
+  };
+
+  const createUtcDate = (year: number, month: number, day: number): Date => {
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      throw new Error(`Date format is invalid: ${rawValue}`);
+    }
+
+    return date;
+  };
+
+  const parts = value.split(/[\/.\-]/);
+  if (parts.length !== 3 || parts.some((part) => !/^\d+$/.test(part))) {
+    throw new Error(`Date format is invalid: ${rawValue}`);
   }
 
-  const dmyMatch = value.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
-  if (dmyMatch) {
-    const day = Number.parseInt(dmyMatch[1], 10);
-    const month = Number.parseInt(dmyMatch[2], 10);
-    const year = Number.parseInt(dmyMatch[3], 10);
-    return new Date(Date.UTC(year, month - 1, day));
+  if (parts[0]?.length === 4) {
+    const year = normalizeYear(parts[0]);
+    const month = Number.parseInt(parts[1] ?? "", 10);
+    const day = Number.parseInt(parts[2] ?? "", 10);
+    return createUtcDate(year, month, day);
   }
 
-  throw new Error(`Date format is invalid: ${rawValue}`);
+  const day = Number.parseInt(parts[0] ?? "", 10);
+  const month = Number.parseInt(parts[1] ?? "", 10);
+  const year = normalizeYear(parts[2] ?? "");
+  return createUtcDate(year, month, day);
 }
 
 function getMappedValue(

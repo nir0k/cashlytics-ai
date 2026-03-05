@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.1...v0.4.0) (2026-03-05)
+
+### ✨ Features
+
+- add ai support to csv imports ([d355367](https://github.com/aaronjoeldev/cashlytics-ai/commit/d3553673e60ce42c9d3b15327bc0558043228678))
+- add csv import feature with ai support ([49d4fa5](https://github.com/aaronjoeldev/cashlytics-ai/commit/49d4fa5e0a2378b7297dc98413a4e48727b95a52))
+
+### 🐛 Bug Fixes
+
+- solve date parsing issue in csv ([3b2c5e4](https://github.com/aaronjoeldev/cashlytics-ai/commit/3b2c5e4c763895118a9a4c4d1ac701da7f1ac20e))
+
 ## [0.3.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.0...v0.3.1) (2026-03-03)
 
 ### 🐛 Bug Fixes

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Bell, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ type SupportState = "checking" | "supported" | "unsupported";
 type PermissionState = "default" | "granted" | "denied" | "unknown";
 
 export function NotificationSettings() {
+  const t = useTranslations("settings.pushNotifications");
   const [support, setSupport] = useState<SupportState>("checking");
   const [permission, setPermission] = useState<PermissionState>("unknown");
   const [subscribed, setSubscribed] = useState(false);
@@ -64,7 +66,7 @@ export function NotificationSettings() {
       setPermission(result as PermissionState);
 
       if (result !== "granted") {
-        toast.error("Benachrichtigungen wurden nicht erlaubt.");
+        toast.error(t("toasts.permissionDenied"));
         setLoading(false);
         return;
       }
@@ -75,7 +77,7 @@ export function NotificationSettings() {
       // 3. Fetch VAPID public key from the backend.
       const keyRes = await fetch("/api/push/vapid-public-key");
       if (!keyRes.ok) {
-        throw new Error("VAPID-Schlüssel konnte nicht abgerufen werden.");
+        throw new Error(t("errors.vapidKeyFetch"));
       }
       const { key: publicKey } = await keyRes.json();
 
@@ -99,14 +101,14 @@ export function NotificationSettings() {
         }),
       });
       if (!subRes.ok) {
-        throw new Error("Abonnement konnte nicht gespeichert werden.");
+        throw new Error(t("errors.subscriptionSave"));
       }
 
       setSubscribed(true);
-      toast.success("Push-Benachrichtigungen aktiviert.");
+      toast.success(t("toasts.enabled"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler.";
-      toast.error(`Fehler: ${message}`);
+      const message = err instanceof Error ? err.message : t("errors.unknown");
+      toast.error(t("errors.generic", { message }));
     } finally {
       setLoading(false);
     }
@@ -135,10 +137,10 @@ export function NotificationSettings() {
       });
 
       setSubscribed(false);
-      toast.success("Push-Benachrichtigungen deaktiviert.");
+      toast.success(t("toasts.disabled"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler.";
-      toast.error(`Fehler beim Deaktivieren: ${message}`);
+      const message = err instanceof Error ? err.message : t("errors.unknown");
+      toast.error(t("errors.disableGeneric", { message }));
     } finally {
       setLoading(false);
     }
@@ -160,12 +162,12 @@ export function NotificationSettings() {
   const isDisabled = isUnsupported || isChecking || loading || isDenied;
 
   function statusLabel(): string {
-    if (isChecking) return "Wird geprüft…";
-    if (isUnsupported) return "Nicht unterstützt";
-    if (isDenied) return "Blockiert";
-    if (loading) return subscribed ? "Wird deaktiviert…" : "Wird aktiviert…";
-    if (subscribed) return "Aktiviert";
-    return "Deaktiviert";
+    if (isChecking) return t("status.checking");
+    if (isUnsupported) return t("status.unsupported");
+    if (isDenied) return t("status.blocked");
+    if (loading) return subscribed ? t("status.disabling") : t("status.enabling");
+    if (subscribed) return t("status.enabled");
+    return t("status.disabled");
   }
 
   function statusColor(): string {
@@ -181,22 +183,19 @@ export function NotificationSettings() {
           <span className="from-primary/20 to-primary/5 flex size-8 items-center justify-center rounded-xl bg-gradient-to-br">
             <Bell className="text-primary h-4 w-4" />
           </span>
-          Push-Benachrichtigungen
+          {t("title")}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Description */}
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          Erhalte sofortige Benachrichtigungen über neue Transaktionen, Budgetwarnungen und
-          monatliche Zusammenfassungen — auch wenn Cashlytics im Hintergrund läuft.
-        </p>
+        <p className="text-muted-foreground text-sm leading-relaxed">{t("description")}</p>
 
         {/* Toggle row */}
         <div className="border-border/60 flex items-center justify-between rounded-xl border px-4 py-3 dark:border-white/[0.06]">
           <div className="flex flex-col gap-0.5">
             <Label htmlFor="push-toggle" className="cursor-pointer text-sm font-medium">
-              Benachrichtigungen empfangen
+              {t("toggleLabel")}
             </Label>
             <span className={`text-xs font-medium ${statusColor()}`}>{statusLabel()}</span>
           </div>
@@ -206,7 +205,7 @@ export function NotificationSettings() {
             checked={subscribed}
             onCheckedChange={handleToggle}
             disabled={isDisabled}
-            aria-label="Push-Benachrichtigungen umschalten"
+            aria-label={t("ariaLabel")}
           />
         </div>
 
@@ -214,10 +213,7 @@ export function NotificationSettings() {
         {isDenied && (
           <div className="border-destructive/20 bg-destructive/5 flex items-start gap-3 rounded-xl border px-4 py-3">
             <AlertTriangle className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
-            <p className="text-destructive text-sm leading-relaxed">
-              Benachrichtigungen sind in deinem Browser blockiert. Öffne die Website-Einstellungen
-              deines Browsers und erlaube Benachrichtigungen für diese Seite, um sie zu aktivieren.
-            </p>
+            <p className="text-destructive text-sm leading-relaxed">{t("warnings.denied")}</p>
           </div>
         )}
 
@@ -226,11 +222,9 @@ export function NotificationSettings() {
           <div className="border-border/60 bg-muted/40 flex items-start gap-3 rounded-xl border px-4 py-3 dark:border-white/[0.06]">
             <AlertTriangle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Dein Browser unterstützt keine Push-Benachrichtigungen. <strong>iPhone/iPad:</strong>{" "}
-              Öffne Cashlytics in Safari, tippe auf den Teilen-Button und wähle &bdquo;Zum
-              Home-Bildschirm&ldquo; — dann die App von dort starten und Benachrichtigungen hier
-              aktivieren. Außerdem ist HTTPS erforderlich. <strong>Desktop:</strong> Bitte verwende
-              Chrome, Edge oder Firefox.
+              {t.rich("warnings.unsupported", {
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </p>
           </div>
         )}

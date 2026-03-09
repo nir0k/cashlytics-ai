@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import {
   Plus,
@@ -41,32 +42,42 @@ type FloatingActionItem = {
   href?: string;
 };
 
-const QUICK_CHAT_PROMPTS = ["45€ Tanken", "Budget diesen Monat?", "Einnahmen zeigen"];
+type FloatingActionLabels = Record<ActionKey, string>;
+const MINI_CHAT_PROMPTS = ["45€ Tanken", "Budget diesen Monat?", "Einnahmen zeigen"];
+const MINI_CHAT_TITLE = "Cashlytics Assistent";
+const MINI_CHAT_EMPTY_STATE = "Frag mich nach deinen Finanzen oder buche schnell eine Ausgabe.";
+const MINI_CHAT_PLACEHOLDER = "z.B. '45€ REWE'";
+const MINI_CHAT_OPEN_FULL_VIEW = "Vollansicht öffnen";
+const MINI_CHAT_CLOSE = "Chat schließen";
+const MINI_CHAT_SEND = "Senden";
 
-export function getFloatingActions(aiEnabled: boolean): FloatingActionItem[] {
+export function getFloatingActions(
+  aiEnabled: boolean,
+  labels: FloatingActionLabels
+): FloatingActionItem[] {
   const baseActions: FloatingActionItem[] = [
     {
       key: "expense",
       icon: TrendingDown,
-      label: "Ausgabe",
+      label: labels.expense,
       className: "bg-amber-500 hover:bg-amber-600 text-white",
     },
     {
       key: "income",
       icon: TrendingUp,
-      label: "Einnahme",
+      label: labels.income,
       className: "bg-emerald-500 hover:bg-emerald-600 text-white",
     },
     {
       key: "transfer",
       icon: ArrowRightLeft,
-      label: "Transfer",
+      label: labels.transfer,
       className: "bg-violet-500 hover:bg-violet-600 text-white",
     },
     {
       key: "account",
       icon: CreditCard,
-      label: "Konto",
+      label: labels.account,
       className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
   ];
@@ -80,7 +91,7 @@ export function getFloatingActions(aiEnabled: boolean): FloatingActionItem[] {
     {
       key: "import",
       icon: FileUp,
-      label: "CSV-Import",
+      label: labels.import,
       className: "bg-slate-700 hover:bg-slate-800 text-white",
       href: "/import",
     },
@@ -88,6 +99,8 @@ export function getFloatingActions(aiEnabled: boolean): FloatingActionItem[] {
 }
 
 export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
+  const t = useTranslations("floatingActions");
+  const tCsvImport = useTranslations("csvImport");
   const pathname = usePathname();
   const isAssistantPage = pathname === "/assistant";
 
@@ -106,6 +119,14 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  const actionLabels: FloatingActionLabels = {
+    expense: t("actions.expense"),
+    income: t("actions.income"),
+    transfer: t("actions.transfer"),
+    account: t("actions.account"),
+    import: tCsvImport("title"),
+  };
 
   useEffect(() => {
     if (menuOpen && !dataLoaded) {
@@ -146,7 +167,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
     setDataLoaded(false);
   };
 
-  const actions = getFloatingActions(aiEnabled);
+  const actions = getFloatingActions(aiEnabled, actionLabels);
 
   return (
     <>
@@ -164,11 +185,16 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
             <div className="from-primary/20 to-primary/5 flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br">
               <Bot className="text-primary h-4 w-4" />
             </div>
-            <p className="text-sm font-semibold">Cashlytics Assistent</p>
+            <p className="text-sm font-semibold">{MINI_CHAT_TITLE}</p>
           </div>
           <div className="flex items-center gap-1">
             <Link href="/assistant" onClick={() => setChatOpen(false)}>
-              <Button variant="ghost" size="icon" className="h-7 w-7" title="Vollansicht öffnen">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                title={MINI_CHAT_OPEN_FULL_VIEW}
+              >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -177,7 +203,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
               size="icon"
               className="h-7 w-7"
               onClick={() => setChatOpen(false)}
-              aria-label="Chat schließen"
+              aria-label={MINI_CHAT_CLOSE}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -190,11 +216,9 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
               <div className="from-primary/20 to-primary/5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br">
                 <MessageSquare className="text-primary h-6 w-6" />
               </div>
-              <p className="text-muted-foreground text-sm">
-                Frag mich nach deinen Finanzen oder buche schnell eine Ausgabe.
-              </p>
+              <p className="text-muted-foreground text-sm">{MINI_CHAT_EMPTY_STATE}</p>
               <div className="flex w-full flex-col gap-2">
-                {QUICK_CHAT_PROMPTS.map((prompt) => (
+                {MINI_CHAT_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     className="bg-muted/50 hover:bg-muted cursor-pointer rounded-lg px-3 py-2 text-left text-xs transition-colors"
@@ -226,7 +250,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
                   handleChatSend();
                 }
               }}
-              placeholder="z.B. '45€ REWE'"
+              placeholder={MINI_CHAT_PLACEHOLDER}
               disabled={chatLoading}
               className="h-8 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0"
             />
@@ -235,7 +259,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
               className="h-8 shrink-0 px-3"
               disabled={!chatInput.trim() || chatLoading}
               onClick={handleChatSend}
-              aria-label="Senden"
+              aria-label={MINI_CHAT_SEND}
             >
               {chatLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -307,7 +331,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
               setMenuOpen(false);
               setChatOpen((prev) => !prev);
             }}
-            aria-label={chatOpen ? "Chat schließen" : "Chat öffnen"}
+            aria-label={chatOpen ? MINI_CHAT_CLOSE : "Chat öffnen"}
           >
             {chatOpen ? <X className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
           </Button>
@@ -325,7 +349,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
               setChatOpen(false);
               setMenuOpen((prev) => !prev);
             }}
-            aria-label={menuOpen ? "Schließen" : "Aktionen"}
+            aria-label={menuOpen ? t("buttons.menuClose") : t("buttons.menuOpen")}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
           </Button>

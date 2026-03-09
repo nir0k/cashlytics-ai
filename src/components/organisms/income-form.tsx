@@ -1,21 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus } from 'lucide-react';
-import { incomeSchema, type IncomeInput, incomeRecurrenceTypes } from '@/lib/validations/transaction';
-import { createIncome, updateIncome } from '@/actions/income-actions';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
+import {
+  incomeSchema,
+  type IncomeInput,
+  incomeRecurrenceTypes,
+} from "@/lib/validations/transaction";
+import { createIncome, updateIncome } from "@/actions/income-actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -23,27 +28,29 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
-} from '@/components/ui/dialog';
-import type { Account, Income } from '@/types/database';
+} from "@/components/ui/dialog";
+import type { Account, Income } from "@/types/database";
 
 interface IncomeFormProps {
   accounts: Account[];
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: Income) => void;
   editIncome?: Income | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const recurrenceLabels: Record<string, string> = {
-  once: 'Einmalig',
-  monthly: 'Monatlich',
-  yearly: 'Jährlich',
-};
-
-export function IncomeForm({ accounts, onSuccess, editIncome, open: controlledOpen, onOpenChange }: IncomeFormProps) {
+export function IncomeForm({
+  accounts,
+  onSuccess,
+  editIncome,
+  open: controlledOpen,
+  onOpenChange,
+}: IncomeFormProps) {
+  const t = useTranslations("income");
+  const tRecurrence = useTranslations("recurrence");
   const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
 
@@ -52,36 +59,36 @@ export function IncomeForm({ accounts, onSuccess, editIncome, open: controlledOp
   const form = useForm<IncomeInput>({
     resolver: zodResolver(incomeSchema),
     defaultValues: {
-      accountId: '',
-      source: '',
-      amount: '',
-      recurrenceType: 'monthly',
+      accountId: "",
+      source: "",
+      amount: "",
+      recurrenceType: "monthly",
       startDate: new Date(),
       endDate: null,
-      info: '',
+      info: "",
     },
   });
 
   useEffect(() => {
     if (editIncome) {
       form.reset({
-        accountId: editIncome.accountId || '',
+        accountId: editIncome.accountId || "",
         source: editIncome.source,
         amount: editIncome.amount,
-        recurrenceType: editIncome.recurrenceType as IncomeInput['recurrenceType'],
+        recurrenceType: editIncome.recurrenceType as IncomeInput["recurrenceType"],
         startDate: new Date(editIncome.startDate),
         endDate: editIncome.endDate ? new Date(editIncome.endDate) : null,
-        info: editIncome.info || '',
+        info: editIncome.info || "",
       });
     } else {
       form.reset({
-        accountId: '',
-        source: '',
-        amount: '',
-        recurrenceType: 'monthly',
+        accountId: "",
+        source: "",
+        amount: "",
+        recurrenceType: "monthly",
         startDate: new Date(),
         endDate: null,
-        info: '',
+        info: "",
       });
     }
   }, [editIncome, form]);
@@ -89,10 +96,13 @@ export function IncomeForm({ accounts, onSuccess, editIncome, open: controlledOp
   const handleSubmit = async (data: IncomeInput) => {
     setIsSubmitting(true);
     try {
-      const endDate = data.endDate && data.endDate !== '' 
-        ? (typeof data.endDate === 'string' ? new Date(data.endDate) : data.endDate)
-        : null;
-      
+      const endDate =
+        data.endDate && data.endDate !== ""
+          ? typeof data.endDate === "string"
+            ? new Date(data.endDate)
+            : data.endDate
+          : null;
+
       if (isEditMode && editIncome) {
         const result = await updateIncome(editIncome.id, {
           accountId: data.accountId,
@@ -134,81 +144,92 @@ export function IncomeForm({ accounts, onSuccess, editIncome, open: controlledOp
       {!isEditMode && controlledOpen === undefined && (
         <DialogTrigger asChild>
           <Button variant="secondary">
-            <Plus className="w-4 h-4 mr-2" />
-            Einnahme hinzufügen
+            <Plus className="mr-2 h-4 w-4" />
+            {t("addIncome")}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Einnahme bearbeiten' : 'Neue Einnahme'}</DialogTitle>
-          <DialogDescription>{isEditMode ? 'Bearbeite die Einnahmequelle' : 'Erfasse eine neue Einnahmequelle'}</DialogDescription>
+          <DialogTitle>{isEditMode ? t("editIncome") : t("newIncome")}</DialogTitle>
+          <DialogDescription>
+            {isEditMode ? t("editIncomeDesc") : t("newIncomeDesc")}
+          </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
+
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-4 space-y-4">
           <div className="space-y-2">
-            <Label>Quelle</Label>
-            <Input {...form.register('source')} placeholder="z.B. Gehalt, Nebenjob" />
+            <Label>{t("source")}</Label>
+            <Input {...form.register("source")} placeholder={t("sourcePlaceholder")} />
             {form.formState.errors.source && (
-              <p className="text-sm text-destructive">{form.formState.errors.source.message}</p>
+              <p className="text-destructive text-sm">{form.formState.errors.source.message}</p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Betrag (€)</Label>
-              <Input {...form.register('amount')} placeholder="0.00" type="number" step="0.01" />
+              <Label>{t("amount")}</Label>
+              <Input {...form.register("amount")} placeholder="0.00" type="number" step="0.01" />
             </div>
             <div className="space-y-2">
-              <Label>Wiederholung</Label>
+              <Label>{t("recurrence")}</Label>
               <Select
-                value={form.watch('recurrenceType')}
-                onValueChange={(v) => form.setValue('recurrenceType', v as IncomeInput['recurrenceType'])}
+                value={form.watch("recurrenceType")}
+                onValueChange={(v) =>
+                  form.setValue("recurrenceType", v as IncomeInput["recurrenceType"])
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {incomeRecurrenceTypes.map(type => (
-                    <SelectItem key={type} value={type}>{recurrenceLabels[type]}</SelectItem>
+                  {incomeRecurrenceTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {tRecurrence(type)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Konto</Label>
-              <Select value={form.watch('accountId')} onValueChange={(v) => form.setValue('accountId', v)}>
+              <Label>{t("account")}</Label>
+              <Select
+                value={form.watch("accountId")}
+                onValueChange={(v) => form.setValue("accountId", v)}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Konto wählen" />
+                  <SelectValue placeholder={t("selectAccount")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {accounts.map(account => (
-                    <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Startdatum</Label>
-              <Input type="date" {...form.register('startDate', { valueAsDate: true })} />
+              <Label>{t("startDate")}</Label>
+              <Input type="date" {...form.register("startDate", { valueAsDate: true })} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Enddatum (optional)</Label>
-            <Input type="date" {...form.register('endDate', { valueAsDate: true })} />
+            <Label>{t("endDate")}</Label>
+            <Input type="date" {...form.register("endDate", { valueAsDate: true })} />
           </div>
 
           <div className="space-y-2">
-            <Label>Info / Notizen (optional)</Label>
-            <Input {...form.register('info')} placeholder="z.B. Arbeitgeber, Vertragsdetails..." />
+            <Label>{t("info")}</Label>
+            <Input {...form.register("info")} placeholder={t("infoPlaceholder")} />
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Speichern...' : isEditMode ? 'Änderungen speichern' : 'Einnahme erstellen'}
+            {isSubmitting ? t("saving") : isEditMode ? t("saveChanges") : t("createIncome")}
           </Button>
         </form>
       </DialogContent>

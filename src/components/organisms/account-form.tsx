@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,34 +11,29 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { createAccount } from '@/actions/account-actions';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/select";
+import { createAccount } from "@/actions/account-actions";
+import { useToast } from "@/hooks/use-toast";
+import type { Account } from "@/types/database";
 
 interface AccountFormProps {
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: Account) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const accountTypes = [
-  { value: 'checking', label: 'Girokonto', icon: '🏦' },
-  { value: 'savings', label: 'Sparkonto', icon: 'piggy' },
-  { value: 'etf', label: 'ETF-Konto', icon: '📈' },
-];
-
 export function AccountForm({ onSuccess, open: controlledOpen, onOpenChange }: AccountFormProps) {
-  const router = useRouter();
+  const t = useTranslations("accounts");
   const { toast } = useToast();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
@@ -47,47 +42,53 @@ export function AccountForm({ onSuccess, open: controlledOpen, onOpenChange }: A
     onOpenChange?.(value);
   };
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState('');
-  const [type, setType] = useState<'checking' | 'savings' | 'etf'>('checking');
-  const [balance, setBalance] = useState('');
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"checking" | "savings" | "etf">("checking");
+  const [balance, setBalance] = useState("");
+
+  const accountTypes = [
+    { value: "checking", label: t("types.checking"), icon: "🏦" },
+    { value: "savings", label: t("types.savings"), icon: "piggy" },
+    { value: "etf", label: t("types.etf"), icon: "📈" },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast({
-        title: 'Fehler',
-        description: 'Bitte gib einen Namen ein.',
-        variant: 'destructive',
+        title: t("errorTitle"),
+        description: t("errors.nameRequired"),
+        variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    
+
     const result = await createAccount({
       name: name.trim(),
       type,
-      balance: balance || '0',
+      balance: balance || "0",
     });
 
     setIsLoading(false);
 
     if (result.success) {
       toast({
-        title: 'Konto erstellt',
-        description: `${name} wurde erfolgreich angelegt.`,
+        title: t("success.created"),
+        description: t("createdDesc", { name }),
       });
-      setName('');
-      setType('checking');
-      setBalance('');
+      setName("");
+      setType("checking");
+      setBalance("");
       setOpen(false);
       onSuccess?.(result.data);
     } else {
       toast({
-        title: 'Fehler',
-        description: result.error || 'Konto konnte nicht erstellt werden.',
-        variant: 'destructive',
+        title: t("errorTitle"),
+        description: result.error || t("errors.createFailed"),
+        variant: "destructive",
       });
     }
   };
@@ -98,38 +99,36 @@ export function AccountForm({ onSuccess, open: controlledOpen, onOpenChange }: A
         <DialogTrigger asChild>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Konto hinzufügen
+            {t("addAccount")}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Neues Konto</DialogTitle>
-            <DialogDescription>
-              Füge ein neues Konto zu deiner Übersicht hinzu.
-            </DialogDescription>
+            <DialogTitle>{t("newAccount")}</DialogTitle>
+            <DialogDescription>{t("newAccountDesc")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("name")}</Label>
               <Input
                 id="name"
-                placeholder="z.B. Girokonto Sparkasse"
+                placeholder={t("namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Kontotyp</Label>
+              <Label htmlFor="type">{t("type")}</Label>
               <Select
                 value={type}
-                onValueChange={(value) => setType(value as 'checking' | 'savings' | 'etf')}
+                onValueChange={(value) => setType(value as "checking" | "savings" | "etf")}
                 disabled={isLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Wähle den Kontotyp" />
+                  <SelectValue placeholder={t("typePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {accountTypes.map((t) => (
@@ -141,7 +140,7 @@ export function AccountForm({ onSuccess, open: controlledOpen, onOpenChange }: A
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="balance">Anfangssaldo (€)</Label>
+              <Label htmlFor="balance">{t("initialBalanceLabel")}</Label>
               <Input
                 id="balance"
                 type="number"
@@ -155,7 +154,7 @@ export function AccountForm({ onSuccess, open: controlledOpen, onOpenChange }: A
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Wird erstellt...' : 'Konto erstellen'}
+              {isLoading ? t("creating") : t("createAccount")}
             </Button>
           </DialogFooter>
         </form>

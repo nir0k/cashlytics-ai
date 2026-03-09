@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useSettings } from "@/lib/settings-context";
 import type { DailyExpenseWithDetails } from "@/types/database";
+import type { Locale } from "@/i18n/config";
 
 interface DashboardStats {
   totalAssets: number;
@@ -158,7 +159,7 @@ export function DashboardClient({
 }: DashboardClientProps) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const { formatCurrency } = useSettings();
+  const { formatCurrency, locale } = useSettings();
   const [viewMode, setViewMode] = useState<"reserve" | "cashflow">("reserve");
   const activeStats = viewMode === "reserve" ? stats.reserveView : stats.cashflowView;
   const portfolioMonthlyBalance = stats.cashflowView.savingsRate;
@@ -166,7 +167,13 @@ export function DashboardClient({
   const hasTransactions = recentTransactions.length > 0;
   const hasUpcoming = upcomingPayments.length > 0;
 
-  const today = new Date().toLocaleDateString("de-DE", {
+  const localeMap: Record<Locale, string> = {
+    de: "de-DE",
+    en: "en-US",
+  };
+
+  const intlLocale = localeMap[locale];
+  const today = new Date().toLocaleDateString(intlLocale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -182,7 +189,7 @@ export function DashboardClient({
     if (diffDays === 1) return tCommon("tomorrow");
     if (diffDays <= 7) return tCommon("inDays", { count: diffDays });
 
-    return new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short" }).format(date);
+    return new Intl.DateTimeFormat(intlLocale, { day: "numeric", month: "short" }).format(date);
   }
 
   return (

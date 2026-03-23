@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.0...v0.5.0) (2026-03-23)
+
+### ✨ Features
+
+- add English translations for dashboard and forms ([fb84a8d](https://github.com/aaronjoeldev/cashlytics-ai/commit/fb84a8dd3109b723641dce8d42498bbec3fe49a4))
+
+### 🐛 Bug Fixes
+
+- resolve income form callback type mismatch ([57f306f](https://github.com/aaronjoeldev/cashlytics-ai/commit/57f306fc51806c43650ec4ddc53b1cbe5390edcf))
+
 ## [0.4.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.3.1...v0.4.0) (2026-03-05)
 
 ### ✨ Features

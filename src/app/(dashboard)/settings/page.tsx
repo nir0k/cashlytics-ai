@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import { NotificationSettings } from "@/components/settings/notification-setting
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
+  const tCategories = useTranslations("categories");
   const tCurrency = useTranslations("currency");
   const { locale, setLocale, currency, setCurrency } = useSettings();
 
@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Datenverwaltung</CardTitle>
+          <CardTitle>{t("dataManagement")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <Link href="/categories">
@@ -84,10 +84,8 @@ export default function SettingsPage() {
                   <Tag className="text-primary h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-medium">Kategorien verwalten</p>
-                  <p className="text-muted-foreground text-sm">
-                    Ausgaben-Kategorien anlegen und bearbeiten
-                  </p>
+                  <p className="font-medium">{tCategories("title")}</p>
+                  <p className="text-muted-foreground text-sm">{tCategories("description")}</p>
                 </div>
               </div>
               <ChevronRight className="text-muted-foreground h-4 w-4" />

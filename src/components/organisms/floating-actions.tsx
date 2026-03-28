@@ -17,6 +17,7 @@ import {
   Loader2,
   Bot,
   FileUp,
+  ScanLine,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ import { TransferForm } from "@/components/organisms/transfer-form";
 import type { Account, Category } from "@/types/database";
 
 type FormType = "expense" | "income" | "transfer" | "account" | null;
-type ActionKey = "expense" | "income" | "transfer" | "account" | "import";
+type ActionKey = "expense" | "income" | "transfer" | "account" | "import" | "scan";
 
 type FloatingActionItem = {
   key: ActionKey;
@@ -80,6 +81,13 @@ export function getFloatingActions(
       label: labels.account,
       className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
+    {
+      key: "scan",
+      icon: ScanLine,
+      label: labels.scan,
+      className: "bg-orange-500 hover:bg-orange-600 text-white",
+      href: "/scan",
+    },
   ];
 
   if (!aiEnabled) {
@@ -125,6 +133,7 @@ export function FloatingActions({ aiEnabled }: { aiEnabled: boolean }) {
     income: t("actions.income"),
     transfer: t("actions.transfer"),
     account: t("actions.account"),
+    scan: t("actions.scan"),
     import: tCsvImport("title"),
   };
 

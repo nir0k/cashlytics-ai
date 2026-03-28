@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.5.0...v0.6.0) (2026-03-28)
+
+### ✨ Features
+
+- add AI-powered receipt scanner ([081f9e3](https://github.com/aaronjoeldev/cashlytics-ai/commit/081f9e375d80ae971948369ba4ece610a7419297))
+
+### 🐛 Bug Fixes
+
+- update @swc/helpers to 0.5.20 to satisfy next-intl peer dependency ([be0dca6](https://github.com/aaronjoeldev/cashlytics-ai/commit/be0dca658e8fb43144f1cf750cbd5917fa205f50))
+
 ## [0.5.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.4.0...v0.5.0) (2026-03-23)
 
 ### ✨ Features

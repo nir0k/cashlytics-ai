@@ -33,6 +33,7 @@
 - 🔐 **User Authentication** — Secure multi-user support with login system
 - 🔑 **Password Reset** — Self-service password recovery via email (optional SMTP)
 - 🤖 **AI Assistant** — Chat with an AI-powered financial assistant (requires OpenAI API key)
+- 🧾 **Receipt Scanner** — Photograph or upload receipts and invoices; AI extracts merchant, amount, date, and category automatically (requires OpenAI API key)
 - 📥 **CSV Import + AI Reconciliation** — Import bank CSV files, detect duplicates, review conflicts, and confirm transactionally (requires OpenAI API key)
 - 🏷️ **Categories** — Organize transactions with custom categories
 - 🌍 **Multi-Language** — Available in English and German
@@ -216,30 +217,30 @@ npm start
 
 ### Environment Variables
 
-| Variable                       | Required | Default                 | Description                                                     |
-| ------------------------------ | -------- | ----------------------- | --------------------------------------------------------------- |
-| `DATABASE_URL`                 | ✅ Yes   | —                       | PostgreSQL connection string                                    |
-| `POSTGRES_PASSWORD`            | ✅ Yes   | —                       | PostgreSQL password used by Compose and `DATABASE_URL`          |
-| `NEXT_PUBLIC_APP_URL`          | ✅ Yes   | `http://localhost:3000` | Public URL of your Cashlytics instance                          |
-| `AUTH_SECRET`                  | ✅ Yes   | —                       | Secret for JWT encryption (generate with `npx auth secret`)     |
-| `AUTH_TRUST_HOST`              | ⚠️ Often | `true`                  | Set to `true` for IP/domain, reverse proxy, VPS, Docker ingress |
-| `SINGLE_USER_MODE`             | ❌ No    | `true`                  | Set to `false` to allow open registration                       |
-| `SINGLE_USER_EMAIL`            | ❌ No    | —                       | Email used by single-user migration scripts                     |
-| `NEXT_PUBLIC_DEFAULT_LOCALE`   | ❌ No    | `de`                    | Default locale (`de` or `en`)                                   |
-| `NEXT_PUBLIC_DEFAULT_CURRENCY` | ❌ No    | `EUR`                   | Default currency for new UI/session state                       |
-| `OPENAI_API_KEY`               | ❌ No    | —                       | OpenAI API key for AI Assistant feature                         |
-| `EMAIL_TRANSPORT`              | ❌ No    | `smtp`/auto             | Mail transport (`smtp` or `sendmail`)                           |
-| `SMTP_HOST`                    | ❌ No    | —                       | SMTP server hostname (e.g., `smtp.gmail.com`)                   |
-| `SMTP_PORT`                    | ❌ No    | —                       | SMTP port (587 for STARTTLS, 465 for TLS)                       |
-| `SMTP_USER`                    | ❌ No    | —                       | SMTP authentication username                                    |
-| `SMTP_PASS`                    | ❌ No    | —                       | SMTP authentication password                                    |
-| `SMTP_FROM`                    | ❌ No    | `SMTP_USER`             | From address for outgoing emails                                |
-| `APP_URL`                      | ❌ No    | `NEXT_PUBLIC_APP_URL`   | Server-side URL for email links                                 |
-| `VAPID_PUBLIC_KEY`             | ❌ No    | —                       | Public VAPID key for browser push subscriptions                 |
-| `VAPID_PRIVATE_KEY`            | ❌ No    | —                       | Private VAPID key used to sign push messages                    |
-| `VAPID_SUBJECT`                | ❌ No    | —                       | Contact URI for VAPID (`mailto:...` or `https://...`)           |
-| `CRON_SECRET`                  | ❌ No    | —                       | Bearer token used by scheduled reminder endpoint                |
-| `NOTIFICATION_SCHEDULE`        | ❌ No    | `0 8 * * *`             | Cron schedule for upcoming-payment checks                       |
+| Variable                       | Required | Default                 | Description                                                            |
+| ------------------------------ | -------- | ----------------------- | ---------------------------------------------------------------------- |
+| `DATABASE_URL`                 | ✅ Yes   | —                       | PostgreSQL connection string                                           |
+| `POSTGRES_PASSWORD`            | ✅ Yes   | —                       | PostgreSQL password used by Compose and `DATABASE_URL`                 |
+| `NEXT_PUBLIC_APP_URL`          | ✅ Yes   | `http://localhost:3000` | Public URL of your Cashlytics instance                                 |
+| `AUTH_SECRET`                  | ✅ Yes   | —                       | Secret for JWT encryption (generate with `npx auth secret`)            |
+| `AUTH_TRUST_HOST`              | ⚠️ Often | `true`                  | Set to `true` for IP/domain, reverse proxy, VPS, Docker ingress        |
+| `SINGLE_USER_MODE`             | ❌ No    | `true`                  | Set to `false` to allow open registration                              |
+| `SINGLE_USER_EMAIL`            | ❌ No    | —                       | Email used by single-user migration scripts                            |
+| `NEXT_PUBLIC_DEFAULT_LOCALE`   | ❌ No    | `de`                    | Default locale (`de` or `en`)                                          |
+| `NEXT_PUBLIC_DEFAULT_CURRENCY` | ❌ No    | `EUR`                   | Default currency for new UI/session state                              |
+| `OPENAI_API_KEY`               | ❌ No    | —                       | OpenAI API key — enables AI Assistant, Receipt Scanner, and CSV Import |
+| `EMAIL_TRANSPORT`              | ❌ No    | `smtp`/auto             | Mail transport (`smtp` or `sendmail`)                                  |
+| `SMTP_HOST`                    | ❌ No    | —                       | SMTP server hostname (e.g., `smtp.gmail.com`)                          |
+| `SMTP_PORT`                    | ❌ No    | —                       | SMTP port (587 for STARTTLS, 465 for TLS)                              |
+| `SMTP_USER`                    | ❌ No    | —                       | SMTP authentication username                                           |
+| `SMTP_PASS`                    | ❌ No    | —                       | SMTP authentication password                                           |
+| `SMTP_FROM`                    | ❌ No    | `SMTP_USER`             | From address for outgoing emails                                       |
+| `APP_URL`                      | ❌ No    | `NEXT_PUBLIC_APP_URL`   | Server-side URL for email links                                        |
+| `VAPID_PUBLIC_KEY`             | ❌ No    | —                       | Public VAPID key for browser push subscriptions                        |
+| `VAPID_PRIVATE_KEY`            | ❌ No    | —                       | Private VAPID key used to sign push messages                           |
+| `VAPID_SUBJECT`                | ❌ No    | —                       | Contact URI for VAPID (`mailto:...` or `https://...`)                  |
+| `CRON_SECRET`                  | ❌ No    | —                       | Bearer token used by scheduled reminder endpoint                       |
+| `NOTIFICATION_SCHEDULE`        | ❌ No    | `0 8 * * *`             | Cron schedule for upcoming-payment checks                              |
 
 ### Database Configuration
 
@@ -255,9 +256,9 @@ Example:
 postgresql://cashlytics:mypassword@postgres:5432/cashlytics
 ```
 
-### AI Assistant (Optional)
+### AI Features (Optional)
 
-To enable the AI-powered financial assistant:
+Three features share a single API key: **AI Assistant**, **Receipt Scanner**, and **CSV Import with AI Reconciliation**.
 
 1. Get an API key from [OpenAI](https://platform.openai.com/api-keys)
 2. Add it to your `.env` file:
@@ -265,7 +266,22 @@ To enable the AI-powered financial assistant:
    OPENAI_API_KEY=sk-proj-your-key-here
    ```
 
-> **Note:** Without an OpenAI API key, Cashlytics will still work, but the AI Assistant feature will be disabled.
+> **Note:** Without an OpenAI API key, Cashlytics works fully for manual entry — AI Assistant, Receipt Scanner, and CSV Import are simply hidden.
+
+### Receipt Scanner (Optional)
+
+The receipt scanner lets you photograph or upload a receipt (JPG, PNG, max 5 MB) and have the AI extract all relevant data automatically.
+
+**How it works:**
+
+1. Open the **Receipt Scanner** from the sidebar or the `+` speed-dial button.
+2. Upload or drag-and-drop a receipt image.
+3. The AI (GPT-4o mini) extracts merchant, amount, date, and suggests a matching category from your existing categories.
+4. Review and correct the pre-filled form, then save — the image is automatically attached as a document to the expense.
+
+The scanner page lives at `/scan` and is bookmarkable, making it ideal as a home-screen shortcut on mobile. A confidence indicator warns you when the image quality may affect accuracy.
+
+> **Requires:** `OPENAI_API_KEY`
 
 ### CSV Import With AI Reconciliation (Optional)
 

@@ -15,6 +15,7 @@ import {
   FolderOpen,
   FileText,
   FileUp,
+  ScanLine,
   LogOut,
 } from "lucide-react";
 
@@ -55,6 +56,7 @@ const baseMainNavItems: NavItem[] = [
   { titleKey: "documents", url: "/documents", icon: FileText },
   { titleKey: "accounts", url: "/accounts", icon: Building2 },
   { titleKey: "analytics", url: "/analytics", icon: PieChart },
+  { titleKey: "scan", url: "/scan", icon: ScanLine },
 ];
 
 export function getMainNavItems(aiEnabled: boolean): NavItem[] {

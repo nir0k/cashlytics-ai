@@ -34,6 +34,7 @@
     "categories": "Kategorien",
     "documents": "Dokumente",
     "import": "CSV-Import",
+    "scan": "Belegscanner",
     "accounts": "Konten",
     "analytics": "Analysen",
     "goals": "Ziele",
@@ -443,7 +444,8 @@
       "expense": "Ausgabe",
       "income": "Einnahme",
       "transfer": "Transfer",
-      "account": "Konto"
+      "account": "Konto",
+      "scan": "Beleg scannen"
     },
     "buttons": {
       "menuOpen": "Aktionen",
@@ -492,6 +494,45 @@
         "denied": "Benachrichtigungen sind in deinem Browser blockiert. Öffne die Website-Einstellungen deines Browsers und erlaube Benachrichtigungen für diese Seite, um sie zu aktivieren.",
         "unsupported": "Dein Browser unterstützt keine Push-Benachrichtigungen. <strong>iPhone/iPad:</strong> Öffne Cashlytics in Safari, tippe auf den Teilen-Button und wähle „Zum Home-Bildschirm“. Dann die App von dort starten und Benachrichtigungen hier aktivieren. Außerdem ist HTTPS erforderlich. <strong>Desktop:</strong> Bitte verwende Chrome, Edge oder Firefox."
       }
+    }
+  },
+  "receiptScan": {
+    "title": "Belegscanner",
+    "subtitle": "Lade eine Quittung oder Rechnung hoch – die KI trägt die Daten automatisch ein.",
+    "dropzoneTitle": "Beleg oder Quittung hochladen",
+    "dropzoneHint": "JPG oder PNG · max. 5 MB",
+    "processing": "Beleg wird analysiert…",
+    "saving": "Ausgabe wird gespeichert…",
+    "confidenceMedium": "Bitte prüfen – einige Felder könnten ungenau sein.",
+    "confidenceLow": "Beleg schlecht lesbar – bitte alle Felder prüfen.",
+    "notEnabledTitle": "KI nicht konfiguriert",
+    "notEnabledDescription": "Der Belegscanner benötigt einen OpenAI API-Key. Setze OPENAI_API_KEY in deiner .env-Datei.",
+    "imageAlt": "Belegvorschau",
+    "fields": {
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "z.B. REWE",
+      "amount": "Betrag",
+      "date": "Datum",
+      "account": "Konto",
+      "accountPlaceholder": "Konto wählen",
+      "category": "Kategorie",
+      "noCategory": "Keine Kategorie"
+    },
+    "actions": {
+      "save": "Ausgabe speichern",
+      "scanAnother": "Weiteren Beleg scannen",
+      "viewExpenses": "Zu den Ausgaben"
+    },
+    "success": {
+      "title": "Ausgabe erfasst!",
+      "subtitle": "Der Beleg wurde erfolgreich gespeichert."
+    },
+    "errors": {
+      "fileTooLarge": "Datei zu groß. Maximum: 5 MB",
+      "invalidType": "Ungültiges Format. Bitte JPG oder PNG hochladen.",
+      "scanFailed": "Beleg konnte nicht analysiert werden. Bitte versuche es erneut.",
+      "saveFailed": "Ausgabe konnte nicht gespeichert werden.",
+      "notEnabled": "KI-Funktion nicht aktiviert."
     }
   },
   "csvImport": {

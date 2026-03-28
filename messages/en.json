@@ -34,6 +34,7 @@
     "categories": "Categories",
     "documents": "Documents",
     "import": "CSV Import",
+    "scan": "Receipt Scanner",
     "accounts": "Accounts",
     "analytics": "Analytics",
     "goals": "Goals",
@@ -443,11 +444,51 @@
       "expense": "Expense",
       "income": "Income",
       "transfer": "Transfer",
-      "account": "Account"
+      "account": "Account",
+      "scan": "Scan receipt"
     },
     "buttons": {
       "menuOpen": "Actions",
       "menuClose": "Close"
+    }
+  },
+  "receiptScan": {
+    "title": "Receipt Scanner",
+    "subtitle": "Upload a receipt or invoice – the AI will fill in the details automatically.",
+    "dropzoneTitle": "Upload receipt or invoice",
+    "dropzoneHint": "JPG or PNG · max. 5 MB",
+    "processing": "Analyzing receipt…",
+    "saving": "Saving expense…",
+    "confidenceMedium": "Please review – some fields may be inaccurate.",
+    "confidenceLow": "Receipt hard to read – please check all fields.",
+    "notEnabledTitle": "AI not configured",
+    "notEnabledDescription": "The receipt scanner requires an OpenAI API key. Set OPENAI_API_KEY in your .env file.",
+    "imageAlt": "Receipt preview",
+    "fields": {
+      "description": "Description",
+      "descriptionPlaceholder": "e.g. Supermarket",
+      "amount": "Amount",
+      "date": "Date",
+      "account": "Account",
+      "accountPlaceholder": "Select account",
+      "category": "Category",
+      "noCategory": "No category"
+    },
+    "actions": {
+      "save": "Save expense",
+      "scanAnother": "Scan another receipt",
+      "viewExpenses": "View expenses"
+    },
+    "success": {
+      "title": "Expense saved!",
+      "subtitle": "The receipt has been successfully saved."
+    },
+    "errors": {
+      "fileTooLarge": "File too large. Maximum: 5 MB",
+      "invalidType": "Invalid format. Please upload JPG or PNG.",
+      "scanFailed": "Could not analyze receipt. Please try again.",
+      "saveFailed": "Could not save expense.",
+      "notEnabled": "AI feature not enabled."
     }
   },
   "settings": {

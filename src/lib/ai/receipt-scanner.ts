@@ -18,7 +18,7 @@ const receiptSchema = z.object({
 
 export async function scanReceipt(
   fileBase64: string,
-  mimeType: "image/jpeg" | "image/jpg" | "image/png",
+  mediaType: "image/jpeg" | "image/jpg" | "image/png",
   userCategories: string[]
 ): Promise<ReceiptScanResult> {
   const categoryList =
@@ -42,7 +42,7 @@ Für confidence: "high" wenn alle Kernfelder (merchant, amount, date) klar lesba
           {
             type: "image",
             image: Buffer.from(fileBase64, "base64"),
-            mimeType,
+            mediaType,
           },
           {
             type: "text",

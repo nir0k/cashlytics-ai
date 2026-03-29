@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.6.0...v0.6.1) (2026-03-29)
+
+### 🐛 Bug Fixes
+
+- use mediaType instead of mimeType in ImagePart for AI SDK v6 compatibility ([b4ee9c9](https://github.com/aaronjoeldev/cashlytics-ai/commit/b4ee9c9025c7e9b416233a545645e9d06541af61))
+
 ## [0.6.0](https://github.com/aaronjoeldev/cashlytics-ai/compare/v0.5.0...v0.6.0) (2026-03-28)
 
 ### ✨ Features
